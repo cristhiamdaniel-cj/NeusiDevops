@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>✅ Checklist de {{ integrante }}</h2>
+<ul>
+    {% for tarea in tareas %}
+        <li>{{ tarea.titulo }} ({{ tarea.get_categoria_display }})</li>
+    {% empty %}
+        <li>No tienes tareas asignadas en este sprint.</li>
+    {% endfor %}
+</ul>
+<a href="{% url 'backlog' %}">⬅ Volver al backlog</a>
+{% endblock %}

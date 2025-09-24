@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>📝 Resumen de Dailies</h2>
+    
+    {% if request.user.is_authenticated %}
+    <div style="text-align: right;">
+        <a href="{% url 'home' %}" style="background:#6c757d; color:white; padding:8px 16px; margin-right:8px; text-decoration:none; border-radius:5px; font-weight:bold;">🏠 Home</a>
+        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" style="background:#dc3545; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
+            🚪 Cerrar Sesión
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Accesos rápidos y filtros según permisos -->
+<div style="margin:15px 0;">
+    <a href="{% url 'daily_personal' %}" 
+       style="display:inline-block; margin:5px; padding:12px 20px;
+              background:#28a745; color:white; border-radius:5px;
+              text-decoration:none; font-weight:bold;">
+        📅 Mi Daily Personal
+    </a>
+    
+    {% if tiene_permisos_admin %}
+    <!-- Filtros solo para Daniel/Andrés -->
+    <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+        <h4 style="margin-bottom: 10px;">🔧 Filtros Administrativos:</h4>
+        <form method="get" style="display: inline-flex; align-items: center; gap: 15px;">
+            <label for="persona">Ver dailies de:</label>
+            <select name="persona" id="persona" onchange="this.form.submit()">
+                <option value="">-- Todas las personas --</option>
+                {% for i in integrantes %}
+                    <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
+                        {{ i.user.first_name }} {{ i.user.last_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if persona_id %}
+                <a href="{% url 'daily_resumen' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
+            {% endif %}
+        </form>
+        
+        <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+            💡 Como administrador, puedes ver los dailies de todo el equipo y filtrar por persona específica.
+        </div>
+    </div>
+    {% else %}
+    <!-- Vista personal para usuarios normales -->
+    <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
+        <h4 style="color: #856404; margin-bottom: 10px;">📋 Vista Personal</h4>
+        <p style="color: #856404; margin: 0;">
+            Solo puedes ver tu propio historial de dailies. Para acceder a los dailies del equipo completo, contacta a Daniel Campos o Andrés Gómez.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<div style="margin-bottom: 15px;">
+    <a href="{% url 'backlog_lista' %}" style="background:#28a745; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
+        📋 Ver Backlog
+    </a>
+    <a href="{% url 'backlog_matriz' %}" style="background:#17a2b8; color:white; padding:8px 16px; margin-left:10px; text-decoration:none; border-radius:5px; font-weight:bold;">
+        📊 Ver Matriz
+    </a>
+</div>
+
+<table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse;">
+    <tr style="background-color: #f8f9fa;">
+        <th>👤 Integrante</th>
+        <th>📅 Fecha</th>
+        <th>✅ Ayer</th>
+        <th>🎯 Hoy</th>
+        <th>⛔ Impedimentos</th>
+    </tr>
+    {% for d in registros %}
+    <tr>
+        <td><strong>{{ d.integrante.user.first_name }}</strong></td>
+        <td>{{ d.fecha }}</td>
+        <td>{{ d.que_hizo_ayer }}</td>
+        <td>{{ d.que_hara_hoy }}</td>
+        <td>{{ d.impedimentos|default:"-" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" style="text-align: center; padding: 20px; color: #666;">No hay registros de daily.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

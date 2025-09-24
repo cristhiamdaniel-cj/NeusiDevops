@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📅 Daily - NEUSI Task Manager</title>
+    <style>
+        .btn {
+            padding: 6px 12px;
+            margin: 3px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-primary { background-color: #007bff; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-danger { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>📅 Daily de {{ integrante.user.first_name }} ({{ fecha_actual }})</h2>
+        
+        {% if request.user.is_authenticated %}
+        <div style="text-align: right;">
+            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li style="color:red">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">✅ Guardar Daily</button>
+    </form>
+
+    <!-- 🔘 Botón para volver al backlog -->
+    <div style="margin-top: 15px;">
+        <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">
+            📋 Volver al Backlog
+        </a>
+        <a href="{% url 'daily_resumen' %}" class="btn btn-secondary">
+            📝 Ver Resumen Daily
+        </a>
+    </div>
+</body>
+</html>

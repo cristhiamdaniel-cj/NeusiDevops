@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚀 NEUSI Task Manager</title>
+    <style>
+        .btn {
+            padding: 6px 12px;
+            margin: 3px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-primary { background-color: #007bff; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-info { background-color: #17a2b8; }
+        .btn-warning { background-color: #ffc107; color: #000; }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            text-align: right;
+        }
+        .tarea-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .tarea-titulo {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .tarea-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin: 4px 0;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.8em;
+        }
+        .badge-ui { background-color: #dc3545; }
+        .badge-nui { background-color: #28a745; }
+        .badge-uni { background-color: #ffc107; color: #000; }
+        .badge-nuni { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>🚀 NEUSI Task Manager</h1>
+        
+        {% if request.user.is_authenticated %}
+        <div style="text-align: right;">
+            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <h2>📋 Backlog en Lista</h2>
+
+    <!-- 🔘 Botón para ir al Daily del usuario actual -->
+    {% if request.user.is_authenticated and request.user.integrante %}
+        <div style="margin-bottom: 15px;">
+            <a href="{% url 'daily_personal' %}" class="btn btn-primary">
+                📅 Mi Daily de Hoy
+            </a>
+        </div>
+    {% endif %}
+
+    <form method="get" style="margin-bottom: 20px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+        <!-- Solo mostrar filtros de persona y sprint para Daniel/Andrés -->
+        {% if tiene_permisos_admin %}
+        <label for="persona">Persona:</label>
+        <select name="persona" id="persona">
+            <option value="">-- Todos --</option>
+            {% for i in integrantes %}
+                <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
+                    {{ i.user.first_name }} {{ i.user.last_name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="sprint" style="margin-left: 15px;">Sprint:</label>
+        <select name="sprint" id="sprint">
+            <option value="">-- Todos --</option>
+            {% for s in sprints %}
+                <option value="{{ s.id }}" {% if sprint_id == s.id|stringformat:"s" %}selected{% endif %}>
+                    Sprint {{ s.inicio }} - {{ s.fin }}
+                </option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <!-- Para usuarios normales, mostrar solo información de sus tareas -->
+        <div style="background: #fff3cd; padding: 10px; border-radius: 5px; border: 1px solid #ffeaa7; color: #856404; margin-bottom: 15px;">
+            <strong>📋 Vista Personal:</strong> Solo puedes ver tus tareas asignadas. 
+            Para ver todas las tareas del equipo, contacta a Daniel Campos o Andrés Gómez.
+        </div>
+        {% endif %}
+
+        <label for="estado" {% if tiene_permisos_admin %}style="margin-left: 15px;"{% endif %}>Estado:</label>
+        <select name="estado" id="estado">
+            <option value="">-- Todos --</option>
+            <option value="abiertas" {% if estado == "abiertas" %}selected{% endif %}>Abiertas</option>
+            <option value="cerradas" {% if estado == "cerradas" %}selected{% endif %}>Cerradas</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary" style="margin-left: 15px;">Filtrar</button>
+        <a href="{% url 'backlog_lista' %}" class="btn btn-danger">❌ Limpiar</a>
+    </form>
+
+    <div style="margin-bottom: 15px;">
+        <!-- Solo mostrar "Nueva tarea" si el usuario tiene permisos -->
+        {% if request.user.integrante.puede_crear_tareas %}
+            <a href="{% url 'nueva_tarea' %}" class="btn btn-primary">➕ Nueva tarea</a>
+        {% else %}
+            <span class="btn" style="background-color: #ccc; color: #666; cursor: not-allowed;">➕ Nueva tarea (Sin permisos)</span>
+        {% endif %}
+        <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
+    </div>
+
+    <hr>
+
+    {% for tarea in tareas %}
+        <div class="tarea-card">
+            <div class="tarea-titulo">
+                📋 {{ tarea.titulo }}
+            </div>
+            
+            <div class="tarea-meta">
+                <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
+                    {{ tarea.get_categoria_display }}
+                </span>
+            </div>
+            
+            <div class="tarea-meta">
+                <strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}
+            </div>
+            
+            <div class="tarea-meta">
+                <strong>Asignado:</strong> {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}
+            </div>
+            
+            <div class="tarea-meta">
+                <strong>Estado:</strong> 
+                {% if tarea.completada %}
+                    ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
+                {% else %}
+                    ⏳ Abierta
+                {% endif %}
+            </div>
+
+            <div style="margin-top: 10px;">
+                <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
+                {% if not tarea.completada %}
+                    <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-danger">✅ Cerrar Tarea</a>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="tarea-card">
+            <p>No hay tareas registradas con los filtros seleccionados.</p>
+        </div>
+    {% endfor %}
+</body>
+</html>

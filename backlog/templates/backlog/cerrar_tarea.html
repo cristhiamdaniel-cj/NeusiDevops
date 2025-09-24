@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cerrar Tarea - NEUSI Task Manager</title>
+    <style>
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-danger { background-color: #dc3545; }
+        .btn-secondary { background-color: #6c757d; }
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .required {
+            color: red;
+            font-weight: bold;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>✅ Cerrar Tarea</h1>
+        
+        {% if request.user.is_authenticated %}
+        <div style="text-align: right;">
+            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        <div style="margin: 10px 0;">
+            {% for message in messages %}
+                <div style="padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; color: #721c24;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>{{ tarea.titulo }}</h2>
+        <p><strong>Categoría:</strong> {{ tarea.get_categoria_display }}</p>
+        <p><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</p>
+        
+        {% if tarea.descripcion %}
+        <div style="margin: 15px 0;">
+            <h4>Descripción:</h4>
+            <p style="background: white; padding: 10px; border-radius: 5px;">{{ tarea.descripcion|linebreaks }}</p>
+        </div>
+        {% endif %}
+
+        {% if tarea.criterios_aceptacion %}
+        <div style="margin: 15px 0;">
+            <h4>Criterios de Aceptación:</h4>
+            <p style="background: white; padding: 10px; border-radius: 5px;">{{ tarea.criterios_aceptacion|linebreaks }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="warning">
+        <h3>⚠️ Importante</h3>
+        <p>Para cerrar esta tarea debes:</p>
+        <ul>
+            <li>Adjuntar un informe que documente la finalización de la tarea</li>
+            <li>Confirmar que estás seguro de cerrarla</li>
+            <li>Una vez cerrada, no podrás modificar el estado</li>
+        </ul>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="informe_cierre">Informe de Cierre <span class="required">*</span></label>
+            <input type="file" name="informe_cierre" id="informe_cierre" required>
+            <small>Formatos permitidos: PDF, DOC, DOCX, TXT, etc.</small>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="confirmacion" value="confirmo" required>
+                <span class="required">*</span> Confirmo que he completado todos los criterios de aceptación y estoy seguro de cerrar esta tarea
+            </label>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-danger">✅ Cerrar Tarea Definitivamente</button>
+            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">❌ Cancelar</a>
+        </div>
+    </form>
+</body>
+</html>

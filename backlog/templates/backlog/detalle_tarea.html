@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detalle Tarea - NEUSI Task Manager</title>
+    <style>
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .btn-primary { background-color: #007bff; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-success { background-color: #28a745; }
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .evidencia {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin: 10px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.9em;
+        }
+        .badge-ui { background-color: #dc3545; }
+        .badge-nui { background-color: #28a745; }
+        .badge-uni { background-color: #ffc107; color: #000; }
+        .badge-nuni { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>📋 Detalle de Tarea</h1>
+        
+        {% if request.user.is_authenticated %}
+        <div style="text-align: right;">
+            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        <div style="margin: 10px 0;">
+            {% for message in messages %}
+                <div style="padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; color: #155724;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>{{ tarea.titulo }}</h2>
+        
+        <p><strong>Categoría:</strong> 
+            <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
+                {{ tarea.get_categoria_display }}
+            </span>
+        </p>
+        
+        <p><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</p>
+        <p><strong>Asignado a:</strong> {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</p>
+        <p><strong>Estado:</strong> 
+            {% if tarea.completada %}
+                ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
+            {% else %}
+                ⏳ Abierta
+            {% endif %}
+        </p>
+
+        {% if tarea.descripcion %}
+        <div style="margin: 15px 0;">
+            <h4>📝 Descripción:</h4>
+            <p style="background: white; padding: 15px; border-radius: 5px;">{{ tarea.descripcion|linebreaks }}</p>
+        </div>
+        {% endif %}
+
+        {% if tarea.criterios_aceptacion %}
+        <div style="margin: 15px 0;">
+            <h4>✅ Criterios de Aceptación:</h4>
+            <p style="background: white; padding: 15px; border-radius: 5px;">{{ tarea.criterios_aceptacion|linebreaks }}</p>
+        </div>
+        {% endif %}
+
+        {% if tarea.informe_cierre %}
+        <div style="margin: 15px 0;">
+            <h4>📄 Informe de Cierre:</h4>
+            <p><a href="{{ tarea.informe_cierre.url }}" target="_blank" class="btn btn-primary">📥 Descargar Informe</a></p>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 20px;">
+            {% if not tarea.completada and tarea.asignado_a.user == request.user %}
+                <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-danger">✅ Cerrar Tarea</a>
+            {% endif %}
+            <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Volver al Backlog</a>
+        </div>
+    </div>
+
+    <!-- Sección de Evidencias -->
+    <div class="card">
+        <h3>📎 Evidencias</h3>
+        
+        {% if not tarea.completada and request.user.integrante.puede_agregar_evidencias %}
+        <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data" style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            {% csrf_token %}
+            <h4>Agregar nueva evidencia:</h4>
+            <div style="margin: 10px 0;">
+                <label for="comentario">Comentario:</label><br>
+                <textarea name="comentario" id="comentario" rows="3" style="width: 100%; padding: 8px;"></textarea>
+            </div>
+            <div style="margin: 10px 0;">
+                <label for="archivo">Archivo (opcional):</label><br>
+                <input type="file" name="archivo" id="archivo">
+            </div>
+            <button type="submit" class="btn btn-success">📎 Agregar Evidencia</button>
+        </form>
+        {% elif not tarea.completada %}
+        <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ffeaa7; color: #856404;">
+            <h4>⚠️ Permisos Limitados</h4>
+            <p>Solo <strong>Daniel Campos</strong> y <strong>Andrés Gómez</strong> pueden agregar evidencias a las tareas.</p>
+        </div>
+        {% endif %}
+
+        {% for evidencia in evidencias %}
+        <div class="evidencia">
+            <p><strong>📅 {{ evidencia.fecha|date:"d/m/Y H:i" }}</strong></p>
+            {% if evidencia.comentario %}
+                <p>{{ evidencia.comentario|linebreaks }}</p>
+            {% endif %}
+            {% if evidencia.archivo %}
+                <p><a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-primary">📥 Descargar Archivo</a></p>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p style="color: #666; font-style: italic;">No hay evidencias registradas para esta tarea.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
