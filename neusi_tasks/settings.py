@@ -25,9 +25,15 @@ SECRET_KEY = 'django-insecure-kzm9r)eo08het9l9-6yf+ei71$ku-asgc0$4kqo-klz2pqvrcx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'devops-neusi.ngrok.io', '*']
+# CSRF Configuration for ngrok
+CSRF_TRUSTED_ORIGINS = [
+    'https://devops-neusi.ngrok.io',
+    'http://devops-neusi.ngrok.io',
+    'http://localhost:8076',
+    'http://127.0.0.1:8076',
+]
 # Application definition
 
 INSTALLED_APPS = [
