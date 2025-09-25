@@ -1,0 +1,90 @@
+{% load disponibilidad_filters %}
+{% extends 'base.html' %}
+
+{% block title %}Mi Disponibilidad - NeusiDevops{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>???? Mi Disponibilidad Semanal</h2>
+            
+            <div class="alert alert-info">
+                <strong>Estado:</strong> {{ mensaje_edicion }}
+            </div>
+
+            <div class="mb-3">
+                <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" class="btn btn-info">
+                    ???? Ver Equipo
+                </a>
+            </div>
+
+            <!-- Grid simple de disponibilidad -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            {% for dia_num, dia_nombre in dias_semana %}
+                            <th>{{ dia_nombre }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hora in horas %}
+                        <tr>
+                            <td><strong>{{ hora|stringformat:"02d" }}:00</strong></td>
+                            {% for dia_num, dia_nombre in dias_semana %}
+                            <td>
+                                <select class="form-control form-control-sm" 
+                                        onchange="actualizarHorario({{ dia_num }}, {{ hora }}, this.value)"
+                                        {% if not puede_editar %}disabled{% endif %}>
+                                    <option value="ocupado" 
+                                            {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'ocupado' or not horarios_matriz|lookup:dia_num|lookup:hora %}selected{% endif %}>
+                                        Ocupado
+                                    </option>
+                                    <option value="parcial" 
+                                            {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'parcial' %}selected{% endif %}>
+                                        Parcial
+                                    </option>
+                                    <option value="disponible" 
+                                            {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'disponible' %}selected{% endif %}>
+                                        Disponible
+                                    </option>
+                                </select>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function actualizarHorario(dia, hora, estado) {
+    fetch('{% url "disponibilidad:actualizar_horario" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            dia_semana: dia,
+            hora: hora,
+            estado: estado
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Horario actualizado');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

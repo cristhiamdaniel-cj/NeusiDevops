@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Disponibilidad del Equipo - NeusiDevops{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>???? Disponibilidad del Equipo</h2>
+            
+            <div class="mb-3">
+                <a href="{% url 'disponibilidad:mi_disponibilidad' %}" class="btn btn-primary">
+                    ???? Mi Disponibilidad
+                </a>
+                <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">
+                    ??? Volver al Inicio
+                </a>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>Semana actual:</strong> {{ semana_actual|date:"d/m/Y" }}
+            </div>
+
+            {% if equipo_disponibilidad %}
+                {% for user_id, data in equipo_disponibilidad.items %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>???? {{ data.usuario.first_name }} {{ data.usuario.last_name }} 
+                            <small class="text-muted">({{ data.usuario.username }})</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Vista simplificada de disponibilidad semanal</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <h4>???? No hay disponibilidades registradas</h4>
+                    <p>Los miembros del equipo a??n no han configurado su disponibilidad para esta semana.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
