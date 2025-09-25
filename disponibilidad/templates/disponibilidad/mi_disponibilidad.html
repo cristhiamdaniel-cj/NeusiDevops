@@ -174,16 +174,18 @@
                     {% for hora in horas %}
                     <div class="hora-label">{{ hora|stringformat:"02d" }}:00</div>
                     {% for dia_num, dia_nombre in dias_semana %}
-                    <div class="celda-horario {% if horarios_matriz|lookup:dia_num|lookup:hora %}estado-{{ horarios_matriz|lookup:dia_num|lookup:hora.estado }}{% else %}estado-vacio{% endif %}"
+                    {% with horarios_matriz|lookup:dia_num|lookup:hora as horario %}
+                    <div class="celda-horario {% if horario and horario.estado == 'disponible' %}estado-disponible{% else %}estado-vacio{% endif %}"
                          data-dia="{{ dia_num }}" 
                          data-hora="{{ hora }}"
                          title="{{ dia_nombre }} {{ hora }}:00">
-                        {% if horarios_matriz|lookup:dia_num|lookup:hora %}
-                            {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'disponible' %}SI{% endif %}
+                        {% if horario and horario.estado == 'disponible' %}
+                            SI
                         {% else %}
                             -
                         {% endif %}
                     </div>
+                    {% endwith %}
                     {% endfor %}
                     {% endfor %}
                 </div>
