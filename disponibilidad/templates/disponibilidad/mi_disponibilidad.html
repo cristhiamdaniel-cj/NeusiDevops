@@ -53,7 +53,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
     user-select: none;
 }
@@ -66,16 +66,6 @@
 .estado-disponible {
     background: linear-gradient(135deg, #d4edda, #c3e6cb);
     color: #155724;
-}
-
-.estado-ocupado {
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-    color: #721c24;
-}
-
-.estado-parcial {
-    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-    color: #856404;
 }
 
 .estado-vacio {
@@ -94,20 +84,20 @@
 
 .modo-seleccion {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     margin-bottom: 15px;
     flex-wrap: wrap;
 }
 
 .btn-modo {
-    padding: 10px 20px;
+    padding: 12px 25px;
     border: 2px solid;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.2s;
     text-align: center;
-    min-width: 120px;
+    min-width: 140px;
 }
 
 .btn-modo.activo {
@@ -121,18 +111,6 @@
     color: #155724;
 }
 
-.modo-ocupado {
-    background: #f8d7da;
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-.modo-parcial {
-    background: #fff3cd;
-    border-color: #ffc107;
-    color: #856404;
-}
-
 .modo-borrar {
     background: #e9ecef;
     border-color: #6c757d;
@@ -144,45 +122,39 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>???? Mi Disponibilidad Semanal</h2>
+                <h2>Disponibilidad Semanal</h2>
                 <div>
                     <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" class="btn btn-info">
-                        ???? Ver Equipo
+                        Ver Equipo
                     </a>
                     <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">
-                        ??? Inicio
+                        Volver al Inicio
                     </a>
                 </div>
             </div>
 
             <div class="alert alert-info">
-                <strong>???? Estado:</strong> {{ mensaje_edicion }}
-                <br><small><strong>???? Tip:</strong> Selecciona un modo abajo y haz clic en los horarios para cambiar tu disponibilidad</small>
+                <strong>Estado:</strong> {{ mensaje_edicion }}
+                <br><small><strong>Instrucciones:</strong> Selecciona un modo abajo y haz clic en los horarios para marcar tu disponibilidad</small>
             </div>
 
             <!-- Herramientas de selecci??n -->
             <div class="herramientas">
-                <h4>???? Herramientas de Edici??n</h4>
+                <h4>Herramientas de Edicion</h4>
                 <div class="modo-seleccion">
                     <div class="btn-modo modo-disponible" data-estado="disponible">
-                        ???? Disponible
-                    </div>
-                    <div class="btn-modo modo-parcial" data-estado="parcial">
-                        ???? Parcial
-                    </div>
-                    <div class="btn-modo modo-ocupado" data-estado="ocupado">
-                        ???? Ocupado
+                        Disponible
                     </div>
                     <div class="btn-modo modo-borrar" data-estado="vacio">
-                        ??????? Limpiar
+                        Limpiar
                     </div>
                 </div>
-                <div style="margin-top: 10px;">
+                <div style="margin-top: 15px;">
                     <button class="btn btn-outline-primary btn-sm" onclick="llenarHorarioOficina()">
-                        ???? Horario oficina (8-17h)
+                        Horario oficina (8-17h)
                     </button>
                     <button class="btn btn-outline-danger btn-sm" onclick="limpiarTodo()">
-                        ???? Limpiar todo
+                        Limpiar todo
                     </button>
                 </div>
             </div>
@@ -207,10 +179,7 @@
                          data-hora="{{ hora }}"
                          title="{{ dia_nombre }} {{ hora }}:00">
                         {% if horarios_matriz|lookup:dia_num|lookup:hora %}
-                            {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'disponible' %}???
-                            {% elif horarios_matriz|lookup:dia_num|lookup:hora.estado == 'parcial' %}~
-                            {% elif horarios_matriz|lookup:dia_num|lookup:hora.estado == 'ocupado' %}???
-                            {% endif %}
+                            {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'disponible' %}SI{% endif %}
                         {% else %}
                             -
                         {% endif %}
@@ -221,11 +190,9 @@
             </div>
 
             <div class="mt-4">
-                <p><strong>???? Leyenda:</strong>
-                <span class="badge bg-success">???? Disponible (???)</span>
-                <span class="badge bg-warning">???? Parcial (~)</span>
-                <span class="badge bg-danger">???? Ocupado (???)</span>
-                <span class="badge bg-secondary">??? Sin definir (-)</span>
+                <p><strong>Leyenda:</strong>
+                <span class="badge bg-success">Verde = Disponible</span>
+                <span class="badge bg-secondary">Gris = No disponible</span>
                 </p>
             </div>
         </div>
@@ -295,21 +262,19 @@ function cambiarEstadoCelda(celda, nuevoEstado) {
 }
 
 function actualizarCeldaVisual(celda, estado) {
-    celda.classList.remove('estado-disponible', 'estado-ocupado', 'estado-parcial', 'estado-vacio');
+    celda.classList.remove('estado-disponible', 'estado-vacio');
     
     if (estado === 'vacio') {
         celda.classList.add('estado-vacio');
         celda.textContent = '-';
     } else {
-        celda.classList.add(`estado-${estado}`);
-        celda.textContent = estado === 'disponible' ? '???' : 
-                          estado === 'parcial' ? '~' : 
-                          estado === 'ocupado' ? '???' : '-';
+        celda.classList.add('estado-disponible');
+        celda.textContent = 'SI';
     }
 }
 
 function llenarHorarioOficina() {
-    if (!confirm('??Llenar horario de oficina (8:00 - 17:00, Lunes a Viernes) como disponible?')) return;
+    if (!confirm('Marcar horario de oficina (8:00 - 17:00, Lunes a Viernes) como disponible?')) return;
     
     for (let dia = 0; dia < 5; dia++) {
         for (let hora = 8; hora < 17; hora++) {
@@ -322,7 +287,7 @@ function llenarHorarioOficina() {
 }
 
 function limpiarTodo() {
-    if (!confirm('??Est??s seguro de que quieres limpiar toda tu disponibilidad?')) return;
+    if (!confirm('Estas seguro de que quieres limpiar toda tu disponibilidad?')) return;
     
     document.querySelectorAll('.celda-horario').forEach(celda => {
         cambiarEstadoCelda(celda, 'vacio');
