@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>➕ Crear Daily - Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
+        .card { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        textarea, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; }
+        .btn { padding: 8px 16px; margin: 10px 5px; border-radius: 5px; text-decoration: none; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>➕ Crear Daily (Administrador)</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <label for="integrante">👤 Seleccionar integrante:</label>
+            <select name="integrante" id="integrante" required>
+                <option value="">-- Selecciona --</option>
+                {% for i in integrantes %}
+                    <option value="{{ i.id }}">{{ i.user.first_name }} {{ i.user.last_name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="{{ form.que_hizo_ayer.id_for_label }}">✅ ¿Qué hizo ayer?</label>
+            {{ form.que_hizo_ayer }}
+
+            <label for="{{ form.que_hara_hoy.id_for_label }}">🚀 ¿Qué hará hoy?</label>
+            {{ form.que_hara_hoy }}
+
+            <label for="{{ form.impedimentos.id_for_label }}">⚠️ Impedimentos</label>
+            {{ form.impedimentos }}
+
+            <button type="submit" class="btn btn-primary">💾 Guardar Daily</button>
+            <a href="{% url 'daily_resumen' %}" class="btn btn-secondary">↩️ Volver</a>
+        </form>
+    </div>
+</body>
+</html>

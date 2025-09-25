@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>❌ Confirmar eliminación de Daily</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
+        .card { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        .btn { padding: 8px 16px; margin: 5px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>⚠️ Confirmar eliminación</h2>
+        <p>¿Seguro que deseas eliminar el Daily del integrante 
+           <strong>{{ daily.integrante.user.first_name }} {{ daily.integrante.user.last_name }}</strong> 
+           registrado el <strong>{{ daily.fecha }}</strong>?</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">🗑️ Sí, eliminar</button>
+            <a href="{% url 'daily_resumen' %}" class="btn btn-secondary">↩️ Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>

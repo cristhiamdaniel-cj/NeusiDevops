@@ -1,13 +1,71 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>✅ Checklist de {{ integrante }}</h2>
-<ul>
-    {% for tarea in tareas %}
-        <li>{{ tarea.titulo }} ({{ tarea.get_categoria_display }})</li>
-    {% empty %}
-        <li>No tienes tareas asignadas en este sprint.</li>
-    {% endfor %}
-</ul>
-<a href="{% url 'backlog' %}">⬅ Volver al backlog</a>
+<div style="margin: 20px;">
+    <h2>✅ Checklist de {{ integrante.user.get_full_name|default:integrante.user.username }}</h2>
+
+    {% if tareas %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+            <thead style="background: #007bff; color: white;">
+                <tr>
+                    <th style="padding: 10px; text-align: left;">Título</th>
+                    <th style="padding: 10px; text-align: left;">Categoría</th>
+                    <th style="padding: 10px; text-align: left;">Sprint</th>
+                    <th style="padding: 10px; text-align: left;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarea in tareas %}
+                <tr style="border-bottom: 1px solid #ddd; background: white;">
+                    <td style="padding: 10px;">
+                        <a href="{% url 'detalle_tarea' tarea.id %}" style="text-decoration: none; color: #007bff; font-weight: bold;">
+                            {{ tarea.titulo }}
+                        </a>
+                    </td>
+                    <td style="padding: 10px;">
+                        <span class="badge 
+                            {% if tarea.categoria == 'UI' %}badge-ui
+                            {% elif tarea.categoria == 'NUI' %}badge-nui
+                            {% elif tarea.categoria == 'UNI' %}badge-uni
+                            {% else %}badge-nuni{% endif %}">
+                            {{ tarea.get_categoria_display }}
+                        </span>
+                    </td>
+                    <td style="padding: 10px;">
+                        {{ tarea.sprint.inicio }} – {{ tarea.sprint.fin }}
+                    </td>
+                    <td style="padding: 10px;">
+                        {% if tarea.completada %}
+                            <span style="color: green; font-weight: bold;">✔ Cerrada</span>
+                        {% else %}
+                            <span style="color: orange; font-weight: bold;">⏳ Abierta</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="margin-top: 15px; color: #666; font-style: italic;">
+            No tienes tareas asignadas en este sprint.
+        </p>
+    {% endif %}
+
+    <div style="margin-top: 20px;">
+        <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">⬅ Volver al Backlog</a>
+    </div>
+</div>
+
+<style>
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: white;
+        font-size: 0.9em;
+    }
+    .badge-ui { background-color: #dc3545; }
+    .badge-nui { background-color: #28a745; }
+    .badge-uni { background-color: #ffc107; color: #000; }
+    .badge-nuni { background-color: #6c757d; }
+</style>
 {% endblock %}

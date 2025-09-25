@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>✏️ Editar Tarea</h2>
+    
+    {% if request.user.is_authenticated %}
+    <div style="text-align: right;">
+        <a href="{% url 'home' %}" style="background:#6c757d; color:white; padding:8px 16px; margin-right:8px; text-decoration:none; border-radius:5px; font-weight:bold;">🏠 Home</a>
+        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" style="background:#dc3545; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
+            🚪 Cerrar Sesión
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div style="background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeaa7; color: #856404; margin-bottom: 20px;">
+    <strong>⚠️ Advertencia:</strong> Estás editando la tarea <strong>"{{ tarea.titulo }}"</strong>. 
+    Los cambios afectarán la información visible para todo el equipo.
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    
+    <div style="margin-top: 20px;">
+        <button type="submit" style="background:#28a745; color:white; padding:12px 20px; border:none; border-radius:5px; font-weight:bold; margin-right:10px;">
+            💾 Guardar Cambios
+        </button>
+        
+        <a href="{% url 'detalle_tarea' tarea.id %}" style="background:#6c757d; color:white; padding:12px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">
+            ❌ Cancelar
+        </a>
+    </div>
+</form>
+
+<hr style="margin: 30px 0;">
+
+<div style="background: #e9ecef; padding: 15px; border-radius: 5px;">
+    <h4>📋 Información Actual de la Tarea:</h4>
+    <p><strong>Título:</strong> {{ tarea.titulo }}</p>
+    <p><strong>Asignada a:</strong> {{ tarea.asignado_a }}</p>
+    <p><strong>Sprint:</strong> {{ tarea.sprint }}</p>
+    <p><strong>Estado:</strong> {% if tarea.completada %}✅ Completada{% else %}⏳ Abierta{% endif %}</p>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'detalle_tarea' tarea.id %}" style="background:#17a2b8; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
+        👁️ Ver Detalle Completo
+    </a>
+    <a href="{% url 'backlog_lista' %}" style="background:#007bff; color:white; padding:8px 16px; margin-left:10px; text-decoration:none; border-radius:5px; font-weight:bold;">
+        📋 Volver al Backlog
+    </a>
+</div>
+{% endblock %}

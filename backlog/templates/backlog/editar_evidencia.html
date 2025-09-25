@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Editar Evidencia - NEUSI Task Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f1f3f6; padding: 20px; }
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .btn-primary { background-color: #007bff; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-success { background-color: #28a745; }
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 15px auto;
+            border-radius: 8px;
+            background: #ffffff;
+            max-width: 700px;
+        }
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .alert-danger { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>✏️ Editar Evidencia</h1>
+        {% if request.user.is_authenticated %}
+        <div style="text-align: right;">
+            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Mensajes -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Card principal -->
+    <div class="card">
+        <h2>Tarea: {{ evidencia.tarea.titulo }}</h2>
+        <p><strong>Autor:</strong> {{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</p>
+        <p><strong>Creada el:</strong> {{ evidencia.creado_en|date:"d/m/Y H:i" }}</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <div style="margin: 10px 0;">
+                {{ form.comentario.label_tag }}
+                {{ form.comentario }}
+                {{ form.comentario.errors }}
+            </div>
+
+            <div style="margin: 10px 0;">
+                {{ form.archivo.label_tag }}
+                {{ form.archivo }}
+                {{ form.archivo.errors }}
+                {% if evidencia.archivo %}
+                    <p>📂 Archivo actual: 
+                        <a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-primary">📥 Ver Archivo</a>
+                    </p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
+            <a href="{% url 'detalle_tarea' evidencia.tarea.id %}" class="btn btn-secondary">↩️ Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>
