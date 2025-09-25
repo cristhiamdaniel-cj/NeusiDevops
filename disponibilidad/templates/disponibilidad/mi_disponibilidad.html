@@ -3,238 +3,143 @@
 
 {% block title %}Mi Disponibilidad - NeusiDevops{% endblock %}
 
-{% block extra_css %}
-<style>
-    .disponibilidad-container {
-        max-width: 100%;
-        overflow-x: auto;
-        margin: 20px 0;
-    }
-    
-    .grid-disponibilidad {
-        display: grid;
-        grid-template-columns: 80px repeat(7, 1fr);
-        gap: 2px;
-        min-width: 800px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 10px;
-    }
-    
-    .header-dia {
-        background: #343a40;
-        color: white;
-        text-align: center;
-        padding: 10px 5px;
-        font-weight: bold;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-    
-    .hora-label {
-        background: #6c757d;
-        color: white;
-        text-align: center;
-        padding: 8px 4px;
-        font-size: 12px;
-        font-weight: bold;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .celda-horario {
-        min-height: 35px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 2px solid transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: bold;
-        user-select: none;
-        position: relative;
-    }
-    
-    .celda-horario:hover {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        z-index: 10;
-    }
-    
-    .celda-horario.seleccionando {
-        border: 2px solid #007bff;
-        box-shadow: 0 0 10px rgba(0,123,255,0.3);
-    }
-    
-    /* Estados de disponibilidad */
-    .estado-disponible {
-        background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        color: #155724;
-    }
-    
-    .estado-ocupado {
-        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-        color: #721c24;
-    }
-    
-    .estado-parcial {
-        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-        color: #856404;
-    }
-    
-    .estado-vacio {
-        background: linear-gradient(135deg, #e9ecef, #dee2e6);
-        color: #6c757d;
-        border: 1px dashed #adb5bd;
-    }
-    
-    /* Herramientas de selecci??n */
-    .herramientas {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .herramientas h4 {
-        margin-bottom: 15px;
-        color: #343a40;
-    }
-    
-    .modo-seleccion {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-    }
-    
-    .btn-modo {
-        padding: 10px 20px;
-        border: 2px solid;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.2s;
-        text-align: center;
-        min-width: 120px;
-    }
-    
-    .btn-modo.activo {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    .modo-disponible {
-        background: #d4edda;
-        border-color: #28a745;
-        color: #155724;
-    }
-    
-    .modo-ocupado {
-        background: #f8d7da;
-        border-color: #dc3545;
-        color: #721c24;
-    }
-    
-    .modo-parcial {
-        background: #fff3cd;
-        border-color: #ffc107;
-        color: #856404;
-    }
-    
-    .modo-borrar {
-        background: #e9ecef;
-        border-color: #6c757d;
-        color: #495057;
-    }
-    
-    /* Leyenda mejorada */
-    .leyenda-moderna {
-        background: white;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .leyenda-items {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    
-    .leyenda-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-weight: bold;
-    }
-    
-    .leyenda-color {
-        width: 20px;
-        height: 20px;
-        border-radius: 4px;
-        border: 1px solid rgba(0,0,0,0.1);
-    }
-    
-    /* Responsivo */
-    @media (max-width: 768px) {
-        .grid-disponibilidad {
-            grid-template-columns: 60px repeat(7, 1fr);
-            gap: 1px;
-        }
-        
-        .celda-horario {
-            min-height: 25px;
-            font-size: 10px;
-        }
-        
-        .hora-label {
-            font-size: 10px;
-            padding: 4px 2px;
-        }
-        
-        .herramientas {
-            padding: 15px;
-        }
-        
-        .modo-seleccion {
-            justify-content: center;
-        }
-        
-        .btn-modo {
-            min-width: 80px;
-            padding: 8px 12px;
-        }
-    }
-    
-    /* Animaciones */
-    @keyframes pulso {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-    
-    .celda-horario.actualizado {
-        animation: pulso 0.5s ease-in-out;
-    }
-    
-    /* Efectos de selecci??n m??ltiple */
-    .seleccion-multiple {
-        background: rgba(0, 123, 255, 0.1) !important;
-        border: 2px dashed #007bff !important;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
+<style>
+.disponibilidad-container {
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 20px 0;
+}
+
+.grid-disponibilidad {
+    display: grid;
+    grid-template-columns: 80px repeat(7, 1fr);
+    gap: 2px;
+    min-width: 800px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.header-dia {
+    background: #343a40;
+    color: white;
+    text-align: center;
+    padding: 10px 5px;
+    font-weight: bold;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.hora-label {
+    background: #6c757d;
+    color: white;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.celda-horario {
+    min-height: 35px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    user-select: none;
+}
+
+.celda-horario:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.estado-disponible {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+}
+
+.estado-ocupado {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+}
+
+.estado-parcial {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+}
+
+.estado-vacio {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+    color: #6c757d;
+    border: 1px dashed #adb5bd;
+}
+
+.herramientas {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.modo-seleccion {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-modo {
+    padding: 10px 20px;
+    border: 2px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 120px;
+}
+
+.btn-modo.activo {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.modo-disponible {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.modo-ocupado {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.modo-parcial {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.modo-borrar {
+    background: #e9ecef;
+    border-color: #6c757d;
+    color: #495057;
+}
+</style>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -250,7 +155,6 @@
                 </div>
             </div>
 
-            <!-- Estado y mensaje -->
             <div class="alert alert-info">
                 <strong>???? Estado:</strong> {{ mensaje_edicion }}
                 <br><small><strong>???? Tip:</strong> Selecciona un modo abajo y haz clic en los horarios para cambiar tu disponibilidad</small>
@@ -261,7 +165,7 @@
                 <h4>???? Herramientas de Edici??n</h4>
                 <div class="modo-seleccion">
                     <div class="btn-modo modo-disponible" data-estado="disponible">
-                        ?????? Disponible
+                        ???? Disponible
                     </div>
                     <div class="btn-modo modo-parcial" data-estado="parcial">
                         ???? Parcial
@@ -274,10 +178,7 @@
                     </div>
                 </div>
                 <div style="margin-top: 10px;">
-                    <button class="btn btn-outline-primary btn-sm" onclick="llenarDia()">
-                        ???? Llenar d??a completo
-                    </button>
-                    <button class="btn btn-outline-warning btn-sm" onclick="llenarHorarioOficina()">
+                    <button class="btn btn-outline-primary btn-sm" onclick="llenarHorarioOficina()">
                         ???? Horario oficina (8-17h)
                     </button>
                     <button class="btn btn-outline-danger btn-sm" onclick="limpiarTodo()">
@@ -319,27 +220,13 @@
                 </div>
             </div>
 
-            <!-- Leyenda moderna -->
-            <div class="leyenda-moderna">
-                <div class="leyenda-items">
-                    <span><strong>???? Leyenda:</strong></span>
-                    <div class="leyenda-item estado-disponible">
-                        <div class="leyenda-color estado-disponible"></div>
-                        <span>???? Disponible (???)</span>
-                    </div>
-                    <div class="leyenda-item estado-parcial">
-                        <div class="leyenda-color estado-parcial"></div>
-                        <span>???? Parcial (~)</span>
-                    </div>
-                    <div class="leyenda-item estado-ocupado">
-                        <div class="leyenda-color estado-ocupado"></div>
-                        <span>???? Ocupado (???)</span>
-                    </div>
-                    <div class="leyenda-item estado-vacio">
-                        <div class="leyenda-color estado-vacio"></div>
-                        <span>??? Sin definir (-)</span>
-                    </div>
-                </div>
+            <div class="mt-4">
+                <p><strong>???? Leyenda:</strong>
+                <span class="badge bg-success">???? Disponible (???)</span>
+                <span class="badge bg-warning">???? Parcial (~)</span>
+                <span class="badge bg-danger">???? Ocupado (???)</span>
+                <span class="badge bg-secondary">??? Sin definir (-)</span>
+                </p>
             </div>
         </div>
     </div>
@@ -348,8 +235,6 @@
 {% csrf_token %}
 <script>
 let modoActual = 'disponible';
-let estaSelecionando = false;
-let celdaInicial = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     inicializarHerramientas();
@@ -357,15 +242,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function inicializarHerramientas() {
-    // Activar el primer modo por defecto
     document.querySelector('.btn-modo[data-estado="disponible"]').classList.add('activo');
     
-    // Agregar listeners a los modos
     document.querySelectorAll('.btn-modo').forEach(btn => {
         btn.addEventListener('click', function() {
-            // Remover activo de todos
             document.querySelectorAll('.btn-modo').forEach(b => b.classList.remove('activo'));
-            // Activar el seleccionado
             this.classList.add('activo');
             modoActual = this.dataset.estado;
         });
@@ -376,24 +257,12 @@ function inicializarCeldas() {
     const celdas = document.querySelectorAll('.celda-horario');
     
     celdas.forEach(celda => {
-        // Click simple
         celda.addEventListener('click', function() {
             if (!{{ puede_editar|yesno:"true,false" }}) {
                 alert('{{ mensaje_edicion }}');
                 return;
             }
             cambiarEstadoCelda(this, modoActual);
-        });
-        
-        // Hover para preview
-        celda.addEventListener('mouseenter', function() {
-            if ({{ puede_editar|yesno:"true,false" }}) {
-                this.classList.add('seleccionando');
-            }
-        });
-        
-        celda.addEventListener('mouseleave', function() {
-            this.classList.remove('seleccionando');
         });
     });
 }
@@ -402,10 +271,8 @@ function cambiarEstadoCelda(celda, nuevoEstado) {
     const dia = parseInt(celda.dataset.dia);
     const hora = parseInt(celda.dataset.hora);
     
-    // Optimistic UI - cambiar visualmente primero
     actualizarCeldaVisual(celda, nuevoEstado);
     
-    // Enviar al servidor
     fetch('{% url "disponibilidad:actualizar_horario" %}', {
         method: 'POST',
         headers: {
@@ -420,27 +287,16 @@ function cambiarEstadoCelda(celda, nuevoEstado) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            // Animaci??n de confirmaci??n
-            celda.classList.add('actualizado');
-            setTimeout(() => celda.classList.remove('actualizado'), 500);
-        } else {
-            // Revertir cambio visual si falla
+        if (!data.success) {
             console.error('Error:', data.error);
             alert('Error al actualizar: ' + data.error);
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexi??n');
     });
 }
 
 function actualizarCeldaVisual(celda, estado) {
-    // Remover clases de estado existentes
     celda.classList.remove('estado-disponible', 'estado-ocupado', 'estado-parcial', 'estado-vacio');
     
-    // Agregar nueva clase
     if (estado === 'vacio') {
         celda.classList.add('estado-vacio');
         celda.textContent = '-';
@@ -452,28 +308,11 @@ function actualizarCeldaVisual(celda, estado) {
     }
 }
 
-// Funciones de llenado r??pido
-function llenarDia() {
-    const dia = prompt('??Qu?? d??a quieres llenar? (0=Lunes, 1=Martes, ..., 6=Domingo)');
-    if (dia === null || dia === '') return;
-    
-    const diaNum = parseInt(dia);
-    if (diaNum < 0 || diaNum > 6) {
-        alert('D??a inv??lido. Debe ser entre 0 (Lunes) y 6 (Domingo)');
-        return;
-    }
-    
-    const celdas = document.querySelectorAll(`.celda-horario[data-dia="${diaNum}"]`);
-    celdas.forEach(celda => {
-        cambiarEstadoCelda(celda, modoActual);
-    });
-}
-
 function llenarHorarioOficina() {
     if (!confirm('??Llenar horario de oficina (8:00 - 17:00, Lunes a Viernes) como disponible?')) return;
     
-    for (let dia = 0; dia < 5; dia++) { // Lunes a viernes
-        for (let hora = 8; hora < 17; hora++) { // 8 AM a 5 PM
+    for (let dia = 0; dia < 5; dia++) {
+        for (let hora = 8; hora < 17; hora++) {
             const celda = document.querySelector(`.celda-horario[data-dia="${dia}"][data-hora="${hora}"]`);
             if (celda) {
                 cambiarEstadoCelda(celda, 'disponible');
