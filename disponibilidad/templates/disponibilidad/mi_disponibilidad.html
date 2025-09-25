@@ -140,7 +140,7 @@
 
             <!-- Herramientas de selecci??n -->
             <div class="herramientas">
-                <h4>Herramientas de Edicion</h4>
+                <h4>Herramientas de Edici??n</h4>
                 <div class="modo-seleccion">
                     <div class="btn-modo modo-disponible" data-estado="disponible">
                         Disponible
@@ -180,7 +180,7 @@
                          data-hora="{{ hora }}"
                          title="{{ dia_nombre }} {{ hora }}:00">
                         {% if horario and horario.estado == 'disponible' %}
-                            SI
+                            S??
                         {% else %}
                             -
                         {% endif %}
@@ -271,12 +271,12 @@ function actualizarCeldaVisual(celda, estado) {
         celda.textContent = '-';
     } else {
         celda.classList.add('estado-disponible');
-        celda.textContent = 'SI';
+        celda.textContent = 'S??';
     }
 }
 
 function llenarHorarioOficina() {
-    if (!confirm('Marcar horario de oficina (8:00 - 17:00, Lunes a Viernes) como disponible?')) return;
+    if (!confirm('??Marcar horario de oficina (8:00 - 17:00, Lunes a Viernes) como disponible?')) return;
     
     for (let dia = 0; dia < 5; dia++) {
         for (let hora = 8; hora < 17; hora++) {
@@ -289,7 +289,7 @@ function llenarHorarioOficina() {
 }
 
 function limpiarTodo() {
-    if (!confirm('Estas seguro de que quieres limpiar toda tu disponibilidad?')) return;
+    if (!confirm('??Est??s seguro de que quieres limpiar toda tu disponibilidad?')) return;
     
     document.querySelectorAll('.celda-horario').forEach(celda => {
         cambiarEstadoCelda(celda, 'vacio');
