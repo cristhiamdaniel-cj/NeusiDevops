@@ -1,5 +1,5 @@
-{% load disponibilidad_filters %}
 {% extends 'base.html' %}
+{% load disponibilidad_filters %}
 
 {% block title %}Mi Disponibilidad - NeusiDevops{% endblock %}
 
@@ -16,6 +16,9 @@
             <div class="mb-3">
                 <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" class="btn btn-info">
                     ???? Ver Equipo
+                </a>
+                <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">
+                    ??? Volver al Inicio
                 </a>
             </div>
 
@@ -41,15 +44,15 @@
                                         {% if not puede_editar %}disabled{% endif %}>
                                     <option value="ocupado" 
                                             {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'ocupado' or not horarios_matriz|lookup:dia_num|lookup:hora %}selected{% endif %}>
-                                        Ocupado
+                                        ???? Ocupado
                                     </option>
                                     <option value="parcial" 
                                             {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'parcial' %}selected{% endif %}>
-                                        Parcial
+                                        ???? Parcial
                                     </option>
                                     <option value="disponible" 
                                             {% if horarios_matriz|lookup:dia_num|lookup:hora.estado == 'disponible' %}selected{% endif %}>
-                                        Disponible
+                                        ???? Disponible
                                     </option>
                                 </select>
                             </td>
@@ -59,10 +62,18 @@
                     </tbody>
                 </table>
             </div>
+            
+            <div class="mt-3">
+                <p><strong>Leyenda:</strong></p>
+                <span class="badge bg-danger">???? Ocupado</span>
+                <span class="badge bg-warning">???? Parcial</span>
+                <span class="badge bg-success">???? Disponible</span>
+            </div>
         </div>
     </div>
 </div>
 
+{% csrf_token %}
 <script>
 function actualizarHorario(dia, hora, estado) {
     fetch('{% url "disponibilidad:actualizar_horario" %}', {
@@ -84,6 +95,10 @@ function actualizarHorario(dia, hora, estado) {
         } else {
             alert('Error: ' + data.error);
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexi??n');
     });
 }
 </script>
