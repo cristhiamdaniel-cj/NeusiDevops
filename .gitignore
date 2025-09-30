@@ -29,9 +29,18 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
+<<<<<<< HEAD
 # Scripts de utilidad en directorio raíz
 /*.sh
 
+=======
+# Scripts de utilidad en directorio raíz (solo .sh en raíz)
+/*.sh
+
+# Archivos de migración temporales
+**/migrations/__pycache__/
+
+>>>>>>> develop
 # Archivos Python en directorio raíz (excepto manage.py)
 /*.py
 !manage.py
