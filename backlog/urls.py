@@ -51,5 +51,10 @@ urlpatterns = [
 
     path("daily/nuevo/", views.daily_create_admin, name="daily_create_admin"),
 
+    path("tarea/<int:tarea_id>/cerrar/", views.cerrar_tarea, name="cerrar_tarea"),  # Cerrar
+    path("tarea/<int:tarea_id>/eliminar/", views.eliminar_tarea, name="eliminar_tarea"),  # Eliminar
 
+    # 📊 Kanban Board
+    path("kanban/", views.kanban_board, name="kanban_board"),
+    path("tarea/<int:tarea_id>/cambiar-estado/", views.cambiar_estado_tarea, name="cambiar_estado_tarea"),
 ]

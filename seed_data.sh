@@ -2,7 +2,7 @@
 # seed_data.sh
 # Inserta datos de ejemplo en la base
 
-source .venv/bin/activate
+source venv/bin/activate
 
 echo "📌 Insertando datos de prueba..."
 echo "

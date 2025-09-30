@@ -59,6 +59,15 @@ class Tarea(models.Model):
         ("NUNI", "No Urgente y No Importante"),
     ]
 
+    # NUEVO: Estados de workflow
+    ESTADO_CHOICES = [
+        ("NUEVO", "Nuevo"),
+        ("APROBADO", "Aprobado"),
+        ("EN_PROGRESO", "En Progreso"),
+        ("COMPLETADO", "Completado"),
+        ("BLOQUEADO", "Bloqueado"),
+    ]
+
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
     criterios_aceptacion = models.TextField(
@@ -66,6 +75,15 @@ class Tarea(models.Model):
         help_text="Criterios que deben cumplirse para cerrar esta tarea"
     )
     categoria = models.CharField(max_length=4, choices=MATRIZ_CHOICES)
+    
+    # NUEVO: Campo de estado
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default="NUEVO",
+        help_text="Estado actual de la tarea en el workflow"
+    )
+    
     asignado_a = models.ForeignKey(
         Integrante,
         on_delete=models.SET_NULL,
@@ -85,7 +103,6 @@ class Tarea(models.Model):
 
     def __str__(self):
         return f"{self.titulo} ({self.get_categoria_display()})"
-
 
 # ==============================
 # Evidencia

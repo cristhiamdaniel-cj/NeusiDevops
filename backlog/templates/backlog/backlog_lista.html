@@ -20,6 +20,8 @@
         .btn-danger { background-color: #dc3545; }
         .btn-info { background-color: #17a2b8; }
         .btn-warning { background-color: #ffc107; color: #000; }
+        .btn-delete { background-color: #8B0000; }
+        .btn-success { background-color: #28a745; }
         .tarea-card {
             border: 1px solid #ddd;
             padding: 15px;
@@ -120,6 +122,7 @@
             <span class="btn" style="background-color: #ccc; color: #666; cursor: not-allowed;">➕ Nueva tarea (Sin permisos)</span>
         {% endif %}
         <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
+        <a href="{% url 'kanban_board' %}" class="btn btn-success">📋 Ver Kanban</a>
     </div>
 
     <hr>
@@ -152,6 +155,13 @@
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">
                         ✅ Cerrar Tarea
                     </button>
+                {% endif %}
+                
+                <!-- Botón eliminar solo para administradores -->
+                {% if tiene_permisos_admin %}
+                    <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">
+                        🗑️ Eliminar
+                    </a>
                 {% endif %}
             </div>
         </div>

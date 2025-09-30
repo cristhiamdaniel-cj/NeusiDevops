@@ -17,6 +17,9 @@
             margin-bottom: 8px;
             cursor: grab;
         }
+        .card:active {
+            cursor: grabbing;
+        }
         .quadrant.drag-over {
             background-color: #e3f2fd;
             border-color: #0d6efd;
@@ -29,10 +32,17 @@
             text-decoration: none;
             color: white;
             font-weight: bold;
+            display: inline-block;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.85em;
         }
         .btn-primary { background-color: #007bff; }
         .btn-secondary { background-color: #6c757d; }
         .btn-danger { background-color: #dc3545; }
+        .btn-info { background-color: #17a2b8; }
+        .btn-delete { background-color: #8B0000; }
         .header-container {
             display: flex;
             justify-content: space-between;
@@ -41,6 +51,14 @@
         }
         .user-info {
             text-align: right;
+        }
+        .task-actions {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .task-content {
+            cursor: grab;
         }
     </style>
 </head>
@@ -96,9 +114,18 @@
                 <h5>🔥 Urgente e Importante</h5>
                 {% for tarea in ui %}
                     <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <strong>{{ tarea.titulo }}</strong><br>
-                        👤 {{ tarea.asignado_a }}<br>
-                        🗓 Sprint: {{ tarea.sprint }}
+                        <div class="task-content">
+                            <strong>{{ tarea.titulo }}</strong><br>
+                            👤 {{ tarea.asignado_a }}<br>
+                            🗓 Sprint: {{ tarea.sprint }}
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+                            {% if tiene_permisos_admin %}
+                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+                            {% endif %}
+                        </div>
                     </div>
                 {% empty %}
                     <p>⚠ Nada en este cuadrante.</p>
@@ -112,9 +139,18 @@
                 <h5>📊 No Urgente e Importante</h5>
                 {% for tarea in nui %}
                     <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <strong>{{ tarea.titulo }}</strong><br>
-                        👤 {{ tarea.asignado_a }}<br>
-                        🗓 Sprint: {{ tarea.sprint }}
+                        <div class="task-content">
+                            <strong>{{ tarea.titulo }}</strong><br>
+                            👤 {{ tarea.asignado_a }}<br>
+                            🗓 Sprint: {{ tarea.sprint }}
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+                            {% if tiene_permisos_admin %}
+                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+                            {% endif %}
+                        </div>
                     </div>
                 {% empty %}
                     <p>⚠ Nada en este cuadrante.</p>
@@ -128,9 +164,18 @@
                 <h5>⚡ Urgente y No Importante</h5>
                 {% for tarea in uni %}
                     <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <strong>{{ tarea.titulo }}</strong><br>
-                        👤 {{ tarea.asignado_a }}<br>
-                        🗓 Sprint: {{ tarea.sprint }}
+                        <div class="task-content">
+                            <strong>{{ tarea.titulo }}</strong><br>
+                            👤 {{ tarea.asignado_a }}<br>
+                            🗓 Sprint: {{ tarea.sprint }}
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+                            {% if tiene_permisos_admin %}
+                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+                            {% endif %}
+                        </div>
                     </div>
                 {% empty %}
                     <p>⚠ Nada en este cuadrante.</p>
@@ -144,9 +189,18 @@
                 <h5>🏝 No Urgente y No Importante</h5>
                 {% for tarea in nuni %}
                     <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <strong>{{ tarea.titulo }}</strong><br>
-                        👤 {{ tarea.asignado_a }}<br>
-                        🗓 Sprint: {{ tarea.sprint }}
+                        <div class="task-content">
+                            <strong>{{ tarea.titulo }}</strong><br>
+                            👤 {{ tarea.asignado_a }}<br>
+                            🗓 Sprint: {{ tarea.sprint }}
+                        </div>
+                        <div class="task-actions">
+                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+                            {% if tiene_permisos_admin %}
+                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+                            {% endif %}
+                        </div>
                     </div>
                 {% empty %}
                     <p>⚠ Nada en este cuadrante.</p>
@@ -156,13 +210,26 @@
     </div>
 
     <script>
-        // Drag & Drop básico
+        // Drag & Drop mejorado
         let draggedCard = null;
 
         document.querySelectorAll(".card").forEach(card => {
+            // Solo el contenido de la tarea es draggable, no los botones
+            const taskContent = card.querySelector('.task-content');
+            
             card.addEventListener("dragstart", e => {
+                // Prevenir drag si se hace clic en un botón
+                if (e.target.tagName === 'A') {
+                    e.preventDefault();
+                    return;
+                }
                 draggedCard = card;
                 e.dataTransfer.effectAllowed = "move";
+                card.style.opacity = "0.5";
+            });
+
+            card.addEventListener("dragend", e => {
+                card.style.opacity = "1";
             });
         });
 
@@ -181,11 +248,48 @@
                 quad.classList.remove("drag-over");
                 if (draggedCard) {
                     quad.appendChild(draggedCard);
-                    // 🚀 Aquí podrías hacer un fetch a Django para actualizar la categoría
-                    console.log("Mover tarea", draggedCard.dataset.id, "a", quad.id);
+                    
+                    // Actualizar categoría en el servidor
+                    const tareaId = draggedCard.dataset.id;
+                    const nuevaCategoria = quad.id.toUpperCase();
+                    
+                    fetch(`/backlog/tarea/${tareaId}/cambiar-categoria/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            categoria: nuevaCategoria
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Tarea movida:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al mover la tarea. Recarga la página.');
+                    });
                 }
             });
         });
+
+        // Función para obtener el CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
 </body>

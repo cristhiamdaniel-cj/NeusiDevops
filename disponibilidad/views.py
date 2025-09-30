@@ -101,16 +101,31 @@ def ver_disponibilidad_equipo(request):
     """Vista para ver la disponibilidad de todo el equipo"""
     semana_actual = DisponibilidadSemanal.obtener_semana_actual()
     
-    # Obtener todas las disponibilidades de la semana actual
-    disponibilidades = DisponibilidadSemanal.objects.filter(
-        semana_inicio=semana_actual
-    ).select_related('usuario').prefetch_related('horarios')
+    # Obtener TODOS los usuarios del sistema
+    todos_usuarios = User.objects.all().order_by('first_name', 'last_name')
+    
+    # Filtrar por usuario si se solicita
+    usuario_filtrado = request.GET.get('usuario')
+    if usuario_filtrado:
+        try:
+            todos_usuarios = todos_usuarios.filter(id=usuario_filtrado)
+        except (ValueError, User.DoesNotExist):
+            pass
     
     # Organizar datos por usuario
     equipo_disponibilidad = {}
-    for disp in disponibilidades:
+    for usuario in todos_usuarios:
+        # Intentar obtener la disponibilidad de este usuario
+        try:
+            disp = DisponibilidadSemanal.objects.get(
+                usuario=usuario,
+                semana_inicio=semana_actual
+            )
+        except DisponibilidadSemanal.DoesNotExist:
+            disp = None
+        
         usuario_data = {
-            'usuario': disp.usuario,
+            'usuario': usuario,
             'disponibilidad': disp,
             'horarios': {}
         }
@@ -119,19 +134,24 @@ def ver_disponibilidad_equipo(request):
         for dia in range(7):
             usuario_data['horarios'][dia] = {}
             for hora in range(24):
-                try:
-                    horario = disp.horarios.get(dia_semana=dia, hora=hora)
-                    usuario_data['horarios'][dia][hora] = horario
-                except HorarioDisponibilidad.DoesNotExist:
+                if disp:
+                    try:
+                        horario = disp.horarios.get(dia_semana=dia, hora=hora)
+                        usuario_data['horarios'][dia][hora] = horario
+                    except HorarioDisponibilidad.DoesNotExist:
+                        usuario_data['horarios'][dia][hora] = None
+                else:
                     usuario_data['horarios'][dia][hora] = None
         
-        equipo_disponibilidad[disp.usuario.id] = usuario_data
+        equipo_disponibilidad[usuario.id] = usuario_data
     
     context = {
         'equipo_disponibilidad': equipo_disponibilidad,
         'semana_actual': semana_actual,
         'dias_semana': HorarioDisponibilidad.DIAS_SEMANA,
         'horas': range(24),
+        'todos_usuarios': User.objects.all().order_by('first_name', 'last_name'),
+        'usuario_filtrado': usuario_filtrado,
     }
     
     return render(request, 'disponibilidad/equipo_disponibilidad.html', context)

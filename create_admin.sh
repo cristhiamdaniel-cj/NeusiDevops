@@ -2,7 +2,7 @@
 # create_admin.sh
 # Crear un superusuario por defecto
 
-source .venv/bin/activate
+source venv/bin/activate
 
 echo "📌 Creando superusuario Django (usuario: neusi_admin / pass: Neusi123*)"
 echo "from django.contrib.auth.models import User

@@ -348,7 +348,26 @@ def backlog_lista(request):
 
     sprints = Sprint.objects.all()
 
+    # ✅ CAPTURAR PARÁMETROS DE LOS FILTROS
+    persona_id = request.GET.get("persona")
+    sprint_id = request.GET.get("sprint")
     estado = request.GET.get("estado")
+
+    # ✅ FILTRAR POR PERSONA
+    if persona_id and persona_id != "":
+        try:
+            tareas = tareas.filter(asignado_a__id=persona_id)
+        except (ValueError, Integrante.DoesNotExist):
+            pass
+
+    # ✅ FILTRAR POR SPRINT
+    if sprint_id and sprint_id != "":
+        try:
+            tareas = tareas.filter(sprint__id=sprint_id)
+        except (ValueError, Sprint.DoesNotExist):
+            pass
+
+    # ✅ FILTRAR POR ESTADO
     if estado == "abiertas":
         tareas = tareas.filter(completada=False)
     elif estado == "cerradas":
@@ -361,6 +380,8 @@ def backlog_lista(request):
         "sprints": sprints,
         "integrantes": integrantes,
         "estado": estado,
+        "persona_id": persona_id,  # ✅ PASAR AL TEMPLATE
+        "sprint_id": sprint_id,    # ✅ PASAR AL TEMPLATE
         "tiene_permisos_admin": tiene_permisos_admin,
     })
 
@@ -564,3 +585,116 @@ def daily_create_admin(request):
         "form": form,
         "integrantes": integrantes,
     })
+
+@login_required
+def eliminar_tarea(request, tarea_id):
+    """Eliminar una tarea - solo para administradores"""
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+
+    # Solo administradores pueden eliminar tareas
+    try:
+        if not request.user.integrante.puede_crear_tareas():
+            messages.error(request, "❌ No tienes permisos para eliminar tareas.")
+            return redirect("backlog_lista")
+    except AttributeError:
+        messages.error(request, "❌ No tienes un perfil de integrante válido.")
+        return redirect("home")
+
+    if request.method == "POST":
+        titulo_tarea = tarea.titulo
+        tarea.delete()
+        messages.success(request, f"🗑️ Tarea '{titulo_tarea}' eliminada correctamente.")
+        return redirect("backlog_lista")
+
+    return render(request, "backlog/confirmar_eliminar_tarea.html", {
+        "tarea": tarea,
+    })
+
+@login_required
+def kanban_board(request):
+    """Vista Kanban con estados de workflow - todos los usuarios pueden mover sus tareas"""
+    try:
+        usuario_integrante = request.user.integrante
+        tiene_permisos_admin = usuario_integrante.puede_crear_tareas()
+    except AttributeError:
+        tiene_permisos_admin = False
+        usuario_integrante = None
+
+    # Admins ven todas las tareas, usuarios normales solo las suyas
+    if tiene_permisos_admin:
+        tareas = Tarea.objects.all().select_related("asignado_a", "sprint")
+        integrantes = Integrante.objects.all()
+        persona_id = request.GET.get("persona")
+        if persona_id:
+            try:
+                tareas = tareas.filter(asignado_a__id=persona_id)
+            except (Integrante.DoesNotExist, ValueError):
+                pass
+    else:
+        tareas = Tarea.objects.filter(asignado_a=usuario_integrante) if usuario_integrante else Tarea.objects.none()
+        integrantes = []
+
+    # Organizar tareas por estado
+    estados = {
+        "nuevo": tareas.filter(estado="NUEVO"),
+        "aprobado": tareas.filter(estado="APROBADO"),
+        "en_progreso": tareas.filter(estado="EN_PROGRESO"),
+        "completado": tareas.filter(estado="COMPLETADO"),
+        "bloqueado": tareas.filter(estado="BLOQUEADO"),
+    }
+
+    return render(request, "backlog/kanban_board.html", {
+        **estados,
+        "integrantes": integrantes,
+        "persona_id": persona_id if tiene_permisos_admin else None,
+        "tiene_permisos_admin": tiene_permisos_admin,
+    })
+
+
+@login_required
+def cambiar_estado_tarea(request, tarea_id):
+    """API para cambiar el estado de una tarea (drag & drop)"""
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+    
+    # Verificar permisos: admins pueden mover cualquier tarea, usuarios solo las suyas
+    try:
+        usuario_integrante = request.user.integrante
+        es_admin = usuario_integrante.puede_crear_tareas()
+    except AttributeError:
+        return JsonResponse({"error": "No tienes perfil de integrante"}, status=403)
+
+    if not es_admin and tarea.asignado_a != usuario_integrante:
+        return JsonResponse({"error": "Solo puedes mover tus propias tareas"}, status=403)
+
+    import json
+    try:
+        data = json.loads(request.body)
+        nuevo_estado = data.get("estado", "").upper()
+        
+        estados_validos = ["NUEVO", "APROBADO", "EN_PROGRESO", "COMPLETADO", "BLOQUEADO"]
+        if nuevo_estado not in estados_validos:
+            return JsonResponse({"error": "Estado no válido"}, status=400)
+
+        tarea.estado = nuevo_estado
+        
+        # Si la tarea se marca como COMPLETADO, también marcarla como completada
+        if nuevo_estado == "COMPLETADO":
+            tarea.completada = True
+            if not tarea.fecha_cierre:
+                tarea.fecha_cierre = now()
+        
+        tarea.save()
+        
+        return JsonResponse({
+            "success": True,
+            "tarea_id": tarea.id,
+            "nuevo_estado": nuevo_estado,
+            "mensaje": f"Tarea movida a {tarea.get_estado_display()}"
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON inválido"}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

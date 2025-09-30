@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load disponibilidad_extras %}
 
 {% block title %}Disponibilidad del Equipo - NeusiDevops{% endblock %}
 
@@ -6,14 +7,14 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <h2>???? Disponibilidad del Equipo</h2>
+            <h2>👥 Disponibilidad del Equipo</h2>
             
             <div class="mb-3">
                 <a href="{% url 'disponibilidad:mi_disponibilidad' %}" class="btn btn-primary">
-                    ???? Mi Disponibilidad
+                    📅 Mi Disponibilidad
                 </a>
-                <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">
-                    ??? Volver al Inicio
+                <a href="{% url 'home' %}" class="btn btn-secondary">
+                    🏠 Volver al Inicio
                 </a>
             </div>
 
@@ -21,26 +22,127 @@
                 <strong>Semana actual:</strong> {{ semana_actual|date:"d/m/Y" }}
             </div>
 
+            <!-- Filtro por usuario -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-auto">
+                            <label for="usuario" class="form-label">Filtrar por usuario:</label>
+                            <select name="usuario" id="usuario" class="form-select">
+                                <option value="">-- Todos los usuarios --</option>
+                                {% for user in todos_usuarios %}
+                                    <option value="{{ user.id }}" {% if usuario_filtrado == user.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Filtrar</button>
+                            <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" class="btn btn-secondary">Limpiar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             {% if equipo_disponibilidad %}
                 {% for user_id, data in equipo_disponibilidad.items %}
                 <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>???? {{ data.usuario.first_name }} {{ data.usuario.last_name }} 
-                            <small class="text-muted">({{ data.usuario.username }})</small>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            👤 {{ data.usuario.first_name }} {{ data.usuario.last_name }} 
+                            <small class="text-white-50">({{ data.usuario.username }})</small>
+                            {% if not data.disponibilidad %}
+                                <span class="badge bg-warning text-dark ms-2">Sin disponibilidad configurada</span>
+                            {% endif %}
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted">Vista simplificada de disponibilidad semanal</p>
+                        {% if data.disponibilidad %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr class="table-secondary">
+                                        <th style="width: 80px;">Hora</th>
+                                        {% for dia_num, dia_nombre in dias_semana %}
+                                            <th class="text-center">{{ dia_nombre }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hora in horas %}
+                                    <tr>
+                                        <td class="text-center fw-bold">{{ hora }}:00</td>
+                                        {% for dia_num, dia_nombre in dias_semana %}
+                                            {% with horario=data.horarios|dict_lookup:dia_num|dict_lookup:hora %}
+                                            <td class="text-center p-1" 
+                                                style="
+                                                    {% if horario %}
+                                                        {% if horario.estado == 'disponible' %}
+                                                            background-color: #d4edda;
+                                                        {% elif horario.estado == 'ocupado' %}
+                                                            background-color: #f8d7da;
+                                                        {% elif horario.estado == 'tentativo' %}
+                                                            background-color: #fff3cd;
+                                                        {% endif %}
+                                                    {% else %}
+                                                        background-color: #f8f9fa;
+                                                    {% endif %}
+                                                ">
+                                                {% if horario %}
+                                                    {% if horario.estado == 'disponible' %}
+                                                        ✅
+                                                    {% elif horario.estado == 'ocupado' %}
+                                                        ❌
+                                                    {% elif horario.estado == 'tentativo' %}
+                                                        ⚠️
+                                                    {% endif %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            {% endwith %}
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <strong>Leyenda:</strong>
+                                <span class="badge" style="background-color: #d4edda; color: #000;">✅ Disponible</span>
+                                <span class="badge" style="background-color: #f8d7da; color: #000;">❌ Ocupado</span>
+                                <span class="badge" style="background-color: #fff3cd; color: #000;">⚠️ Tentativo</span>
+                                <span class="badge" style="background-color: #f8f9fa; color: #000;">- Sin definir</span>
+                            </small>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning mb-0">
+                            Este usuario aún no ha configurado su disponibilidad para esta semana.
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="alert alert-warning">
-                    <h4>???? No hay disponibilidades registradas</h4>
-                    <p>Los miembros del equipo a??n no han configurado su disponibilidad para esta semana.</p>
+                    <h4>⚠️ No hay usuarios en el sistema</h4>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+    .table-bordered td, .table-bordered th {
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+    .table-sm td {
+        padding: 0.25rem;
+        font-size: 0.875rem;
+    }
+</style>
 {% endblock %}
