@@ -2,7 +2,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - NEUSI Task Manager</title>
+  <meta charset="utf-8">
+  <title>Login - NEUSI Task Manager</title>
+  <link rel="stylesheet" href="{% static 'backlog/styles.css' %}">
 </head>
 <body>
     <h2>🔑 Iniciar sesión</h2>
@@ -18,11 +20,8 @@
         {% csrf_token %}
         <label for="username">Usuario:</label><br>
         <input type="text" name="username" id="username"><br><br>
-
         <label for="password">Contraseña:</label><br>
         <input type="password" name="password" id="password"><br><br>
-
         <button type="submit">Entrar</button>
     </form>
 </body>
-</html>
