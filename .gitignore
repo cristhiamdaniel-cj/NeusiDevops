@@ -1,24 +1,27 @@
 # Python
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
-__pycache__/
-*.pyc
 
-# Virtual Environment
+# Entornos virtuales
 venv/
-env/
+.env/
 ENV/
-.venv
+.venv/
 
-# Django
+# Logs
 *.log
+
+# Bases de datos locales
 db.sqlite3
 db.sqlite3-journal
+
+# Archivos generados por Django
 media/
 staticfiles/
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -29,14 +32,19 @@ staticfiles/
 .DS_Store
 Thumbs.db
 
-# Scripts de utilidad (opcional, puedes mantenerlos si quieres)
-*.sh
+# Scripts utilitarios en raíz
+/*.sh
 
 # Archivos de migración temporales
 **/migrations/__pycache__/
 
-__pycache__/
-*.pyc
-*.pyo
-*.py[cod]
+# Archivos Python en raíz (excepto manage.py)
+/*.py
+!manage.py
+
+# Site-packages específicos
+venv/lib/python3.12/site-packages/
+
+# Archivos de desarrollo interno
+README-develop.md
 
