@@ -3,7 +3,16 @@
 <html>
 <head>
     <title>📝 Resumen de Dailies - NEUSI Task Manager</title>
+    <link rel="stylesheet" href="{% static 'backlog/daily-resumen.css' %}?v=1">
     <style>
+    body { position: relative; isolation: isolate; }
+    .btn { position: relative; z-index: 10; }
+    /* Desactivar clics de posibles overlays globales */
+    #particles-js, canvas.particles, canvas#bg-net, .drag-overlay, .matrix-overlay {
+      pointer-events: none !important;
+      z-index: 0 !important;
+    }
+
         body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
         h2 { margin-bottom: 15px; }
         .btn {
@@ -68,9 +77,13 @@
         {% endif %}
     </div>
 
-    <!-- Accesos rápidos -->
+     <!-- Accesos rápidos -->
     <div style="margin-bottom: 15px;">
-        <a href="{% url 'daily_personal' %}" class="btn btn-success">📅 Mi Daily Personal</a>
+        <!-- Opción A: form GET que navega a daily_personal -->
+        <form method="get" action="{% url 'daily_personal' %}" style="display:inline;">
+            <button type="submit" class="btn btn-success">📅 Mi Daily Personal</button>
+        </form>
+
         {% if tiene_permisos_admin %}
             <a href="{% url 'daily_create_admin' %}" class="btn btn-primary">➕ Crear Daily</a>
         {% endif %}
@@ -124,7 +137,7 @@
             <th>⛔ Impedimentos</th>
             <th>⏰ Estado</th>
             {% if tiene_permisos_admin %}
-            <th>⚙️ Acciones</th>
+            <th>⚙ Acciones</th>
             {% endif %}
         </tr>
         {% for d in registros %}
@@ -136,7 +149,7 @@
             <td>{{ d.impedimentos|default:"-" }}</td>
             <td>
                 {% if d.fuera_horario %}
-                    <span class="estado-fuera">⚠️ Fuera de horario</span>
+                    <span class="estado-fuera">⚠ Fuera de horario</span>
                 {% else %}
                     <span class="estado-ok">✅ En horario</span>
                 {% endif %}
@@ -146,9 +159,9 @@
                 <form method="post" action="{% url 'eliminar_daily' d.id %}" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" 
-                            onclick="return confirm('⚠️ ¿Seguro que deseas eliminar este Daily?')" 
+                            onclick="return confirm('⚠ ¿Seguro que deseas eliminar este Daily?')" 
                             class="btn btn-danger btn-sm">
-                        🗑️ Eliminar
+                        🗑 Eliminar
                     </button>
                 </form>
             </td>
@@ -158,6 +171,21 @@
         <tr><td colspan="7" style="text-align: center; padding: 20px; color: #666;">No hay registros de daily.</td></tr>
         {% endfor %}
     </table>
+
+     <!-- Refuerzo JS para navegación del botón -->
+  <script>
+    (function(){
+      var b = document.getElementById('btn-daily-personal');
+      if(!b) return;
+      b.addEventListener('click', function(e){
+        e.preventDefault();
+        var href = this.getAttribute('href');
+        if (!href) return;
+        // Forzar la navegación por si algún overlay capta el clic
+        window.location.assign(href);
+      });
+    })();
+  </script>
 
 </body>
 </html>

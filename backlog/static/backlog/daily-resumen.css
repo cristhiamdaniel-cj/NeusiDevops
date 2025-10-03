@@ -1,0 +1,125 @@
+/* =====================  NEUSI · DAILY (Resumen)  ===================== */
+
+/* Paleta */
+:root{
+  --brand-deep:#3B0764;
+  --brand-purple:#6D28D9;
+  --brand-coral:#FF7A7A;
+
+  --ink:#0f1320;
+  --muted:#6b7280;
+  --card:#ffffff;
+  --radius:16px;
+
+  --blue:#007bff;
+  --gray:#6c757d;
+  --red:#dc3545;
+  --green:#28a745;
+  --teal:#17a2b8;
+}
+
+/* Base + fondo marca */
+html, body{ height:100%; margin:0; }
+body{
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color: var(--ink);
+  padding: 20px;
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(255,122,122,.18), transparent 60%),
+    radial-gradient(900px 600px at 92% 8%, rgba(109,40,217,.26), transparent 60%),
+    linear-gradient(135deg,#43236a 0%, #3b0764 30%, #6d28d9 100%);
+  background-attachment: fixed;
+}
+
+/* Encabezado */
+body > div[style*="justify-content: space-between"]{
+  background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.82));
+  border: 1px solid rgba(16,24,40,.08);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 44px rgba(16,24,40,.12);
+  padding: 14px 18px !important;
+  margin-bottom: 22px !important;
+}
+h2{
+  margin: 0 0 8px 0;
+  color:#1a1330;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+/* Botones */
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 10px 14px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  text-decoration: none !important;
+  color: #fff !important;
+  box-shadow: 0 10px 22px rgba(16,24,40,.12);
+  transition: transform .06s ease, filter .2s ease, box-shadow .2s ease;
+  cursor: pointer;
+  position: relative; z-index: 2; pointer-events:auto;
+}
+.btn:hover{ filter:brightness(1.06); box-shadow:0 16px 34px rgba(16,24,40,.16); }
+.btn:active{ transform: translateY(1px); }
+.btn-primary{  background: var(--blue) !important; }
+.btn-secondary{ background: var(--gray) !important; }
+.btn-danger{   background: var(--red) !important; }
+.btn-success{  background: var(--green) !important; }
+.btn-info{     background: var(--teal) !important; }
+
+/* Tarjeta filtros/admin (tu .card inline) */
+.card{
+  background: rgba(255,255,255,.94) !important;
+  border: 1px solid rgba(16,24,40,.10) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 22px 46px rgba(16,24,40,.14) !important;
+  padding: 16px !important;
+}
+
+/* Tabla */
+table{
+  width:100%;
+  border-collapse: collapse;
+  background: rgba(255,255,255,.94);
+  border: 1px solid rgba(16,24,40,.08);
+  border-radius: 14px;
+  overflow:hidden;
+  box-shadow: 0 16px 40px rgba(16,24,40,.12);
+}
+th, td{
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(16,24,40,.06);
+  color:#0f1320;
+  vertical-align: top;
+}
+th{
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
+  font-weight:900;
+}
+tr:hover td{ background: rgba(109,40,217,.04); }
+
+/* Fila fuera de horario */
+tr.fuera-horario td{
+  background:#ffe9ee !important;
+}
+.estado-ok{ color: var(--green); font-weight:800; }
+.estado-fuera{ color: #d62f52; font-weight:800; }
+
+/* Aviso (cuando no hay persona admin) */
+.card[style*="#fff3cd"]{
+  background:#fff7df !important;
+  border-color:#ffe8a3 !important;
+}
+
+/* Responsivo */
+@media (max-width: 920px){
+  body{ padding: 14px; }
+  body > div[style*="justify-content: space-between"]{ padding: 12px 14px !important; }
+  .btn{ padding: 9px 12px !important; }
+}
+@media (max-width: 740px){
+  table{ display:block; overflow-x:auto; white-space:nowrap; }
+  h2{ font-size:1.2rem; }
+}

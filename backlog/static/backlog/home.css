@@ -1,0 +1,123 @@
+/* ================== NEUSI · HOME ================== */
+:root{
+  --brand-deep:#3B0764;   /* morado profundo */
+  --brand-purple:#6D28D9; /* morado principal */
+  --brand-coral:#FF7A7A;  /* coral del logo */
+
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --fg:#1c2130;
+  --muted:#6b7280;
+  --radius:14px;
+
+  --blue:#007bff;
+  --green:#28a745;
+  --purple:#6f42c1;
+  --cyan:#17a2b8;
+  --brown:#795548;
+  --yellow:#ffc107;
+  --red:#dc3545;
+}
+
+/* Fondo a toda la página con degradado morado + halo coral */
+html, body{ height:100%; margin:0; }
+body{
+  color:var(--fg);
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+
+  /* Capa base clara para que el contenido respire */
+  background:
+    radial-gradient(1200px 700px at 5% -10%, rgba(255,122,122,.18), transparent 60%),
+    radial-gradient(900px 600px at 100% 20%, rgba(109,40,217,.18), transparent 60%),
+    linear-gradient(135deg, #f9fafb 0%, #f2f4fb 40%, #eef0fa 100%);
+}
+
+/* Contenedor principal (el primer bloque del body en tu template) */
+body > *:first-child{
+  width: min(1100px, 92vw);
+  margin: 24px auto 48px auto;
+}
+
+/* Barra superior (donde está el h2 y el usuario) */
+div[style*="display: flex"][style*="justify-content: space-between"]{
+  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.6));
+  border: 1px solid rgba(16,24,40,.08);
+  box-shadow: 0 12px 30px rgba(16,24,40,.08);
+  padding: 16px 18px !important;
+  border-radius: var(--radius) !important;
+}
+
+/* Encabezado */
+h2{
+  margin:0 0 4px 0;
+  font-weight:800;
+  letter-spacing:.2px;
+}
+
+/* Texto “Hola, …" */
+div[style*="text-align: right"] > span{ color:var(--muted); font-weight:600; }
+
+/* Botón salir consistente */
+a[href*="logout"]{
+  background: var(--red) !important; color:#fff !important;
+  padding: 10px 14px !important; border-radius:12px !important;
+  font-weight:800 !important; text-decoration:none !important;
+  box-shadow: 0 6px 18px rgba(220,53,69,.18);
+}
+
+/* Navegación (Backlog/Matriz/…) con botones consistentes */
+nav{
+  margin-top: 16px !important;
+  display:flex; flex-wrap:wrap; gap:14px;
+}
+nav a{
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 12px 18px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  text-decoration: none !important; color:#fff !important;
+  box-shadow: 0 6px 18px rgba(16,24,40,.10);
+  transform: translateY(0);
+  transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+  border:0 !important;
+}
+nav a:hover{ filter:brightness(1.06); box-shadow:0 12px 26px rgba(16,24,40,.14); }
+nav a:active{ transform: translateY(1px); }
+
+/* Colores tal cual tu orden */
+nav a:nth-child(1){ background: var(--blue)  !important; }
+nav a:nth-child(2){ background: var(--green) !important; }
+nav a:nth-child(3){ background: var(--purple)!important; }
+nav a:nth-child(4){ background: var(--cyan)  !important; }
+nav a:nth-child(5){ background: var(--brown) !important; }
+
+/* Tarjeta Acceso Rápido */
+div[style*="background: #f8f9fa"]{
+  background: rgba(255,255,255,.84) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(16,24,40,.08) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 12px 30px rgba(16,24,40,.08) !important;
+}
+
+/* Botones internos de Acceso Rápido */
+div[style*="background: #f8f9fa"] a{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 16px !important; border-radius:12px !important;
+  text-decoration:none !important; font-weight:800 !important; border:0 !important;
+  box-shadow: 0 6px 18px rgba(16,24,40,.10);
+}
+div[style*="background: #f8f9fa"] a[href*="daily_personal"] { background: var(--yellow)!important; color:#241a00 !important; }
+div[style*="background: #f8f9fa"] a[href*="kanban_board"]   { background: var(--purple)!important; color:#fff !important; }
+div[style*="background: #f8f9fa"] a[href*="disponibilidad"] { background: var(--brown) !important; color:#fff !important; }
+
+/* Bloques permisos (verde/amarillo) iguales que antes, solo mejor borde/sombra */
+div[style*="background: #d4edda"]{ box-shadow: 0 6px 22px rgba(25,135,84,.15); }
+div[style*="background: #fff3cd"]{ box-shadow: 0 6px 22px rgba(255,193,7,.15); }
+
+/* Responsivo */
+@media (max-width: 560px){
+  nav a{ width:100%; justify-content:center; }
+  div[style*="text-align: right"] span{ display:none; }
+}

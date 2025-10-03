@@ -3,6 +3,7 @@
 <html>
 <head>
     <title>📅 Daily - NEUSI Task Manager</title>
+    <link rel="stylesheet" href="{% static 'backlog/daily-form.css' %}?v=1">
     <style>
         body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
         h2 { margin-bottom: 15px; }
@@ -71,7 +72,7 @@
     <!-- Aviso de fuera de horario -->
     {% if form.instance.fuera_horario %}
         <div class="alert alert-danger">
-            ⚠️ Este Daily fue registrado <strong>fuera del horario (7:00–9:00 AM)</strong>.  
+            ⚠ Este Daily fue registrado <strong>fuera del horario (7:00–9:00 AM)</strong>.  
             Será notificado a los administradores y tomado como evidencia en las CTAS.
         </div>
     {% endif %}
@@ -89,7 +90,7 @@
             {{ form.que_hara_hoy }}
             {{ form.que_hara_hoy.errors }}
 
-            <label for="{{ form.impedimentos.id_for_label }}">⚠️ Impedimentos:</label>
+            <label for="{{ form.impedimentos.id_for_label }}">⚠ Impedimentos:</label>
             {{ form.impedimentos }}
             {{ form.impedimentos.errors }}
 
