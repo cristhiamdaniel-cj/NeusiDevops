@@ -1,0 +1,107 @@
+/* =========================================================
+   NEUSI — Ajustes por página usando :has() (sin tocar HTML)
+   - Backlog Lista: body SIN .quadrant  -> fondo morado NEUSI
+   - Matriz:        body CON .quadrant  -> fondo suave + hover
+   ========================================================= */
+
+/* --- Colores corporativos --- */
+:root{
+  --neusi-deep:#3B0764;   /* morado profundo */
+  --neusi:#6D28D9;        /* morado principal */
+  --neusi-coral:#FF7A7A;  /* coral del logo */
+  --neusi-wash:#f6f4ff;   /* base muy clara morada */
+}
+
+/* ====================== BACKLOG EN LISTA ====================== */
+/* Esta regla aplica cuando NO hay matriz en la página */
+body:not(:has(.quadrant)){
+  background:
+    radial-gradient(1200px 700px at 8% -10%, rgba(255,122,122,.10), transparent 60%),
+    radial-gradient(900px 600px at 100% 15%, rgba(109,40,217,.12), transparent 60%),
+    linear-gradient(135deg, #faf9ff 0%, #f5f3ff 45%, #f2f0ff 100%);
+}
+
+/* Cabecera/alert y tarjetas con un toque más “glass” */
+body:not(:has(.quadrant)) .alert,
+body:not(:has(.quadrant)) form[method="get"],
+body:not(:has(.quadrant)) .tarea-card{
+  background: linear-gradient(180deg, #ffffff, #fbfaff);
+  border: 1px solid rgba(60, 64, 87, .10);
+  box-shadow: 0 10px 28px rgba(60, 64, 87, .10);
+}
+
+/* Botones primarios del backlog lista con leve acento */
+body:not(:has(.quadrant)) .btn-primary{ box-shadow: 0 8px 22px rgba(109,40,217,.20); }
+body:not(:has(.quadrant)) .btn-secondary{ box-shadow: 0 8px 22px rgba(17,24,39,.08); }
+body:not(:has(.quadrant)) .btn-danger{ box-shadow: 0 8px 22px rgba(220,53,69,.18); }
+
+/* ================== MATRIZ DE EISENHOWER ================== */
+/* Esta regla aplica cuando SÍ hay .quadrant en la página */
+/* Fondo SOLO para la página que tiene .quadrant (Matriz) */
+body:has(.quadrant){
+  background:
+    radial-gradient(900px 520px at 100% 0%, rgba(109,40,217,.16), transparent 60%),
+    radial-gradient(800px 520px at 0% 120%, rgba(255,122,122,.14), transparent 60%),
+    linear-gradient(180deg,#f6f0ff 0%, #efe7ff 45%, #fff0f4 100%);
+}
+
+
+
+/* Cuadrante base (ya lo tienes, reforzamos transiciones) */
+.quadrant{
+  transition: background-color .25s ease, border-color .25s ease,
+              box-shadow .25s ease, transform .06s ease;
+  background: linear-gradient(180deg,#ffffff,#fafbff);
+  border-color:#d6dae4;
+}
+
+/* Hover del cuadrante: resalta en colores NEUSI */
+.quadrant:hover{
+  border-color: var(--neusi);
+  background:
+    radial-gradient(500px 350px at 20% 0%, rgba(109,40,217,.10), transparent 60%),
+    radial-gradient(600px 400px at 100% 100%, rgba(255,122,122,.08), transparent 60%),
+    linear-gradient(180deg,#ffffff,#f9f7ff);
+  box-shadow: 0 10px 28px rgba(2,6,23,.10), inset 0 0 0 1px rgba(109,40,217,.08);
+  transform: translateY(-1px);
+}
+
+/* Título del cuadrante al hover: más contraste */
+.quadrant:hover > h5{
+  color: var(--neusi-deep);
+  text-shadow: 0 1px 0 rgba(255,255,255,.6);
+}
+
+/* Estado drag-over (cuando arrastras una tarjeta encima) */
+.quadrant.drag-over{
+  background:
+    radial-gradient(550px 380px at 30% 10%, rgba(109,40,217,.18), transparent 60%),
+    radial-gradient(600px 400px at 100% 100%, rgba(255,122,122,.12), transparent 60%),
+    linear-gradient(180deg,#ffffff,#f7f4ff);
+  border-color: var(--neusi);
+  box-shadow:
+    0 0 0 3px rgba(109,40,217,.25) inset,
+    0 12px 34px rgba(2,6,23,.12);
+}
+
+/* Tarjetas dentro del cuadrante ligeramente más nítidas al hover */
+.card:hover{
+  border-color:#d9ddf0;
+  box-shadow: 0 14px 36px rgba(2,6,23,.14);
+}
+
+/* Botones dentro de la matriz con acento NEUSI */
+body:has(.quadrant) .btn-primary{ box-shadow: 0 8px 22px rgba(109,40,217,.22); }
+body:has(.quadrant) .btn-info{ box-shadow: 0 8px 22px rgba(23,162,184,.18); }
+
+/* Ajuste fino de borde punteado para que luzca más suave */
+.quadrant{
+  border-style: dashed;
+  border-width: 2px;
+  border-color: #d6dae4;
+}
+
+/* (Opcional) sutil división visual entre cuadrantes en desktop */
+@media (min-width: 992px){
+  .row.g-3{ row-gap: 1.25rem; }
+}

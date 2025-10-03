@@ -2,295 +2,244 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Matriz de Eisenhower</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .quadrant {
-            min-height: 250px;
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 10px;
-            background-color: #f8f9fa;
-        }
-        .card {
-            margin-bottom: 8px;
-            cursor: grab;
-        }
-        .card:active {
-            cursor: grabbing;
-        }
-        .quadrant.drag-over {
-            background-color: #e3f2fd;
-            border-color: #0d6efd;
-        }
-        .btn {
-            padding: 6px 12px;
-            margin: 3px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            display: inline-block;
-        }
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 0.85em;
-        }
-        .btn-primary { background-color: #007bff; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-info { background-color: #17a2b8; }
-        .btn-delete { background-color: #8B0000; }
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .user-info {
-            text-align: right;
-        }
-        .task-actions {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #e0e0e0;
-        }
-        .task-content {
-            cursor: grab;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Matriz de Eisenhower</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=1">
+
+  <style>
+    .quadrant {
+      min-height: 250px;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      background-color: #f8f9fa;
+    }
+    .card { margin-bottom: 8px; cursor: grab; }
+    .card:active { cursor: grabbing; }
+    .quadrant.drag-over { background-color: #e3f2fd; border-color: #0d6efd; }
+
+    .btn { padding: 6px 12px; margin: 3px; border: none; border-radius: 5px; text-decoration: none; color: white; font-weight: bold; display: inline-block; }
+    .btn-sm { padding: 4px 8px; font-size: 0.85em; }
+    .btn-primary { background-color: #007bff; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-info { background-color: #17a2b8; }
+    .btn-delete { background-color: #8B0000; }
+
+    .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .user-info { text-align: right; }
+    .task-actions { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0; }
+    .task-content { cursor: grab; }
+  </style>
 </head>
 <body class="container mt-4">
 
-    <div class="header-container">
-        <h2>📊 Backlog de NEUSI (Matriz de Eisenhower)</h2>
-        
-        {% if request.user.is_authenticated %}
-        <div class="user-info">
-            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
-        </div>
-        {% endif %}
+  <div class="header-container">
+    <h2>📊 Backlog de NEUSI (Matriz de Eisenhower)</h2>
+    {% if request.user.is_authenticated %}
+      <div class="user-info">
+        <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="mb-3">
+    <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily</a>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Ver en Lista</a>
+
+    {% if tiene_permisos_admin %}
+      <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+        <form method="get" style="display: inline-flex; align-items: center; gap: 15px;">
+          <label for="persona">Filtrar por persona:</label>
+          <select name="persona" id="persona" onchange="this.form.submit()">
+            <option value="">-- Todas las personas --</option>
+            {% for i in integrantes %}
+              <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
+                {{ i.user.first_name }} {{ i.user.last_name }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if persona_id %}
+            <a href="{% url 'backlog_matriz' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
+          {% endif %}
+        </form>
+      </div>
+    {% else %}
+      <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
+        <strong style="color: #856404;">📊 Vista Personal:</strong>
+        <span style="color: #856404;">Solo puedes ver tus tareas asignadas en la matriz.</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+    <!-- UI -->
+    <div class="col-md-6">
+      <div class="quadrant" id="ui">
+        <h5>🔥 Urgente e Importante</h5>
+        {% for tarea in ui %}
+          <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
+            <div class="task-content">
+              <strong>{{ tarea.titulo }}</strong><br>
+              👤 {{ tarea.asignado_a }}<br>
+              🗓 Sprint: {{ tarea.sprint }}
+            </div>
+            <div class="task-actions">
+              <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+              {% if tiene_permisos_admin %}
+                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <p>⚠ Nada en este cuadrante.</p>
+        {% endfor %}
+      </div>
     </div>
 
-    <div class="mb-3">
-        <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily</a>
-        <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Ver en Lista</a>
-        
-        {% if tiene_permisos_admin %}
-        <!-- Filtros solo para Daniel/Andrés -->
-        <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px;">
-            <form method="get" style="display: inline-flex; align-items: center; gap: 15px;">
-                <label for="persona">Filtrar por persona:</label>
-                <select name="persona" id="persona" onchange="this.form.submit()">
-                    <option value="">-- Todas las personas --</option>
-                    {% for i in integrantes %}
-                        <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
-                            {{ i.user.first_name }} {{ i.user.last_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-                {% if persona_id %}
-                    <a href="{% url 'backlog_matriz' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
-                {% endif %}
-            </form>
-        </div>
-        {% else %}
-        <!-- Vista personal para usuarios normales -->
-        <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
-            <strong style="color: #856404;">📊 Vista Personal:</strong> 
-            <span style="color: #856404;">Solo puedes ver tus tareas asignadas en la matriz.</span>
-        </div>
-        {% endif %}
+    <!-- NUI -->
+    <div class="col-md-6">
+      <div class="quadrant" id="nui">
+        <h5>📊 No Urgente e Importante</h5>
+        {% for tarea in nui %}
+          <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
+            <div class="task-content">
+              <strong>{{ tarea.titulo }}</strong><br>
+              👤 {{ tarea.asignado_a }}<br>
+              🗓 Sprint: {{ tarea.sprint }}
+            </div>
+            <div class="task-actions">
+              <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+              {% if tiene_permisos_admin %}
+                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <p>⚠ Nada en este cuadrante.</p>
+        {% endfor %}
+      </div>
     </div>
 
-    <div class="row g-3">
-        <!-- Urgente e Importante -->
-        <div class="col-md-6">
-            <div class="quadrant" id="ui">
-                <h5>🔥 Urgente e Importante</h5>
-                {% for tarea in ui %}
-                    <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <div class="task-content">
-                            <strong>{{ tarea.titulo }}</strong><br>
-                            👤 {{ tarea.asignado_a }}<br>
-                            🗓 Sprint: {{ tarea.sprint }}
-                        </div>
-                        <div class="task-actions">
-                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                            {% if tiene_permisos_admin %}
-                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
-                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% empty %}
-                    <p>⚠ Nada en este cuadrante.</p>
-                {% endfor %}
+    <!-- UNI -->
+    <div class="col-md-6">
+      <div class="quadrant" id="uni">
+        <h5>⚡ Urgente y No Importante</h5>
+        {% for tarea in uni %}
+          <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
+            <div class="task-content">
+              <strong>{{ tarea.titulo }}</strong><br>
+              👤 {{ tarea.asignado_a }}<br>
+              🗓 Sprint: {{ tarea.sprint }}
             </div>
-        </div>
-
-        <!-- No Urgente e Importante -->
-        <div class="col-md-6">
-            <div class="quadrant" id="nui">
-                <h5>📊 No Urgente e Importante</h5>
-                {% for tarea in nui %}
-                    <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <div class="task-content">
-                            <strong>{{ tarea.titulo }}</strong><br>
-                            👤 {{ tarea.asignado_a }}<br>
-                            🗓 Sprint: {{ tarea.sprint }}
-                        </div>
-                        <div class="task-actions">
-                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                            {% if tiene_permisos_admin %}
-                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
-                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% empty %}
-                    <p>⚠ Nada en este cuadrante.</p>
-                {% endfor %}
+            <div class="task-actions">
+              <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+              {% if tiene_permisos_admin %}
+                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+              {% endif %}
             </div>
-        </div>
-
-        <!-- Urgente y No Importante -->
-        <div class="col-md-6">
-            <div class="quadrant" id="uni">
-                <h5>⚡ Urgente y No Importante</h5>
-                {% for tarea in uni %}
-                    <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <div class="task-content">
-                            <strong>{{ tarea.titulo }}</strong><br>
-                            👤 {{ tarea.asignado_a }}<br>
-                            🗓 Sprint: {{ tarea.sprint }}
-                        </div>
-                        <div class="task-actions">
-                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                            {% if tiene_permisos_admin %}
-                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
-                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% empty %}
-                    <p>⚠ Nada en este cuadrante.</p>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- No Urgente y No Importante -->
-        <div class="col-md-6">
-            <div class="quadrant" id="nuni">
-                <h5>🏝 No Urgente y No Importante</h5>
-                {% for tarea in nuni %}
-                    <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
-                        <div class="task-content">
-                            <strong>{{ tarea.titulo }}</strong><br>
-                            👤 {{ tarea.asignado_a }}<br>
-                            🗓 Sprint: {{ tarea.sprint }}
-                        </div>
-                        <div class="task-actions">
-                            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                            {% if tiene_permisos_admin %}
-                                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
-                                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% empty %}
-                    <p>⚠ Nada en este cuadrante.</p>
-                {% endfor %}
-            </div>
-        </div>
+          </div>
+        {% empty %}
+          <p>⚠ Nada en este cuadrante.</p>
+        {% endfor %}
+      </div>
     </div>
 
-    <script>
-        // Drag & Drop mejorado
-        let draggedCard = null;
+    <!-- NUNI -->
+    <div class="col-md-6">
+      <div class="quadrant" id="nuni">
+        <h5>🏝 No Urgente y No Importante</h5>
+        {% for tarea in nuni %}
+          <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
+            <div class="task-content">
+              <strong>{{ tarea.titulo }}</strong><br>
+              👤 {{ tarea.asignado_a }}<br>
+              🗓 Sprint: {{ tarea.sprint }}
+            </div>
+            <div class="task-actions">
+              <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+              {% if tiene_permisos_admin %}
+                <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️ Editar</a>
+                <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️ Eliminar</a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <p>⚠ Nada en este cuadrante.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 
-        document.querySelectorAll(".card").forEach(card => {
-            // Solo el contenido de la tarea es draggable, no los botones
-            const taskContent = card.querySelector('.task-content');
-            
-            card.addEventListener("dragstart", e => {
-                // Prevenir drag si se hace clic en un botón
-                if (e.target.tagName === 'A') {
-                    e.preventDefault();
-                    return;
-                }
-                draggedCard = card;
-                e.dataTransfer.effectAllowed = "move";
-                card.style.opacity = "0.5";
-            });
+  <script>
+    // Drag & Drop
+    let draggedCard = null;
 
-            card.addEventListener("dragend", e => {
-                card.style.opacity = "1";
-            });
+    document.querySelectorAll(".card").forEach(card => {
+      const taskContent = card.querySelector('.task-content');
+
+      card.addEventListener("dragstart", e => {
+        if (e.target.tagName === 'A') { e.preventDefault(); return; }
+        draggedCard = card;
+        e.dataTransfer.effectAllowed = "move";
+        card.style.opacity = "0.5";
+      });
+
+      card.addEventListener("dragend", () => { card.style.opacity = "1"; });
+    });
+
+    document.querySelectorAll(".quadrant").forEach(quad => {
+      quad.addEventListener("dragover", e => { e.preventDefault(); quad.classList.add("drag-over"); });
+      quad.addEventListener("dragleave", () => quad.classList.remove("drag-over"));
+      quad.addEventListener("drop", e => {
+        e.preventDefault();
+        quad.classList.remove("drag-over");
+        if (!draggedCard) return;
+
+        quad.appendChild(draggedCard);
+
+        const tareaId = draggedCard.dataset.id;
+        const nuevaCategoria = quad.id.toUpperCase();
+
+        // ⚠️ URL corregida a cambiar-estado (existe en urls.py)
+        fetch(`/backlog/tarea/${tareaId}/cambiar-estado/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ categoria: nuevaCategoria })
+        })
+        .then(r => r.json())
+        .then(data => console.log('Tarea movida:', data))
+        .catch(err => {
+          console.error('Error:', err);
+          alert('Error al mover la tarea. Recarga la página.');
         });
+      });
+    });
 
-        document.querySelectorAll(".quadrant").forEach(quad => {
-            quad.addEventListener("dragover", e => {
-                e.preventDefault();
-                quad.classList.add("drag-over");
-            });
-
-            quad.addEventListener("dragleave", () => {
-                quad.classList.remove("drag-over");
-            });
-
-            quad.addEventListener("drop", e => {
-                e.preventDefault();
-                quad.classList.remove("drag-over");
-                if (draggedCard) {
-                    quad.appendChild(draggedCard);
-                    
-                    // Actualizar categoría en el servidor
-                    const tareaId = draggedCard.dataset.id;
-                    const nuevaCategoria = quad.id.toUpperCase();
-                    
-                    fetch(`/backlog/tarea/${tareaId}/cambiar-categoria/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
-                        body: JSON.stringify({
-                            categoria: nuevaCategoria
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Tarea movida:', data);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al mover la tarea. Recarga la página.');
-                    });
-                }
-            });
-        });
-
-        // Función para obtener el CSRF token
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
         }
-    </script>
-
+      }
+      return cookieValue;
+    }
+  </script>
 </body>
 </html>

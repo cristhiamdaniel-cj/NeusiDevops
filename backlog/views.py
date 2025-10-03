@@ -284,14 +284,24 @@ def daily_view(request, integrante_id=None):
     })
 
 
+#@login_required
+#def daily_personal(request):
+ #   try:
+  #      integrante = request.user.integrante
+   #     return daily_view(request, integrante.id)
+   # except AttributeError:
+    #    messages.error(request, "❌ No tienes un perfil de integrante asociado.")
+     #   return redirect("home")
 @login_required
 def daily_personal(request):
-    try:
-        integrante = request.user.integrante
-        return daily_view(request, integrante.id)
-    except AttributeError:
-        messages.error(request, "❌ No tienes un perfil de integrante asociado.")
-        return redirect("home")
+    integrante = getattr(request.user, 'integrante', None)
+    if not integrante:
+        integrante, _ = Integrante.objects.get_or_create(
+            user=request.user,
+            defaults={'rol': 'Miembro'}  # ajusta defaults según tu modelo
+        )
+        messages.info(request, "Se creó tu perfil de integrante automáticamente.")
+    return daily_view(request, integrante.id)
 
 
 @login_required

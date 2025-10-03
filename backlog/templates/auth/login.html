@@ -2,10 +2,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - NEUSI Task Manager</title>
+  <meta charset="utf-8">
+  <title>Login - NEUSI Task Manager</title>
+   <link rel="stylesheet" href="{% static 'backlog/login.css' %}?v=logo2">
 </head>
 <body>
+      <!-- Bloque de marca -->
+  <div class="brand">
+    <img src="{% static 'backlog/img/logo.png' %}" alt="Logo Neusi" class="brand-logo">
     <h2>🔑 Iniciar sesión</h2>
+  </div>
     {% if messages %}
         <ul>
             {% for message in messages %}
@@ -18,11 +24,11 @@
         {% csrf_token %}
         <label for="username">Usuario:</label><br>
         <input type="text" name="username" id="username"><br><br>
-
         <label for="password">Contraseña:</label><br>
         <input type="password" name="password" id="password"><br><br>
-
         <button type="submit">Entrar</button>
     </form>
+     <!-- Efecto “polygons + scan line” (JS externo) -->
+  <script src="{% static 'backlog/login-effects.js' %}"></script>
 </body>
 </html>
