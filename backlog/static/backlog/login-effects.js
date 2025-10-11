@@ -1,46 +1,64 @@
 /* ==========================================================
-   NEUSI · Fondo “polygons” con interacción de mouse
-   - Líneas más grandes
-   - Atracción suave al cursor
-   - Altamente configurable (ver sección CONFIG)
+   NEUSI · Fondo “polygons” con interacción
+   - Optimizado para MÓVIL (reduce motion / menos puntos)
+   - Z-index seguro bajo el contenido (no bloquea taps)
    ========================================================== */
-
 (function () {
+  // ======== GUARDAS DE RENDIMIENTO / ACCESIBILIDAD ========
+  const prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const vw = Math.min(window.innerWidth, window.innerHeight);
+  const isTinyScreen = vw < 360;            // pantallas muy pequeñas
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+  if (prefersReduce || isTinyScreen) {
+    // No dibujar efecto en condiciones adversas
+    return;
+  }
+
   // ====================== CONFIG ==========================
   const CONFIG = {
-    POINTS: 95,        // Cantidad de puntos (más = más líneas)
-    SPEED: 0.25,           // Velocidad base de movimiento
-    NODE_RADIUS: 2.4,      // Radio del punto (nodo)
-    LINE_WIDTH: 1.2,       // Grosor de las líneas
-    LINK_DISTANCE: 180,    // Distancia máx. para dibujar línea (más grande => redes más “largas”)
-    MOUSE_INFLUENCE: 240,  // Radio de influencia del cursor
-    MOUSE_FORCE: 0.06,     // Fuerza con que los nodos son atraídos hacia el cursor
-    FADE_LINES_WITH_DIST: true, // Atenuar línea con la distancia
-    MAX_OPACITY: 0.9,      // Opacidad máxima de la línea en el centro
-    COLOR: 'rgba(207, 215, 255, 1)', // Color base de las líneas/puntos
-    GLOW: true,            // Halo sutil para líneas
+    POINTS: 95,                // base escritorio
+    SPEED: 0.25,
+    NODE_RADIUS: 2.4,
+    LINE_WIDTH: 1.2,
+    LINK_DISTANCE: 180,
+    MOUSE_INFLUENCE: 240,
+    MOUSE_FORCE: 0.06,
+    FADE_LINES_WITH_DIST: true,
+    MAX_OPACITY: 0.9,
+    COLOR: 'rgba(207, 215, 255, 1)',
+    GLOW: true,
   };
+
+  // Reducir carga en móvil (≈50–60%)
+  if (isMobile || window.innerWidth < 480) {
+    CONFIG.POINTS = Math.max(40, Math.round(CONFIG.POINTS * 0.55));
+    CONFIG.LINK_DISTANCE = 150;
+    CONFIG.MOUSE_INFLUENCE = 200;
+  }
 
   // ====================== CANVAS ==========================
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
+
   canvas.style.position = 'fixed';
   canvas.style.left = 0;
   canvas.style.top = 0;
   canvas.style.width = '100%';
   canvas.style.height = '100%';
-  canvas.style.pointerEvents = 'none'; // El canvas no captura clicks
-  canvas.style.zIndex = 1;             // Debajo del contenido (el CSS ya pone el contenido en z-index:3)
+  canvas.style.pointerEvents = 'none'; // no captura clics/taps
+  canvas.style.zIndex = 0;             // bajo el contenido
   document.body.appendChild(canvas);
 
-  let W = canvas.width  = window.innerWidth  * devicePixelRatio;
-  let H = canvas.height = window.innerHeight * devicePixelRatio;
+  let DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2)); // cap DPR a 2
+  let W = canvas.width  = Math.floor(window.innerWidth  * DPR);
+  let H = canvas.height = Math.floor(window.innerHeight * DPR);
 
   // ====================== ESTADO ==========================
   const points = [];
   const mouse = { x: -9999, y: -9999, active: false };
 
-  function rand(min, max) { return Math.random() * (max - min) + min; }
+  const rand = (min, max) => Math.random() * (max - min) + min;
 
   function createPoint() {
     return {
@@ -53,41 +71,71 @@
 
   function init() {
     points.length = 0;
-    const count = Math.round(CONFIG.POINTS * (W * H) / (1920 * 1080)); // Escala con tamaño de pantalla
+    // Escala por área de pantalla (normalizado a 1920x1080)
+    const baseCount = Math.round(CONFIG.POINTS * (W * H) / (1920 * 1080) * (1 / (DPR * 0.9)));
+    const count = Math.max(28, baseCount);
     for (let i = 0; i < count; i++) points.push(createPoint());
   }
 
   // ====================== INTERACCIÓN ======================
   window.addEventListener('mousemove', (e) => {
     const rect = document.body.getBoundingClientRect();
-    mouse.x = (e.clientX - rect.left) * devicePixelRatio;
-    mouse.y = (e.clientY - rect.top)  * devicePixelRatio;
+    mouse.x = (e.clientX - rect.left) * DPR;
+    mouse.y = (e.clientY - rect.top)  * DPR;
     mouse.active = true;
-  });
-  window.addEventListener('mouseleave', () => { mouse.active = false; });
+  }, { passive: true });
 
-  window.addEventListener('resize', () => {
-    W = canvas.width  = window.innerWidth  * devicePixelRatio;
-    H = canvas.height = window.innerHeight * devicePixelRatio;
-    init();
+  window.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (!t) return;
+    const rect = document.body.getBoundingClientRect();
+    mouse.x = (t.clientX - rect.left) * DPR;
+    mouse.y = (t.clientY - rect.top)  * DPR;
+    mouse.active = true;
+  }, { passive: true });
+
+  window.addEventListener('mouseleave', () => { mouse.active = false; });
+  window.addEventListener('touchend', () => { mouse.active = false; });
+
+  // Resize con throttle
+  let resizeTick = false;
+  function onResize() {
+    if (resizeTick) return;
+    resizeTick = true;
+    requestAnimationFrame(() => {
+      DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+      W = canvas.width  = Math.floor(window.innerWidth  * DPR);
+      H = canvas.height = Math.floor(window.innerHeight * DPR);
+      init();
+      resizeTick = false;
+    });
+  }
+  window.addEventListener('resize', onResize);
+
+  // Pausa si la pestaña no está visible (ahorra batería)
+  let running = true;
+  document.addEventListener('visibilitychange', () => {
+    running = !document.hidden;
+    if (running) requestAnimationFrame(step);
   });
 
   // ====================== DIBUJO ==========================
   function step() {
+    if (!running) return;
+
     ctx.clearRect(0, 0, W, H);
 
     // Actualizar puntos
+    const mouseR = CONFIG.MOUSE_INFLUENCE * DPR;
     for (const p of points) {
-      // Atracción al mouse (parcial, con amortiguación)
       if (mouse.active) {
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const dist2 = dx*dx + dy*dy;
-        const r = CONFIG.MOUSE_INFLUENCE * devicePixelRatio;
-        if (dist2 < r*r) {
+        if (dist2 < mouseR*mouseR) {
           const d = Math.sqrt(dist2) || 0.001;
           const ux = dx / d, uy = dy / d;
-          const force = (1 - d / r) * CONFIG.MOUSE_FORCE;
+          const force = (1 - d / mouseR) * CONFIG.MOUSE_FORCE;
           p.vx += ux * force;
           p.vy += uy * force;
         }
@@ -101,25 +149,20 @@
       if (p.y < 0 || p.y > H) p.vy *= -1;
     }
 
-    // Dibujar conexiones
-    ctx.lineWidth = CONFIG.LINE_WIDTH * devicePixelRatio;
+    // Dibujar conexiones + nodos
+    ctx.lineWidth = CONFIG.LINE_WIDTH * DPR;
     ctx.strokeStyle = CONFIG.COLOR;
+    ctx.shadowColor = CONFIG.GLOW ? 'rgba(148,163,255,0.35)' : 'transparent';
+    ctx.shadowBlur = CONFIG.GLOW ? 6 * DPR : 0;
 
-    if (CONFIG.GLOW) {
-      ctx.shadowColor = 'rgba(148, 163, 255, 0.35)'; // halo azulado
-      ctx.shadowBlur = 6 * devicePixelRatio;
-    } else {
-      ctx.shadowBlur = 0;
-    }
-
-    const linkDist = CONFIG.LINK_DISTANCE * devicePixelRatio;
+    const linkDist = CONFIG.LINK_DISTANCE * DPR;
     for (let i = 0; i < points.length; i++) {
       const p1 = points[i];
 
       // Nodo
       ctx.beginPath();
       ctx.fillStyle = CONFIG.COLOR;
-      ctx.arc(p1.x, p1.y, CONFIG.NODE_RADIUS * devicePixelRatio, 0, Math.PI * 2);
+      ctx.arc(p1.x, p1.y, CONFIG.NODE_RADIUS * DPR, 0, Math.PI * 2);
       ctx.fill();
 
       for (let j = i + 1; j < points.length; j++) {
@@ -147,5 +190,5 @@
 
   // Init & run
   init();
-  step();
+  requestAnimationFrame(step);
 })();

@@ -1,123 +1,176 @@
-/* ================== NEUSI · HOME ================== */
+/* ================= NEUSI · HOME (v13 compacto · adaptado) ================= */
+
+/* Paleta y básicos (colores del logo Neusi) */
 :root{
-  --brand-deep:#3B0764;   /* morado profundo */
-  --brand-purple:#6D28D9; /* morado principal */
-  --brand-coral:#FF7A7A;  /* coral del logo */
+  --brand-purple:#6D28D9; --brand-coral:#FF7A7A;
+  --fg:#1c2130; --muted:#6b7280; --radius:16px;
 
-  --bg:#f6f7fb;
-  --card:#ffffff;
-  --fg:#1c2130;
-  --muted:#6b7280;
-  --radius:14px;
+  /* colores botones */
+  --blue:#007bff; --green:#28a745; --purple:#6f42c1; --cyan:#17a2b8; --brown:#795548;
 
-  --blue:#007bff;
-  --green:#28a745;
-  --purple:#6f42c1;
-  --cyan:#17a2b8;
-  --brown:#795548;
-  --yellow:#ffc107;
-  --red:#dc3545;
+  --shadow-sm:0 4px 12px rgba(16,24,40,.10);
+  --shadow-md:0 10px 24px rgba(16,24,40,.14);
+
+  /* Tamaños compactos */
+  --btnH: 50px;   
+  --chipH: 40px;  
+  --badge: 40px;  
+
+  /* Tipos (exterior) */
+  --h2: clamp(1.9rem, 1.2vw + 1.4rem, 2.4rem);
+  --p: 1.06rem;
+  --h3: 1.22rem;
+  --p-muted: 1.02rem;
+
+  /* Tipos dentro de los botones */
+  --btn-text: 1.04rem;
+  --btn-text-hover: 1.18rem;
 }
 
-/* Fondo a toda la página con degradado morado + halo coral */
-html, body{ height:100%; margin:0; }
+/* Fondo con radiales sutiles a partir del logo */
+html,body{height:100%;margin:0}
 body{
   color:var(--fg);
-  font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-
-  /* Capa base clara para que el contenido respire */
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   background:
-    radial-gradient(1200px 700px at 5% -10%, rgba(255,122,122,.18), transparent 60%),
-    radial-gradient(900px 600px at 100% 20%, rgba(109,40,217,.18), transparent 60%),
-    linear-gradient(135deg, #f9fafb 0%, #f2f4fb 40%, #eef0fa 100%);
+    radial-gradient(1200px 700px at 110% -14%, color-mix(in srgb, var(--brand-purple) 42%, transparent), transparent 64%),
+    radial-gradient(1000px 650px  at -10%  18%, color-mix(in srgb, var(--brand-coral) 34%,  transparent), transparent 64%),
+    linear-gradient(135deg, #f5f7ff 0%, #eaf0ff 46%, #e6e9fb 100%);
 }
 
-/* Contenedor principal (el primer bloque del body en tu template) */
-body > *:first-child{
-  width: min(1100px, 92vw);
-  margin: 24px auto 48px auto;
+body>*:first-child{width:min(1200px,92vw);margin:24px auto 56px}
+
+/* Tipografía exterior (títulos / textos fuera de botones) */
+h2{ font-size:var(--h2); font-weight:800; }
+p{ font-size:var(--p); }
+
+/* “Acceso Rápido” y descripción del bloque */
+.quick-access h3{ font-size:var(--h3); font-weight:800; }
+.quick-access p{ font-size:var(--p-muted); color:var(--muted) }
+
+/* Área superior derecha (saludo + Cerrar Sesión) */
+div[style*="text-align: right"] > span{
+  font-size: 1.06rem;
+  font-weight: 600;
 }
 
-/* Barra superior (donde está el h2 y el usuario) */
-div[style*="display: flex"][style*="justify-content: space-between"]{
-  background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.6));
-  border: 1px solid rgba(16,24,40,.08);
-  box-shadow: 0 12px 30px rgba(16,24,40,.08);
-  padding: 16px 18px !important;
-  border-radius: var(--radius) !important;
-}
-
-/* Encabezado */
-h2{
-  margin:0 0 4px 0;
-  font-weight:800;
-  letter-spacing:.2px;
-}
-
-/* Texto “Hola, …" */
-div[style*="text-align: right"] > span{ color:var(--muted); font-weight:600; }
-
-/* Botón salir consistente */
+/* Botón Cerrar Sesión más grande */
 a[href*="logout"]{
-  background: var(--red) !important; color:#fff !important;
-  padding: 10px 14px !important; border-radius:12px !important;
-  font-weight:800 !important; text-decoration:none !important;
-  box-shadow: 0 6px 18px rgba(220,53,69,.18);
-}
-
-/* Navegación (Backlog/Matriz/…) con botones consistentes */
-nav{
-  margin-top: 16px !important;
-  display:flex; flex-wrap:wrap; gap:14px;
-}
-nav a{
-  display:inline-flex; align-items:center; gap:8px;
-  padding: 12px 18px !important;
-  border-radius: 12px !important;
+  background:#dc3545!important; color:#fff!important;
+  font-size: 1.06rem !important;
+  padding: 12px 18px !important;      /* antes 10x14 */
+  border-radius: 14px !important;
   font-weight: 800 !important;
-  text-decoration: none !important; color:#fff !important;
-  box-shadow: 0 6px 18px rgba(16,24,40,.10);
-  transform: translateY(0);
-  transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
-  border:0 !important;
-}
-nav a:hover{ filter:brightness(1.06); box-shadow:0 12px 26px rgba(16,24,40,.14); }
-nav a:active{ transform: translateY(1px); }
-
-/* Colores tal cual tu orden */
-nav a:nth-child(1){ background: var(--blue)  !important; }
-nav a:nth-child(2){ background: var(--green) !important; }
-nav a:nth-child(3){ background: var(--purple)!important; }
-nav a:nth-child(4){ background: var(--cyan)  !important; }
-nav a:nth-child(5){ background: var(--brown) !important; }
-
-/* Tarjeta Acceso Rápido */
-div[style*="background: #f8f9fa"]{
-  background: rgba(255,255,255,.84) !important;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(16,24,40,.08) !important;
-  border-radius: var(--radius) !important;
-  box-shadow: 0 12px 30px rgba(16,24,40,.08) !important;
+  text-decoration:none!important;
+  box-shadow:0 6px 18px rgba(220,53,69,.18);
 }
 
-/* Botones internos de Acceso Rápido */
-div[style*="background: #f8f9fa"] a{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:10px 16px !important; border-radius:12px !important;
-  text-decoration:none !important; font-weight:800 !important; border:0 !important;
-  box-shadow: 0 6px 18px rgba(16,24,40,.10);
+/* Layout NAV */
+nav{
+  margin-top:18px!important;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;
 }
-div[style*="background: #f8f9fa"] a[href*="daily_personal"] { background: var(--yellow)!important; color:#241a00 !important; }
-div[style*="background: #f8f9fa"] a[href*="kanban_board"]   { background: var(--purple)!important; color:#fff !important; }
-div[style*="background: #f8f9fa"] a[href*="disponibilidad"] { background: var(--brown) !important; color:#fff !important; }
 
-/* Bloques permisos (verde/amarillo) iguales que antes, solo mejor borde/sombra */
-div[style*="background: #d4edda"]{ box-shadow: 0 6px 22px rgba(25,135,84,.15); }
-div[style*="background: #fff3cd"]{ box-shadow: 0 6px 22px rgba(255,193,7,.15); }
+/* ------------- Botones (arriba y abajo) ------------- */
+@keyframes ring-spin{to{transform:rotate(360deg)}}
 
-/* Responsivo */
-@media (max-width: 560px){
-  nav a{ width:100%; justify-content:center; }
-  div[style*="text-align: right"] span{ display:none; }
+/* Base compartida */
+nav a,
+.quick-access > a,
+.chip{
+  --txt:transparent; --icon-o:1;
+  position:relative; isolation:isolate;
+  display:flex; align-items:center; justify-content:center;
+  min-height:var(--btnH);
+  border-radius:var(--radius)!important; border:2px solid transparent!important;
+  text-decoration:none!important; color:var(--txt)!important; font-weight:900!important;
+  overflow:hidden; box-shadow:var(--shadow-sm);
+  transition:transform .12s, filter .18s, box-shadow .18s;
+  font-size: var(--btn-text);
+}
+
+/* Chips (ajuste de altura) */
+.chip, .quick-access > a{ min-height:var(--chipH) }
+
+/* Círculo + icono PNG */
+nav a::before, nav a::after,
+.quick-access > a::before, .quick-access > a::after,
+.chip::before, .chip::after{
+  content:""; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:var(--badge); height:var(--badge); border-radius:999px;
+}
+nav a::before, .quick-access > a::before, .chip::before{
+  background:#fff; box-shadow:0 6px 16px rgba(16,24,40,.18); z-index:2; opacity:var(--icon-o);
+}
+nav a::after, .quick-access > a::after, .chip::after{
+  background:#fff center/72% no-repeat; z-index:3; opacity:var(--icon-o);
+}
+
+/* Hover/focus: muestra texto, oculta icono y borde animado */
+nav a:hover, nav a:focus-visible,
+.quick-access > a:hover, .quick-access > a:focus-visible,
+.chip:hover, .chip:focus-visible{
+  --txt:#fff; --icon-o:0;
+  transform:translateY(-2px); filter:brightness(1.06); box-shadow:var(--shadow-md);
+  outline:2px solid rgba(255,255,255,.85); outline-offset:2px;
+  font-size: var(--btn-text-hover);
+  background:
+    radial-gradient(circle at center, transparent 0 calc(var(--badge) - 1px), #fff0 var(--badge)) padding-box,
+    conic-gradient(from 0deg, #fff, rgba(255,255,255,.35) 25%, #fff 50%, rgba(255,255,255,.35) 75%, #fff 100%) border-box;
+  animation:ring-spin 3.2s linear infinite;
+}
+
+/* Colores de NAV (arriba) */
+nav a:nth-child(1){ background:linear-gradient(180deg,#1485ff,var(--blue)) }
+nav a:nth-child(2){ background:linear-gradient(180deg,#35bf65,var(--green)) }
+nav a:nth-child(3){ background:linear-gradient(180deg,#7d52d0,var(--purple)) }
+nav a:nth-child(4){ background:linear-gradient(180deg,#1ab8c8,var(--cyan)) }
+nav a:nth-child(5){ background:linear-gradient(180deg,#87604d,var(--brown)) }
+
+/* Iconos NAV (rutas absolutas bajo /static) */
+nav a:nth-child(1)::after{ background-image:url("/static/backlog/icons/backlog.png") }
+nav a:nth-child(2)::after{ background-image:url("/static/backlog/icons/matriz.png") }
+nav a:nth-child(3)::after{ background-image:url("/static/backlog/icons/kanban.png") }
+nav a:nth-child(4)::after{ background-image:url("/static/backlog/icons/daily.png") }
+nav a:nth-child(5)::after{ background-image:url("/static/backlog/icons/disponibilidad.png") }
+
+/* ---------- Acceso Rápido: grilla ---------- */
+.quick-access{
+  display:grid;
+  gap:14px;
+  grid-template-columns:1fr;
+}
+.quick-access h3,
+.quick-access p{ grid-column:1 / -1; }
+
+@media (min-width:900px){
+  .quick-access{ grid-template-columns:repeat(3,minmax(240px,1fr)); }
+}
+
+/* Chips por clase (robusto y claro) */
+.chip{ min-height:var(--chipH); }
+.chip--daily  { background:linear-gradient(180deg,#1fc2d5,#17a2b8) !important; }
+.chip--kanban { background:linear-gradient(180deg,#7d52d0,#6f42c1) !important; }
+.chip--disp   { background:linear-gradient(180deg,#87604d,#795548) !important; }
+
+/* Iconos de los chips */
+.chip--daily::after  { background-image:url("/static/backlog/icons/daily.png") !important; }
+.chip--kanban::after { background-image:url("/static/backlog/icons/kanban.png") !important; }
+.chip--disp::after   { background-image:url("/static/backlog/icons/disponibilidad.png") !important; }
+
+/* (Opcional) Fallback por href si algún día quitas las clases */
+.quick-access > a[href*="daily_personal"]{  background:linear-gradient(180deg,#1fc2d5,#17a2b8) !important; }
+.quick-access > a[href*="kanban_board"] {    background:linear-gradient(180deg,#7d52d0,#6f42c1) !important; }
+.quick-access > a[href*="disponibilidad"]{   background:linear-gradient(180deg,#87604d,#795548) !important; }
+.quick-access > a[href*="daily_personal"]::after  { background-image:url("/static/backlog/icons/daily.png") !important; }
+.quick-access > a[href*="kanban_board"]::after   { background-image:url("/static/backlog/icons/kanban.png") !important; }
+.quick-access > a[href*="disponibilidad"]::after { background-image:url("/static/backlog/icons/disponibilidad.png") !important; }
+
+/* Responsive accesible */
+@media (max-width:560px){
+  nav{ grid-template-columns:1fr }
+  .quick-access{ grid-template-columns:1fr }
+  nav a, .chip{ --txt:#fff; --icon-o:0 }
 }
