@@ -49,6 +49,56 @@ class Sprint(models.Model):
 
 
 # ==============================
+# Épica
+# ==============================
+class Epica(models.Model):
+    ESTADO_CHOICES = [
+        ("PROPUESTA", "Propuesta"),
+        ("ACTIVA", "Activa"),
+        ("EN_PAUSA", "En pausa"),
+        ("CERRADA", "Cerrada"),
+    ]
+    PRIORIDAD_CHOICES = [
+        ("ALTA", "Alta"),
+        ("MEDIA", "Media"),
+        ("BAJA", "Baja"),
+    ]
+
+    titulo = models.CharField(max_length=200, unique=True)
+    descripcion = models.TextField(blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="ACTIVA")
+    prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default="MEDIA")
+    owner = models.ForeignKey(
+        Integrante, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas_propias"
+    )
+    sprint = models.ForeignKey(
+        Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas"
+    )
+    creada_en = models.DateTimeField(auto_now_add=True)
+    actualizada_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-creada_en"]
+
+    def __str__(self):
+        return self.titulo
+
+    # Métricas rápidas
+    @property
+    def total_tareas(self) -> int:
+        return self.tareas.count()
+
+    @property
+    def tareas_completadas(self) -> int:
+        return self.tareas.filter(completada=True).count()
+
+    @property
+    def progreso(self) -> float:
+        total = self.total_tareas
+        return round((self.tareas_completadas / total) * 100.0, 2) if total else 0.0
+
+
+# ==============================
 # Tarea
 # ==============================
 class Tarea(models.Model):
@@ -75,7 +125,7 @@ class Tarea(models.Model):
         help_text="Criterios que deben cumplirse para cerrar esta tarea"
     )
     categoria = models.CharField(max_length=4, choices=MATRIZ_CHOICES)
-    
+
     # NUEVO: Campo de estado
     estado = models.CharField(
         max_length=20,
@@ -83,7 +133,12 @@ class Tarea(models.Model):
         default="NUEVO",
         help_text="Estado actual de la tarea en el workflow"
     )
-    
+
+    # NUEVO: FK a Épica (opcional)
+    epica = models.ForeignKey(
+        Epica, on_delete=models.SET_NULL, null=True, blank=True, related_name="tareas"
+    )
+
     asignado_a = models.ForeignKey(
         Integrante,
         on_delete=models.SET_NULL,
@@ -104,6 +159,7 @@ class Tarea(models.Model):
     def __str__(self):
         return f"{self.titulo} ({self.get_categoria_display()})"
 
+
 # ==============================
 # Evidencia
 # ==============================
@@ -122,6 +178,7 @@ class Evidencia(models.Model):
     def __str__(self):
         return f"Evidencia de {self.tarea.titulo} ({self.creado_por})"
 
+
 # ==============================
 # Daily
 # ==============================
@@ -138,4 +195,3 @@ class Daily(models.Model):
 
     def __str__(self):
         return f"Daily {self.integrante} - {self.fecha}"
-

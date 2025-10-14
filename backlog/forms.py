@@ -1,6 +1,6 @@
 # backlog/forms.py - Mejorado y completo
 from django import forms
-from .models import Tarea, Daily, Evidencia, Sprint
+from .models import Tarea, Daily, Evidencia, Sprint, Epica
 
 
 class DailyForm(forms.ModelForm):
@@ -25,11 +25,34 @@ class DailyForm(forms.ModelForm):
         }
 
 
+class EpicaForm(forms.ModelForm):
+    class Meta:
+        model = Epica
+        fields = ["titulo", "descripcion", "estado", "prioridad", "owner", "sprint"]
+        labels = {
+            "titulo": "Título de la épica",
+            "descripcion": "Descripción",
+            "estado": "Estado",
+            "prioridad": "Prioridad",
+            "owner": "Responsable (owner)",
+            "sprint": "Sprint (opcional)",
+        }
+        widgets = {
+            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej.: Autenticación básica"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "estado": forms.Select(attrs={"class": "form-select"}),
+            "prioridad": forms.Select(attrs={"class": "form-select"}),
+            "owner": forms.Select(attrs={"class": "form-select"}),
+            "sprint": forms.Select(attrs={"class": "form-select"}),
+        }
+
+
 class TareaForm(forms.ModelForm):
     class Meta:
         model = Tarea
-        fields = ["titulo", "descripcion", "criterios_aceptacion", "categoria", "asignado_a", "sprint"]
+        fields = ["epica", "titulo", "descripcion", "criterios_aceptacion", "categoria", "asignado_a", "sprint"]
         labels = {
+            "epica": "Épica ",
             "titulo": "Título de la tarea",
             "descripcion": "Descripción",
             "criterios_aceptacion": "Criterios de aceptación",
@@ -41,6 +64,7 @@ class TareaForm(forms.ModelForm):
             "criterios_aceptacion": "Explica claramente las condiciones para dar por completada esta tarea.",
         }
         widgets = {
+            "epica": forms.Select(attrs={"class": "form-select"}),
             "titulo": forms.TextInput(attrs={
                 "class": "form-control", "placeholder": "Escribe un título corto y claro"
             }),
@@ -81,6 +105,7 @@ class EvidenciaForm(forms.ModelForm):
             raise forms.ValidationError("❌ Debes agregar al menos un comentario o un archivo como evidencia.")
 
         return cleaned_data
+
 
 class SprintForm(forms.ModelForm):
     class Meta:

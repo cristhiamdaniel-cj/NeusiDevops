@@ -9,8 +9,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.timezone import localtime, now
 
-from .models import Tarea, Sprint, Integrante, Daily, Evidencia
-from .forms import TareaForm, DailyForm, EvidenciaForm
+from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica
+from .forms import TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm
 
 # ==============================
 # Decoradores de permisos
@@ -22,7 +22,7 @@ def requiere_permiso_crear_tareas(view_func):
         try:
             integrante = request.user.integrante
             if not integrante.puede_crear_tareas():
-                messages.error(request, "❌ No tienes permisos para crear tareas.")
+                messages.error(request, "❌ No tienes permisos para crear/administrar.")
                 return redirect("backlog_lista")
         except AttributeError:
             messages.error(request, "❌ No tienes un perfil de integrante asociado.")
@@ -284,21 +284,13 @@ def daily_view(request, integrante_id=None):
     })
 
 
-#@login_required
-#def daily_personal(request):
- #   try:
-  #      integrante = request.user.integrante
-   #     return daily_view(request, integrante.id)
-   # except AttributeError:
-    #    messages.error(request, "❌ No tienes un perfil de integrante asociado.")
-     #   return redirect("home")
 @login_required
 def daily_personal(request):
     integrante = getattr(request.user, 'integrante', None)
     if not integrante:
         integrante, _ = Integrante.objects.get_or_create(
             user=request.user,
-            defaults={'rol': 'Miembro'}  # ajusta defaults según tu modelo
+            defaults={'rol': 'Miembro'}
         )
         messages.info(request, "Se creó tu perfil de integrante automáticamente.")
     return daily_view(request, integrante.id)
@@ -350,11 +342,13 @@ def backlog_lista(request):
         usuario_integrante = None
 
     if tiene_permisos_admin:
-        tareas = Tarea.objects.all().select_related("asignado_a", "sprint")
+        tareas = Tarea.objects.all().select_related("asignado_a", "sprint", "epica")
         integrantes = Integrante.objects.all()
+        epicas = Epica.objects.all()
     else:
-        tareas = Tarea.objects.filter(asignado_a=usuario_integrante) if usuario_integrante else Tarea.objects.none()
+        tareas = Tarea.objects.filter(asignado_a=usuario_integrante).select_related("sprint", "epica") if usuario_integrante else Tarea.objects.none()
         integrantes = []
+        epicas = Epica.objects.filter(tareas__asignado_a=usuario_integrante).distinct()
 
     sprints = Sprint.objects.all()
 
@@ -362,6 +356,7 @@ def backlog_lista(request):
     persona_id = request.GET.get("persona")
     sprint_id = request.GET.get("sprint")
     estado = request.GET.get("estado")
+    epica_id = request.GET.get("epica")
 
     # ✅ FILTRAR POR PERSONA
     if persona_id and persona_id != "":
@@ -377,21 +372,30 @@ def backlog_lista(request):
         except (ValueError, Sprint.DoesNotExist):
             pass
 
-    # ✅ FILTRAR POR ESTADO
+    # ✅ FILTRAR POR ÉPICA
+    if epica_id and epica_id != "":
+        try:
+            tareas = tareas.filter(epica__id=epica_id)
+        except (ValueError, Epica.DoesNotExist):
+            pass
+
+    # ✅ FILTRAR POR ESTADO (abiertas/cerradas)
     if estado == "abiertas":
         tareas = tareas.filter(completada=False)
     elif estado == "cerradas":
         tareas = tareas.filter(completada=True)
 
-    tareas = tareas.order_by("sprint__inicio", "categoria")
+    tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
 
     return render(request, "backlog/backlog_lista.html", {
         "tareas": tareas,
         "sprints": sprints,
         "integrantes": integrantes,
+        "epicas": epicas,
         "estado": estado,
-        "persona_id": persona_id,  # ✅ PASAR AL TEMPLATE
-        "sprint_id": sprint_id,    # ✅ PASAR AL TEMPLATE
+        "persona_id": persona_id,
+        "sprint_id": sprint_id,
+        "epica_id": epica_id,
         "tiene_permisos_admin": tiene_permisos_admin,
     })
 
@@ -406,7 +410,7 @@ def backlog_matriz(request):
         usuario_integrante = None
 
     if tiene_permisos_admin:
-        tareas = Tarea.objects.all().select_related("asignado_a", "sprint")
+        tareas = Tarea.objects.all().select_related("asignado_a", "sprint", "epica")
         integrantes = Integrante.objects.all()
         persona_id = request.GET.get("persona")
         if persona_id:
@@ -415,7 +419,7 @@ def backlog_matriz(request):
             except (Integrante.DoesNotExist, ValueError):
                 pass
     else:
-        tareas = Tarea.objects.filter(asignado_a=usuario_integrante) if usuario_integrante else Tarea.objects.none()
+        tareas = Tarea.objects.filter(asignado_a=usuario_integrante).select_related("sprint", "epica") if usuario_integrante else Tarea.objects.none()
         integrantes = []
 
     cuadrantes = {
@@ -430,6 +434,7 @@ def backlog_matriz(request):
         "integrantes": integrantes,
         "tiene_permisos_admin": tiene_permisos_admin,
     })
+
 
 # ==============================
 # Checklist de tareas
@@ -463,6 +468,7 @@ def checklist_view(request, integrante_id):
         "tareas": tareas,
     })
 
+
 @login_required
 @requiere_permiso_evidencias
 def eliminar_evidencia(request, tarea_id, evidencia_id):
@@ -483,6 +489,7 @@ def eliminar_evidencia(request, tarea_id, evidencia_id):
         "tarea": tarea,
         "evidencia": evidencia,
     })
+
 
 @login_required
 def eliminar_daily(request, daily_id):
@@ -506,10 +513,12 @@ def eliminar_daily(request, daily_id):
         "daily": daily,
     })
 
+
 @login_required
 def sprint_list(request):
     sprints = Sprint.objects.all().order_by("inicio")
     return render(request, "backlog/sprint_list.html", {"sprints": sprints})
+
 
 @login_required
 def sprint_create(request):
@@ -520,7 +529,8 @@ def sprint_create(request):
     if request.method == "POST":
         inicio = request.POST.get("inicio")
         fin = request.POST.get("fin")
-        Sprint.objects.create(inicio=inicio, fin=fin)
+        nombre = request.POST.get("nombre") or "Sprint"
+        Sprint.objects.create(inicio=inicio, fin=fin, nombre=nombre)
         messages.success(request, "✅ Sprint creado correctamente.")
         return redirect("sprint_list")
 
@@ -596,6 +606,7 @@ def daily_create_admin(request):
         "integrantes": integrantes,
     })
 
+
 @login_required
 def eliminar_tarea(request, tarea_id):
     """Eliminar una tarea - solo para administradores"""
@@ -620,6 +631,11 @@ def eliminar_tarea(request, tarea_id):
         "tarea": tarea,
     })
 
+
+# ==============================
+# Kanban (con epicas en contexto)
+# ==============================
+
 @login_required
 def kanban_board(request):
     """Vista Kanban con estados de workflow - todos los usuarios pueden mover sus tareas"""
@@ -630,21 +646,27 @@ def kanban_board(request):
         tiene_permisos_admin = False
         usuario_integrante = None
 
-    # Admins ven todas las tareas, usuarios normales solo las suyas
     if tiene_permisos_admin:
-        tareas = Tarea.objects.all().select_related("asignado_a", "sprint")
+        tareas = Tarea.objects.all().select_related("asignado_a", "sprint", "epica")
         integrantes = Integrante.objects.all()
+        epicas = Epica.objects.all()
         persona_id = request.GET.get("persona")
+        epica_id = request.GET.get("epica")
         if persona_id:
             try:
                 tareas = tareas.filter(asignado_a__id=persona_id)
             except (Integrante.DoesNotExist, ValueError):
                 pass
+        if epica_id:
+            try:
+                tareas = tareas.filter(epica__id=epica_id)
+            except (Epica.DoesNotExist, ValueError):
+                pass
     else:
-        tareas = Tarea.objects.filter(asignado_a=usuario_integrante) if usuario_integrante else Tarea.objects.none()
+        tareas = Tarea.objects.filter(asignado_a=usuario_integrante).select_related("sprint", "epica") if usuario_integrante else Tarea.objects.none()
         integrantes = []
+        epicas = Epica.objects.filter(tareas__asignado_a=usuario_integrante).distinct()
 
-    # Organizar tareas por estado
     estados = {
         "nuevo": tareas.filter(estado="NUEVO"),
         "aprobado": tareas.filter(estado="APROBADO"),
@@ -656,7 +678,7 @@ def kanban_board(request):
     return render(request, "backlog/kanban_board.html", {
         **estados,
         "integrantes": integrantes,
-        "persona_id": persona_id if tiene_permisos_admin else None,
+        "epicas": epicas,
         "tiene_permisos_admin": tiene_permisos_admin,
     })
 
@@ -708,3 +730,78 @@ def cambiar_estado_tarea(request, tarea_id):
         return JsonResponse({"error": "JSON inválido"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+# ==============================
+# CRUD de Épicas
+# ==============================
+
+@login_required
+def epica_list(request):
+    try:
+        admin = request.user.integrante.puede_crear_tareas()
+    except AttributeError:
+        admin = False
+
+    if admin:
+        epicas = Epica.objects.select_related("owner", "sprint").order_by("-creada_en")
+    else:
+        # Muestra solo epicas relacionadas a tareas del usuario
+        integrante = getattr(request.user, "integrante", None)
+        if integrante:
+            epicas = Epica.objects.filter(tareas__asignado_a=integrante).distinct().order_by("-creada_en")
+        else:
+            epicas = Epica.objects.none()
+
+    return render(request, "backlog/epica_list.html", {"epicas": epicas, "admin": admin})
+
+
+@login_required
+@requiere_permiso_crear_tareas
+def epica_create(request):
+    if request.method == "POST":
+        form = EpicaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Épica creada correctamente.")
+            return redirect("epica_list")
+    else:
+        form = EpicaForm()
+    return render(request, "backlog/epica_form.html", {"form": form})
+
+
+@login_required
+@requiere_permiso_crear_tareas
+def epica_edit(request, epica_id):
+    epica = get_object_or_404(Epica, id=epica_id)
+    if request.method == "POST":
+        form = EpicaForm(request.POST, instance=epica)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✏️ Épica actualizada correctamente.")
+            return redirect("epica_list")
+    else:
+        form = EpicaForm(instance=epica)
+    return render(request, "backlog/epica_form.html", {"form": form, "epica": epica})
+
+
+@login_required
+@requiere_permiso_crear_tareas
+def epica_delete(request, epica_id):
+    epica = get_object_or_404(Epica, id=epica_id)
+    if request.method == "POST":
+        titulo = epica.titulo
+        epica.delete()
+        messages.success(request, f"🗑️ Épica '{titulo}' eliminada correctamente.")
+        return redirect("epica_list")
+    return render(request, "backlog/epica_confirm_delete.html", {"epica": epica})
+
+
+@login_required
+def epica_detail(request, epica_id):
+    epica = get_object_or_404(Epica, id=epica_id)
+    tareas = epica.tareas.select_related("asignado_a", "sprint").order_by("sprint__inicio", "categoria", "titulo")
+    return render(request, "backlog/epica_detail.html", {
+        "epica": epica,
+        "tareas": tareas,
+    })

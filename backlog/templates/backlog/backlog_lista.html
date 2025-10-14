@@ -3,12 +3,11 @@
 <html>
 <head>
     <title>🚀 NEUSI Task Manager</title>
-    <!-- Bootstrap (necesario para modales) -->
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-   
-     <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=1">
-   
-   <style>
+    <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=2">
+
+    <style>
         .btn {
             padding: 6px 12px;
             margin: 3px;
@@ -53,6 +52,7 @@
         .badge-nui { background-color: #28a745; }
         .badge-uni { background-color: #ffc107; color: #000; }
         .badge-nuni { background-color: #6c757d; }
+        .badge-epica { background-color: #007bff; }
     </style>
 </head>
 <body>
@@ -70,12 +70,9 @@
 
     <h2>📋 Backlog en Lista</h2>
 
-    <!-- 🔘 Botón para ir al Daily del usuario actual -->
     {% if request.user.is_authenticated and request.user.integrante %}
         <div style="margin-bottom: 15px;">
-            <a href="{% url 'daily_personal' %}" class="btn btn-primary">
-                📅 Mi Daily de Hoy
-            </a>
+            <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily de Hoy</a>
         </div>
     {% endif %}
 
@@ -100,6 +97,18 @@
                 </option>
             {% endfor %}
         </select>
+
+        <!-- 🔹 Nuevo filtro por Épica -->
+        <label for="epica" style="margin-left: 15px;">Épica:</label>
+        <select name="epica" id="epica">
+            <option value="">-- Todas --</option>
+            {% for e in epicas %}
+                <option value="{{ e.id }}" {% if epica_id == e.id|stringformat:"s" %}selected{% endif %}>
+                    {{ e.titulo }}
+                </option>
+            {% endfor %}
+        </select>
+
         {% else %}
         <div style="background: #fff3cd; padding: 10px; border-radius: 5px; border: 1px solid #ffeaa7; color: #856404; margin-bottom: 15px;">
             <strong>📋 Vista Personal:</strong> Solo puedes ver tus tareas asignadas. 
@@ -126,6 +135,9 @@
         {% endif %}
         <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
         <a href="{% url 'kanban_board' %}" class="btn btn-success">📋 Ver Kanban</a>
+        {% if tiene_permisos_admin %}
+            <a href="{% url 'epica_list' %}" class="btn btn-info">🧱 Épicas</a>
+        {% endif %}
     </div>
 
     <hr>
@@ -134,6 +146,13 @@
         <div class="tarea-card">
             <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
             
+            <!-- 🔹 Badge de Épica -->
+            {% if tarea.epica %}
+                <div class="tarea-meta">
+                    <span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span>
+                </div>
+            {% endif %}
+
             <div class="tarea-meta">
                 <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
                     {{ tarea.get_categoria_display }}
@@ -160,11 +179,8 @@
                     </button>
                 {% endif %}
                 
-                <!-- Botón eliminar solo para administradores -->
                 {% if tiene_permisos_admin %}
-                    <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">
-                        🗑️ Eliminar
-                    </a>
+                    <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">🗑️ Eliminar</a>
                 {% endif %}
             </div>
         </div>

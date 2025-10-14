@@ -1,56 +1,120 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h2>✏️ Editar Tarea</h2>
-    
-    {% if request.user.is_authenticated %}
-    <div style="text-align: right;">
-        <a href="{% url 'home' %}" style="background:#6c757d; color:white; padding:8px 16px; margin-right:8px; text-decoration:none; border-radius:5px; font-weight:bold;">🏠 Home</a>
-        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" style="background:#dc3545; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
-            🚪 Cerrar Sesión
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>✏️ Editar Tarea</h2>
+
+  {% if request.user.is_authenticated %}
+  <div class="text-end">
+    <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+    <span class="mx-2">👤 {{ request.user.first_name|default:request.user.username }}</span>
+    <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+  <div>
+    <strong>⚠️ Advertencia:</strong> Estás editando la tarea <strong>"{{ tarea.titulo }}"</strong>.
+    Los cambios serán visibles para todo el equipo.
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <form method="post" class="card shadow-sm p-4">
+      {% csrf_token %}
+
+      <div class="row g-3">
+        <!-- Épica -->
+        <div class="col-md-6">
+          <label class="form-label">{{ form.epica.label }}</label>
+          {{ form.epica }}
+          {% if form.epica.errors %}<div class="text-danger small">{{ form.epica.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Sprint -->
+        <div class="col-md-6">
+          <label class="form-label">{{ form.sprint.label }}</label>
+          {{ form.sprint }}
+          {% if form.sprint.errors %}<div class="text-danger small">{{ form.sprint.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Título -->
+        <div class="col-md-12">
+          <label class="form-label">{{ form.titulo.label }}</label>
+          {{ form.titulo }}
+          {% if form.titulo.errors %}<div class="text-danger small">{{ form.titulo.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Descripción -->
+        <div class="col-md-12">
+          <label class="form-label">{{ form.descripcion.label }}</label>
+          {{ form.descripcion }}
+          {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Criterios de aceptación -->
+        <div class="col-md-12">
+          <label class="form-label">{{ form.criterios_aceptacion.label }}</label>
+          {{ form.criterios_aceptacion }}
+          {% if form.criterios_aceptacion.help_text %}
+            <div class="form-text">{{ form.criterios_aceptacion.help_text }}</div>
+          {% endif %}
+          {% if form.criterios_aceptacion.errors %}<div class="text-danger small">{{ form.criterios_aceptacion.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Categoría (Matriz Eisenhower) -->
+        <div class="col-md-6">
+          <label class="form-label">{{ form.categoria.label }}</label>
+          {{ form.categoria }}
+          {% if form.categoria.errors %}<div class="text-danger small">{{ form.categoria.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Asignado a -->
+        <div class="col-md-6">
+          <label class="form-label">{{ form.asignado_a.label }}</label>
+          {{ form.asignado_a }}
+          {% if form.asignado_a.errors %}<div class="text-danger small">{{ form.asignado_a.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
+        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">❌ Cancelar</a>
+      </div>
+    </form>
+
+    <div class="mt-3 d-flex flex-wrap gap-2">
+      <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle Completo</a>
+      <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Volver al Backlog</a>
+      <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Ver Kanban</a>
     </div>
-    {% endif %}
-</div>
+  </div>
 
-<div style="background: #fff3cd; padding: 15px; border-radius: 5px; border: 1px solid #ffeaa7; color: #856404; margin-bottom: 20px;">
-    <strong>⚠️ Advertencia:</strong> Estás editando la tarea <strong>"{{ tarea.titulo }}"</strong>. 
-    Los cambios afectarán la información visible para todo el equipo.
-</div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header">📋 Información Actual</div>
+      <div class="card-body">
+        <p class="mb-1"><strong>Título:</strong> {{ tarea.titulo }}</p>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    
-    <div style="margin-top: 20px;">
-        <button type="submit" style="background:#28a745; color:white; padding:12px 20px; border:none; border-radius:5px; font-weight:bold; margin-right:10px;">
-            💾 Guardar Cambios
-        </button>
-        
-        <a href="{% url 'detalle_tarea' tarea.id %}" style="background:#6c757d; color:white; padding:12px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">
-            ❌ Cancelar
-        </a>
+        <p class="mb-1">
+          <strong>Épica:</strong>
+          {% if tarea.epica %}
+            <a href="{% url 'epica_detail' tarea.epica.id %}">{{ tarea.epica.titulo }}</a>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </p>
+
+        <p class="mb-1"><strong>Sprint:</strong> {{ tarea.sprint }}</p>
+        <p class="mb-1"><strong>Asignada a:</strong> {{ tarea.asignado_a|default:"—" }}</p>
+        <p class="mb-1"><strong>Categoría:</strong> {{ tarea.get_categoria_display }}</p>
+        <p class="mb-0">
+          <strong>Estado:</strong>
+          {% if tarea.completada %}✅ Completada{% else %}⏳ Abierta{% endif %}
+        </p>
+      </div>
     </div>
-</form>
-
-<hr style="margin: 30px 0;">
-
-<div style="background: #e9ecef; padding: 15px; border-radius: 5px;">
-    <h4>📋 Información Actual de la Tarea:</h4>
-    <p><strong>Título:</strong> {{ tarea.titulo }}</p>
-    <p><strong>Asignada a:</strong> {{ tarea.asignado_a }}</p>
-    <p><strong>Sprint:</strong> {{ tarea.sprint }}</p>
-    <p><strong>Estado:</strong> {% if tarea.completada %}✅ Completada{% else %}⏳ Abierta{% endif %}</p>
-</div>
-
-<div style="margin-top: 20px;">
-    <a href="{% url 'detalle_tarea' tarea.id %}" style="background:#17a2b8; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
-        👁️ Ver Detalle Completo
-    </a>
-    <a href="{% url 'backlog_lista' %}" style="background:#007bff; color:white; padding:8px 16px; margin-left:10px; text-decoration:none; border-radius:5px; font-weight:bold;">
-        📋 Volver al Backlog
-    </a>
+  </div>
 </div>
 {% endblock %}

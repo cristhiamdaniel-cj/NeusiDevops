@@ -1,0 +1,174 @@
+/* ===== Página ===== */
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #fff;
+  background:
+    radial-gradient(1200px 700px at 15% -20%, rgba(255,122,122,.18), transparent 60%),
+    radial-gradient(1000px 600px at 85% 10%, rgba(109,40,217,.28), transparent 60%),
+    linear-gradient(135deg,#341a6a,#6d28d9 60%, #7c3aed);
+  overflow: hidden;
+}
+
+/* Si usas un canvas/efecto de fondo, colócalo debajo */
+#login-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+/* ===== Wrapper ===== */
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 720px);
+  display: grid;
+  gap: 16px;
+}
+
+/* ===== Marca centrada (logo + título) ===== */
+.brand{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  margin: 12px 0 18px;
+  position: relative; z-index: 10;
+}
+
+.brand{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  margin: 12px 0 18px;
+  position: relative; z-index: 10;
+}
+.brand-centered {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.brand-centered__logo {
+  width: 96px; height: 96px; border-radius: 50%;
+  object-fit: cover; object-position: center;
+  background: #ffffff12;
+  border: 2px solid rgba(255,255,255,.35);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 0 6px rgba(109,40,217,.18);
+}
+.brand-centered__title {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.brand-logo{
+  width: 112px; height: 112px; border-radius: 999px;
+  object-fit: cover; background:#fff; 
+  box-shadow:
+    0 6px 24px rgba(0,0,0,.25),
+    0 0 0 4px rgba(255,255,255,.75),
+    0 0 0 10px rgba(255,255,255,.18);
+}
+
+/* Halo suave fijo */
+.brand-halo{
+  position:absolute; inset:-6px; border-radius:999px;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.55),
+    0 0 30px rgba(255,255,255,.35),
+    0 0 60px rgba(124,58,237,.35);
+}
+
+/* Órbita girando lentamente */
+.brand-orbit{
+  position:absolute; inset:-14px; border-radius:999px;
+  background:
+    radial-gradient(6px 6px at 8% 50%, rgba(255,255,255,.9), transparent 55%),
+    radial-gradient(4px 4px at 28% 15%, rgba(255,255,255,.7), transparent 55%),
+    radial-gradient(5px 5px at 70% 10%, rgba(255,255,255,.85), transparent 55%),
+    radial-gradient(4px 4px at 92% 60%, rgba(255,255,255,.75), transparent 55%),
+    radial-gradient(5px 5px at 76% 86%, rgba(255,255,255,.8), transparent 55%),
+    radial-gradient(4px 4px at 18% 86%, rgba(255,255,255,.7), transparent 55%);
+  filter: blur(0.2px);
+  opacity:.55;
+  animation: orbit-rotate 12s linear infinite;
+}
+
+@keyframes orbit-rotate { to { transform: rotate(360deg) } }
+/* ===== Tarjeta ===== */
+.login-card {
+  display: grid;
+  gap: 14px;
+  padding: 26px 24px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(20,12,38,.84), rgba(25,16,45,.74));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 28px 80px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* ===== Campos ===== */
+.field { display: grid; gap: 6px; }
+.field label {
+  font-size: .95rem;
+  font-weight: 600;
+  color: #d9dbff;
+}
+.field input {
+  height: 48px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.08));
+  color: #fff;
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.25);
+  transition: border-color .15s, background .15s, box-shadow .15s, transform .04s;
+}
+.field input::placeholder { color: rgba(230,230,245,.85); }
+.field input:focus {
+  border-color: rgba(176,196,255,.70);
+  background: rgba(255,255,255,.13);
+  box-shadow: 0 0 0 4px rgba(147,197,253,.24), inset 0 2px 6px rgba(0,0,0,.25);
+}
+
+/* ===== Botón ===== */
+.btn-primary {
+  height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg,#9b7bff,#7C3AED);
+  color: #130c26;
+  font-weight: 800;
+  letter-spacing: .2px;
+  cursor: pointer;
+  box-shadow: 0 16px 40px rgba(124,58,237,.35);
+  transition: transform .06s ease, filter .2s ease, box-shadow .2s;
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 18px 48px rgba(124,58,237,.42);
+}
+.btn-primary:active { transform: translateY(1px); }
+
+/* ===== Mensajes ===== */
+.error {
+  margin: 2px 0 6px;
+  color: #ffecec;
+  background: rgba(255,68,68,.14);
+  border: 1px solid rgba(255,68,68,.35);
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.loading-msg { margin-top: 20vh; opacity: .9; }
+
+/* ===== Footer ===== */
+.login-footer {
+  display: grid;
+  justify-items: center;
+  margin-top: 4px;
+  opacity: .8;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 520px) {
+  .brand-centered__logo { width: 84px; height: 84px; }
+  .login-card { padding: 22px 18px; }
+}
