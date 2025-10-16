@@ -6,7 +6,7 @@
   <title>Matriz de Eisenhower</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=1">
+  <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=2">
 
   <style>
     .quadrant {
@@ -32,6 +32,12 @@
     .user-info { text-align: right; }
     .task-actions { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0; }
     .task-content { cursor: grab; }
+
+    /* 🔹 badge de épica */
+    .badge-epica {
+      background-color: #0d6efd; color: #fff; padding: 3px 6px; border-radius: 3px; font-size: 0.75em;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body class="container mt-4">
@@ -85,7 +91,12 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-              👤 {{ tarea.asignado_a }}<br>
+
+              {% if tarea.epica %}
+                <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
+              {% endif %}
+
+              👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
             <div class="task-actions">
@@ -110,7 +121,12 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-              👤 {{ tarea.asignado_a }}<br>
+
+              {% if tarea.epica %}
+                <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
+              {% endif %}
+
+              👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
             <div class="task-actions">
@@ -135,7 +151,12 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-              👤 {{ tarea.asignado_a }}<br>
+
+              {% if tarea.epica %}
+                <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
+              {% endif %}
+
+              👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
             <div class="task-actions">
@@ -160,7 +181,12 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-              👤 {{ tarea.asignado_a }}<br>
+
+              {% if tarea.epica %}
+                <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
+              {% endif %}
+
+              👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
             <div class="task-actions">
@@ -182,16 +208,13 @@
     // Drag & Drop
     let draggedCard = null;
 
-    document.querySelectorAll(".card").forEach(card => {
-      const taskContent = card.querySelector('.task-content');
-
+    document.querySelectorAll(".card[draggable='true']").forEach(card => {
       card.addEventListener("dragstart", e => {
         if (e.target.tagName === 'A') { e.preventDefault(); return; }
         draggedCard = card;
         e.dataTransfer.effectAllowed = "move";
         card.style.opacity = "0.5";
       });
-
       card.addEventListener("dragend", () => { card.style.opacity = "1"; });
     });
 
@@ -206,10 +229,11 @@
         quad.appendChild(draggedCard);
 
         const tareaId = draggedCard.dataset.id;
-        const nuevaCategoria = quad.id.toUpperCase();
+        const nuevaCategoria = quad.id.toUpperCase(); // UI, NUI, UNI, NUNI
 
-        // ⚠️ URL corregida a cambiar-estado (existe en urls.py)
-        fetch(`/backlog/tarea/${tareaId}/cambiar-estado/`, {
+        // 🔹 Server: cambiar categoría (no estado)
+        // Crea la vista/URL: path("tarea/<int:tarea_id>/cambiar-categoria/", views.cambiar_categoria_tarea, name="cambiar_categoria_tarea")
+        fetch(`/tarea/${tareaId}/cambiar-categoria/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -218,10 +242,16 @@
           body: JSON.stringify({ categoria: nuevaCategoria })
         })
         .then(r => r.json())
-        .then(data => console.log('Tarea movida:', data))
+        .then(data => {
+          if (!data.success) {
+            alert('Error: ' + (data.error || 'No se pudo actualizar'));
+            location.reload();
+          }
+        })
         .catch(err => {
           console.error('Error:', err);
           alert('Error al mover la tarea. Recarga la página.');
+          location.reload();
         });
       });
     });

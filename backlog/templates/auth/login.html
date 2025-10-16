@@ -3,6 +3,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login - NEUSI Task Manager</title>
    <link rel="stylesheet" href="{% static 'backlog/login.css' %}?v=logo2">
 </head>
@@ -29,6 +30,6 @@
         <button type="submit">Entrar</button>
     </form>
      <!-- Efecto “polygons + scan line” (JS externo) -->
-  <script src="{% static 'backlog/login-effects.js' %}"></script>
+  <script src="{% static 'backlog/login-effects.js' %}" defer></script>
 </body>
 </html>

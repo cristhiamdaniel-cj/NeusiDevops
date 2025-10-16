@@ -7,13 +7,13 @@
 
 {% block content %}
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;">
   <h2>🏠 Bienvenido a NEUSI Task Manager</h2>
 
   {% if request.user.is_authenticated %}
-  <div style="text-align: right;">
-    <span style="margin-right: 15px;">👤 Hola, {{ request.user.first_name|default:request.user.username }}</span>
-    <a href="{% url 'logout' %}" style="background:#dc3545; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
+  <div style="text-align:right;">
+    <span style="margin-right:15px;">👤 Hola, {{ request.user.first_name|default:request.user.username }}</span>
+    <a href="{% url 'logout' %}" style="background:#dc3545;color:#fff;padding:8px 16px;text-decoration:none;border-radius:5px;font-weight:bold;">
       🚪 Cerrar Sesión
     </a>
   </div>
@@ -23,47 +23,52 @@
 <p>Selecciona a dónde quieres ir:</p>
 
 <nav style="margin-top:20px;">
-  <a href="{% url 'backlog_lista' %}" style="background:#007bff; color:white; padding:15px 25px; margin-right:15px; text-decoration:none; border-radius:5px; font-weight:bold;">
-    📋 Backlog
+  <a href="{% url 'backlog_lista' %}" style="background:#007bff;color:#fff;padding:15px 25px;margin-right:15px;text-decoration:none;border-radius:5px;font-weight:bold;">
+     Backlog
   </a>
-  <a href="{% url 'backlog_matriz' %}" style="background:#28a745; color:white; padding:15px 25px; margin-right:15px; text-decoration:none; border-radius:5px; font-weight:bold;">
-    📊 Matriz
+  <a href="{% url 'backlog_matriz' %}" style="background:#28a745;color:#fff;padding:15px 25px;margin-right:15px;text-decoration:none;border-radius:5px;font-weight:bold;">
+     Matriz
   </a>
-  <a href="{% url 'kanban_board' %}" style="background:#6f42c1; color:white; padding:15px 25px; margin-right:15px; text-decoration:none; border-radius:5px; font-weight:bold;">
-    🎯 Kanban
-  </a>
-
-  <a href="{% url 'daily_personal' %}" style="background:#17a2b8; color:white; padding:15px 25px; margin-right:15px; text-decoration:none; border-radius:5px; font-weight:bold;">
-    📅 Daily
+  <a href="{% url 'kanban_board' %}" style="background:#6f42c1;color:#fff;padding:15px 25px;margin-right:15px;text-decoration:none;border-radius:5px;font-weight:bold;">
+     Kanban
   </a>
 
-  <a href="{% url 'disponibilidad:mi_disponibilidad' %}" style="background:#795548; color:white; padding:15px 25px; text-decoration:none; border-radius:5px; font-weight:bold;">
-    📅 Disponibilidad
-  </a>
+  {# 🔒 Ocultar para Visualizador #}
+  {% if not es_visualizador %}
+    <a href="{% url 'daily_resumen' %}" style="background:#17a2b8;color:#fff;padding:15px 25px;margin-right:15px;text-decoration:none;border-radius:5px;font-weight:bold;">
+       Daily
+    </a>
+    <a href="{% url 'disponibilidad:mi_disponibilidad' %}" style="background:#795548;color:#fff;padding:15px 25px;text-decoration:none;border-radius:5px;font-weight:bold;">
+       Disponibilidad
+    </a>
+  {% endif %}
 </nav>
 
 {% if request.user.is_authenticated and request.user.integrante %}
-  <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+  <div class="quick-access" style="margin-top:30px;padding:20px;background:#f8f9fa;border-radius:8px;">
     <h3>🚀 Acceso Rápido</h3>
     <p>Accede directamente a tus herramientas:</p>
 
-    <a href="{% url 'daily_personal' %}" style="background:#ffc107; color:#000; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">
-      📅 Mi Daily de Hoy
-    </a>
+    {# 🔒 Ocultar chips de daily/disponibilidad para Visualizador #}
+    {% if not es_visualizador %}
+      <a class="chip chip--daily"  href="{% url 'daily_personal' %}" style="background:#17a2b8;color:#000;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;">
+         Mi Daily de Hoy
+      </a>
 
-    <a href="{% url 'kanban_board' %}" style="background:#6f42c1; color:white; padding:10px 20px; margin-left:15px; text-decoration:none; border-radius:5px; font-weight:bold;">
-      🎯 Kanban de Mis Tareas
-    </a>
+      <a class="chip chip--disp" href="{% url 'disponibilidad:mi_disponibilidad' %}" style="background:#795548;color:#fff;padding:10px 20px;margin-left:15px;text-decoration:none;border-radius:5px;font-weight:bold;">
+         Mi Horario Semanal
+      </a>
+    {% endif %}
 
-    <a href="{% url 'disponibilidad:mi_disponibilidad' %}" style="background:#795548; color:white; padding:10px 20px; margin-left:15px; text-decoration:none; border-radius:5px; font-weight:bold;">
-      ⏰ Mi Horario Semanal
+    <a class="chip chip--kanban" href="{% url 'kanban_board' %}" style="background:#6f42c1;color:#fff;padding:10px 20px;margin-left:15px;text-decoration:none;border-radius:5px;font-weight:bold;">
+       Kanban de Mis Tareas
     </a>
 
     {% if tiene_permisos_admin %}
-      <div style="margin-top: 15px; padding: 15px; background: #d4edda; border-radius: 5px; border: 1px solid #c3e6cb;">
-        <h4 style="color: #155724;">✅ Permisos Administrativos</h4>
-        <p style="color: #155724; margin: 5px 0;">Como <strong>{{ request.user.integrante.rol }}</strong>, tienes acceso completo:</p>
-        <ul style="color: #155724; margin: 5px 0;">
+      <div style="margin-top:15px;padding:15px;background:#d4edda;border-radius:5px;border:1px solid #c3e6cb;">
+        <h4 style="color:#155724;">✅ Permisos Administrativos</h4>
+        <p style="color:#155724;margin:5px 0;">Como <strong>{{ request.user.integrante.rol }}</strong>, tienes acceso completo:</p>
+        <ul style="color:#155724;margin:5px 0;">
           <li>👥 Ver tareas de TODOS los miembros del equipo</li>
           <li>🔍 Usar filtros por persona</li>
           <li>➕ Crear nuevas tareas</li>
@@ -71,22 +76,30 @@
           <li>📊 Acceso a matriz y reportes</li>
           <li>🎯 Gestionar el Kanban de todo el equipo</li>
           <li>📝 Ver todos los dailies del equipo</li>
-          <li>📅 <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" style="color: #155724; text-decoration: underline;">Ver disponibilidad del equipo</a></li>
+          <li>📅 <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" style="color:#155724;text-decoration:underline;">Ver disponibilidad del equipo</a></li>
         </ul>
       </div>
     {% else %}
-      <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
-        <h4 style="color: #856404;">ℹ️ Vista Personal</h4>
-        <ul style="color: #856404; margin: 5px 0;">
+      <div style="margin-top:15px;padding:15px;background:#fff3cd;border-radius:5px;border:1px solid #ffeaa7;">
+        <h4 style="color:#856404;">ℹ️ Vista Personal</h4>
+        <ul style="color:#856404;margin:5px 0;">
           <li>👀 Ver únicamente tus tareas</li>
           <li>🎯 Mover tus tareas en Kanban</li>
-          <li>📝 Registrar tu daily personal</li>
+
+          {# 🔒 Estas dos líneas NO se muestran si es Visualizador #}
+          {% if not es_visualizador %}
+            <li>📝 Registrar tu daily personal</li>
+            <li>⏰ Configurar tu disponibilidad semanal</li>
+          {% endif %}
+
           <li>✅ Cerrar tus tareas</li>
           <li>📊 Ver tu matriz personal</li>
-          <li>⏰ Configurar tu disponibilidad semanal</li>
-          <li>👥 Ver disponibilidad general del equipo</li>
+          {# Si quieres ocultar “Ver disponibilidad general del equipo” al visualizador, borra esta línea o protégela #}
+          {% if not es_visualizador %}
+            <li>👥 Ver disponibilidad general del equipo</li>
+          {% endif %}
         </ul>
-        <p style="color: #856404; margin-top: 10px; font-size: 0.9em;">
+        <p style="color:#856404;margin-top:10px;font-size:.9em;">
           <strong>💡 Nota:</strong> Para ver tareas del equipo o crear tareas, contacta a <strong>Daniel Campos</strong> o <strong>Andrés Gómez</strong>.
         </p>
       </div>

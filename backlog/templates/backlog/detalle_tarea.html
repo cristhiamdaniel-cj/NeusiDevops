@@ -46,6 +46,9 @@
         .badge-nui { background-color: #28a745; }
         .badge-uni { background-color: #ffc107; color: #000; }
         .badge-nuni { background-color: #6c757d; }
+        /* 🔹 nueva badge para Épica */
+        .badge-epica { background-color: #0d6efd; }
+
         .alert {
             padding: 10px;
             margin: 10px 0;
@@ -79,6 +82,15 @@
     <!-- Info de Tarea -->
     <div class="card">
         <h2>{{ tarea.titulo }}</h2>
+
+        <!-- 🔹 Épica (badge + link) -->
+        {% if tarea.epica %}
+            <p><strong>Épica:</strong>
+                <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge badge-epica" style="text-decoration:none;">
+                    {{ tarea.epica.titulo }}
+                </a>
+            </p>
+        {% endif %}
         
         <p><strong>Categoría:</strong> 
             <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
@@ -87,7 +99,17 @@
         </p>
         
         <p><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</p>
-        <p><strong>Asignado a:</strong> {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</p>
+
+        <p><strong>Asignado a:</strong>
+            {% if tarea.asignado_a %}
+                {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}
+            {% else %}
+                <span style="color:#666;">—</span>
+            {% endif %}
+        </p>
+
+        <!-- 🔹 Estado workflow + cierre -->
+        <p><strong>Estado (workflow):</strong> {{ tarea.get_estado_display }}</p>
         <p><strong>Estado:</strong> 
             {% if tarea.completada %}
                 ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
@@ -122,7 +144,7 @@
             {% if request.user.integrante.puede_crear_tareas %}
                 <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-success">✏️ Editar Tarea</a>
             {% endif %}
-            {% if not tarea.completada and tarea.asignado_a.user == request.user %}
+            {% if not tarea.completada and tarea.asignado_a and tarea.asignado_a.user == request.user %}
                 <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-danger">✅ Cerrar Tarea</a>
             {% endif %}
             <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Volver al Backlog</a>
@@ -169,7 +191,7 @@
                 <a href="{% url 'editar_evidencia' tarea.id evidencia.id %}" 
                    class="btn btn-warning btn-sm">✏️ Editar Evidencia</a>
 
-                <!-- Nuevo botón Eliminar -->
+                <!-- Botón Eliminar -->
                 <form method="post" action="{% url 'eliminar_evidencia' tarea.id evidencia.id %}" 
                       style="display:inline;" 
                       onsubmit="return confirm('⚠️ ¿Seguro que deseas eliminar esta evidencia?');">

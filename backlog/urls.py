@@ -20,6 +20,8 @@ urlpatterns = [
     path("tarea/<int:tarea_id>/", views.detalle_tarea, name="detalle_tarea"),  # Detalle
     path("tarea/<int:tarea_id>/editar/", views.editar_tarea, name="editar_tarea"),  # Editar
     path("tarea/<int:tarea_id>/cerrar/", views.cerrar_tarea, name="cerrar_tarea"),  # Cerrar
+    path("tarea/<int:tarea_id>/eliminar/", views.eliminar_tarea, name="eliminar_tarea"),  # Eliminar
+    path("tarea/<int:tarea_id>/cambiar-categoria/", views.cambiar_categoria_tarea, name="cambiar_categoria_tarea"),
 
     # 📎 Evidencias
     path("tarea/<int:tarea_id>/evidencia/", views.agregar_evidencia, name="agregar_evidencia"),  # Agregar
@@ -42,6 +44,7 @@ urlpatterns = [
     path("daily/<int:integrante_id>/", views.daily_view, name="daily_view"),  # Daily de un integrante
     path("daily/resumen/", views.daily_resumen, name="daily_resumen"),  # Resumen de dailies
     path("daily/eliminar/<int:daily_id>/", views.eliminar_daily, name="eliminar_daily"),  # Eliminar daily (solo admin)
+    path("daily/nuevo/", views.daily_create_admin, name="daily_create_admin"),
 
     # 📅 Sprints
     path("sprints/", views.sprint_list, name="sprint_list"),
@@ -49,12 +52,14 @@ urlpatterns = [
     path("sprints/<int:sprint_id>/editar/", views.sprint_edit, name="sprint_edit"),
     path("sprints/<int:sprint_id>/eliminar/", views.sprint_delete, name="sprint_delete"),
 
-    path("daily/nuevo/", views.daily_create_admin, name="daily_create_admin"),
-
-    path("tarea/<int:tarea_id>/cerrar/", views.cerrar_tarea, name="cerrar_tarea"),  # Cerrar
-    path("tarea/<int:tarea_id>/eliminar/", views.eliminar_tarea, name="eliminar_tarea"),  # Eliminar
-
     # 📊 Kanban Board
     path("kanban/", views.kanban_board, name="kanban_board"),
     path("tarea/<int:tarea_id>/cambiar-estado/", views.cambiar_estado_tarea, name="cambiar_estado_tarea"),
+
+    # 🧱 Épicas
+    path("epicas/", views.epica_list, name="epica_list"),
+    path("epicas/nueva/", views.epica_create, name="epica_create"),
+    path("epicas/<int:epica_id>/", views.epica_detail, name="epica_detail"),
+    path("epicas/<int:epica_id>/editar/", views.epica_edit, name="epica_edit"),
+    path("epicas/<int:epica_id>/eliminar/", views.epica_delete, name="epica_delete"),
 ]

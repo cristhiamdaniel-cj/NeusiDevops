@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h4 class="mb-3">Eliminar Épica</h4>
+<div class="alert alert-warning">
+  ¿Estás seguro de eliminar la épica <strong>{{ epica.titulo }}</strong>?<br>
+  Las tareas quedarán <em>sin épica</em> (no se eliminan).
+</div>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">Eliminar</button>
+  <a class="btn btn-outline-secondary" href="{% url 'epica_list' %}">Cancelar</a>
+</form>
+{% endblock %}

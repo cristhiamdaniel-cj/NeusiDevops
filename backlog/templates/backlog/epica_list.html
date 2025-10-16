@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>🧱 Épicas</h4>
+  {% if admin %}
+    <a href="{% url 'epica_create' %}" class="btn btn-primary">➕ Nueva Épica</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-striped mb-0">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Prioridad</th>
+          <th>Owner</th>
+          <th>Sprints</th>
+          <th class="text-end">Progreso</th>
+          <th style="width: 120px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in epicas %}
+          <tr>
+            <td><a href="{% url 'epica_detail' e.id %}">{{ e.titulo }}</a></td>
+            <td>{{ e.get_estado_display }}</td>
+            <td>{{ e.get_prioridad_display }}</td>
+            <td>{{ e.owner|default:"—" }}</td>
+            <td>
+              {% with ep_list=e.sprints.all %}
+                {% if ep_list %}
+                  {% for s in ep_list %}{{ s }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                {% else %}
+                  —
+                {% endif %}
+              {% endwith %}
+            </td>
+            <td class="text-end">{{ e.progreso }}% ({{ e.tareas_completadas }}/{{ e.total_tareas }})</td>
+            <td class="text-end">
+              {% if admin %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'epica_edit' e.id %}">✏️</a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'epica_delete' e.id %}">🗑️</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-muted p-3">No hay épicas registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4 class="mb-0">{{ epica.titulo }}</h4>
+  <div class="d-flex gap-2">
+    <span class="badge text-bg-info">{{ epica.get_estado_display }}</span>
+    <span class="badge text-bg-secondary">{{ epica.get_prioridad_display }}</span>
+  </div>
+</div>
+
+<p class="text-muted">{{ epica.descripcion|default:"(Sin descripción)" }}</p>
+<p class="mb-1"><strong>Owner:</strong> {{ epica.owner|default:"—" }}</p>
+
+<p class="mb-1">
+  <strong>Sprints:</strong>
+  {% for s in epica.sprints.all %}
+    {{ s }}{% if not forloop.last %}, {% endif %}
+  {% empty %}
+    —
+  {% endfor %}
+</p>
+
+<p class="mb-3"><strong>Progreso:</strong> {{ epica.progreso }}% ({{ epica.tareas_completadas }}/{{ epica.total_tareas }})</p>
+
+<div class="card">
+  <div class="card-header">Tareas de la épica</div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Categoría</th>
+          <th>Asignado</th>
+          <th>Sprint</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tareas %}
+          <tr>
+            <td><a href="{% url 'detalle_tarea' t.id %}">{{ t.titulo }}</a></td>
+            <td>{{ t.get_estado_display }}</td>
+            <td>{{ t.get_categoria_display }}</td>
+            <td>{{ t.asignado_a|default:"—" }}</td>
+            <td>{{ t.sprint }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-muted p-3">Sin tareas asociadas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

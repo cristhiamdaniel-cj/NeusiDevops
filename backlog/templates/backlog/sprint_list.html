@@ -1,72 +1,54 @@
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>📅 Gestión de Sprints - NEUSI Task Manager</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
-        h2 { margin-bottom: 15px; }
-        .btn {
-            padding: 6px 12px;
-            margin: 3px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-primary { background-color: #007bff; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-success { background-color: #28a745; }
-        .card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>📅 Gestión de Sprints</h2>
-        <div>
-            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-            <a href="{% url 'backlog_lista' %}" class="btn btn-success">📋 Backlog</a>
-            <a href="{% url 'backlog_matriz' %}" class="btn btn-primary">📊 Matriz</a>
-            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
-        </div>
-    </div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+  <h2>📅 Sprints</h2>
+  <div>
+    {% if tiene_permisos_admin %}
+      <a href="{% url 'sprint_create' %}" class="btn btn-primary">➕ Nuevo Sprint</a>
+    {% endif %}
+    <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">↩️ Volver al Backlog</a>
+  </div>
+</div>
 
-    <div class="card">
-        <a href="{% url 'sprint_create' %}" class="btn btn-success">➕ Nuevo Sprint</a>
-    </div>
-
-    <table>
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-striped mb-0">
+      <thead>
         <tr>
-            <th>📌 Nombre</th>
-            <th>📅 Inicio</th>
-            <th>📅 Fin</th>
-            <th>⚙️ Acciones</th>
+          <th>#</th>
+          <th>Nombre</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          {% if tiene_permisos_admin %}
+            <th style="width:120px;" class="text-end">Acciones</th>
+          {% endif %}
         </tr>
-        {% for sprint in sprints %}
-        <tr>
-            <td><strong>{{ sprint.nombre }}</strong></td>
-            <td>{{ sprint.inicio }}</td>
-            <td>{{ sprint.fin }}</td>
-            <td>
-                <a href="{% url 'sprint_edit' sprint.id %}" class="btn btn-primary btn-sm">✏️ Editar</a>
-                <a href="{% url 'sprint_delete' sprint.id %}" class="btn btn-danger btn-sm">🗑️ Eliminar</a>
-            </td>
-        </tr>
+      </thead>
+      <tbody>
+        {% for s in sprints %}
+          <tr>
+            <td>{{ s.id }}</td>
+            <td>{{ s.nombre }}</td>
+            <td>{{ s.inicio }}</td>
+            <td>{{ s.fin }}</td>
+            {% if tiene_permisos_admin %}
+              <td class="text-end">
+                <a href="{% url 'sprint_edit' s.id %}" class="btn btn-sm btn-outline-secondary">✏️</a>
+                
+              </td>
+            {% endif %}
+          </tr>
         {% empty %}
-        <tr>
-            <td colspan="4" style="text-align:center; padding:15px; color:#777;">
-                ⚠️ No hay sprints registrados.
+          <tr>
+            <td colspan="{% if tiene_permisos_admin %}5{% else %}4{% endif %}" class="text-muted p-3">
+              No hay sprints.
             </td>
-        </tr>
+          </tr>
         {% endfor %}
+      </tbody>
     </table>
+  </div>
+</div>
 
-</body>
-</html>
+{% endblock %}

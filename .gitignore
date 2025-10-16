@@ -49,7 +49,17 @@ venv/lib/python3.12/site-packages/
 README-develop.md
 
 
+# Python bytecode
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Entornos y dependencias
+.venv/
+venv/
+.Python
+
+# Config y secretos
+.env
+.env.local
