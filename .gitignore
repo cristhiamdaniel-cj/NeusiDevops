@@ -48,10 +48,17 @@ venv/lib/python3.12/site-packages/
 # Archivos de desarrollo interno
 README-develop.md
 
-*.pyc
+
+# Python bytecode
 __pycache__/
+*.pyc
 *.pyo
 *.pyd
-.Python
+
+# Entornos y dependencias
+.venv/
 venv/
-db.sqlite3
+.Python
+
+# Config y secretos
+.env
