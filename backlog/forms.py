@@ -1,4 +1,4 @@
-# backlog/forms.py - Mejorado y completo
+# backlog/forms.py
 from django import forms
 from .models import Tarea, Daily, Evidencia, Sprint, Epica
 
@@ -25,34 +25,16 @@ class DailyForm(forms.ModelForm):
         }
 
 
-class EpicaForm(forms.ModelForm):
-    class Meta:
-        model = Epica
-        fields = ["titulo", "descripcion", "estado", "prioridad", "owner", "sprint"]
-        labels = {
-            "titulo": "Título de la épica",
-            "descripcion": "Descripción",
-            "estado": "Estado",
-            "prioridad": "Prioridad",
-            "owner": "Responsable (owner)",
-            "sprint": "Sprint (opcional)",
-        }
-        widgets = {
-            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej.: Autenticación básica"}),
-            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "estado": forms.Select(attrs={"class": "form-select"}),
-            "prioridad": forms.Select(attrs={"class": "form-select"}),
-            "owner": forms.Select(attrs={"class": "form-select"}),
-            "sprint": forms.Select(attrs={"class": "form-select"}),
-        }
-
-
 class TareaForm(forms.ModelForm):
     class Meta:
         model = Tarea
-        fields = ["epica", "titulo", "descripcion", "criterios_aceptacion", "categoria", "asignado_a", "sprint"]
+        # 🔹 Agregamos 'epica' (y dejamos sprint como FK simple)
+        fields = [
+            "epica", "titulo", "descripcion", "criterios_aceptacion",
+            "categoria", "asignado_a", "sprint"
+        ]
         labels = {
-            "epica": "Épica ",
+            "epica": "Épica (opcional)",
             "titulo": "Título de la tarea",
             "descripcion": "Descripción",
             "criterios_aceptacion": "Criterios de aceptación",
@@ -100,10 +82,8 @@ class EvidenciaForm(forms.ModelForm):
         cleaned_data = super().clean()
         comentario = cleaned_data.get("comentario")
         archivo = cleaned_data.get("archivo")
-
         if not comentario and not archivo:
             raise forms.ValidationError("❌ Debes agregar al menos un comentario o un archivo como evidencia.")
-
         return cleaned_data
 
 
@@ -112,6 +92,31 @@ class SprintForm(forms.ModelForm):
         model = Sprint
         fields = ["nombre", "inicio", "fin"]
         widgets = {
-            "inicio": forms.DateInput(attrs={"type": "date"}),
-            "fin": forms.DateInput(attrs={"type": "date"}),
+            "inicio": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "nombre": forms.TextInput(attrs={"class": "form-control"}),
+        }
+
+
+# 🔹 Nuevo: EpicaForm sin 'sprint' (usa ManyToMany 'sprints')
+
+class EpicaForm(forms.ModelForm):
+    class Meta:
+        model = Epica
+        fields = ["titulo", "descripcion", "estado", "prioridad", "owner", "sprints"]
+        labels = {
+            "titulo": "Título",
+            "descripcion": "Descripción",
+            "estado": "Estado",
+            "prioridad": "Prioridad",
+            "owner": "Owner (opcional)",
+            "sprints": "Sprints relacionados",
+        }
+        widgets = {
+            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre de la épica"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "estado": forms.Select(attrs={"class": "form-select"}),
+            "prioridad": forms.Select(attrs={"class": "form-select"}),
+            "owner": forms.Select(attrs={"class": "form-select"}),
+            "sprints": forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
         }

@@ -16,7 +16,7 @@
           <th>Estado</th>
           <th>Prioridad</th>
           <th>Owner</th>
-          <th>Sprint</th>
+          <th>Sprints</th>
           <th class="text-end">Progreso</th>
           <th style="width: 120px;"></th>
         </tr>
@@ -28,7 +28,15 @@
             <td>{{ e.get_estado_display }}</td>
             <td>{{ e.get_prioridad_display }}</td>
             <td>{{ e.owner|default:"—" }}</td>
-            <td>{{ e.sprint|default:"—" }}</td>
+            <td>
+              {% with ep_list=e.sprints.all %}
+                {% if ep_list %}
+                  {% for s in ep_list %}{{ s }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                {% else %}
+                  —
+                {% endif %}
+              {% endwith %}
+            </td>
             <td class="text-end">{{ e.progreso }}% ({{ e.tareas_completadas }}/{{ e.total_tareas }})</td>
             <td class="text-end">
               {% if admin %}

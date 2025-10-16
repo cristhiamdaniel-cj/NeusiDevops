@@ -14,6 +14,7 @@ class Integrante(models.Model):
     ROL_PERMISOS = {
         "Lider Bases de datos": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
         "Scrum Master / PO": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
+        "Visualizador":   [],
     }
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -34,7 +35,8 @@ class Integrante(models.Model):
     def puede_editar_tareas(self):
         permisos = self.ROL_PERMISOS.get(self.rol, [])
         return "editar_tareas" in permisos
-
+    def es_visualizador(self):
+        return self.rol == "Visualizador"
 
 # ==============================
 # Sprint
@@ -68,12 +70,14 @@ class Epica(models.Model):
     descripcion = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="ACTIVA")
     prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default="MEDIA")
+
     owner = models.ForeignKey(
         Integrante, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas_propias"
     )
-    sprint = models.ForeignKey(
-        Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas"
-    )
+
+    # 🔹 CAMBIO: ahora ManyToMany (puede abarcar varios sprints)
+    sprints = models.ManyToManyField(Sprint, blank=True, related_name="epicas")
+
     creada_en = models.DateTimeField(auto_now_add=True)
     actualizada_en = models.DateTimeField(auto_now=True)
 
@@ -97,6 +101,11 @@ class Epica(models.Model):
         total = self.total_tareas
         return round((self.tareas_completadas / total) * 100.0, 2) if total else 0.0
 
+    # Útil para mostrar en admin/listas
+    def sprints_list(self):
+        return ", ".join(str(s) for s in self.sprints.all())
+    sprints_list.short_description = "Sprints"
+
 
 # ==============================
 # Tarea
@@ -109,7 +118,7 @@ class Tarea(models.Model):
         ("NUNI", "No Urgente y No Importante"),
     ]
 
-    # NUEVO: Estados de workflow
+    # Estados de workflow
     ESTADO_CHOICES = [
         ("NUEVO", "Nuevo"),
         ("APROBADO", "Aprobado"),
@@ -126,7 +135,6 @@ class Tarea(models.Model):
     )
     categoria = models.CharField(max_length=4, choices=MATRIZ_CHOICES)
 
-    # NUEVO: Campo de estado
     estado = models.CharField(
         max_length=20,
         choices=ESTADO_CHOICES,
@@ -134,7 +142,7 @@ class Tarea(models.Model):
         help_text="Estado actual de la tarea en el workflow"
     )
 
-    # NUEVO: FK a Épica (opcional)
+    # FK a Épica (opcional)
     epica = models.ForeignKey(
         Epica, on_delete=models.SET_NULL, null=True, blank=True, related_name="tareas"
     )
@@ -171,7 +179,7 @@ class Evidencia(models.Model):
     # Permitimos nulos para compatibilidad con datos viejos
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
-    # Renombramos bien la fecha
+    # Fechas
     creado_en = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     actualizado_en = models.DateTimeField(auto_now=True, null=True, blank=True)
 

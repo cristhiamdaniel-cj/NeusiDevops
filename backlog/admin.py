@@ -29,15 +29,15 @@ class SprintAdmin(admin.ModelAdmin):
 # ==========================
 @admin.register(Epica)
 class EpicaAdmin(admin.ModelAdmin):
-    list_display = ("id", "titulo", "estado", "prioridad", "owner", "sprint", "progreso")
+    list_display = ("id", "titulo", "estado", "prioridad", "owner", "sprints_list", "progreso")
     search_fields = ("titulo", "descripcion", "owner__user__username")
-    list_filter = ("estado", "prioridad", "sprint")
+    list_filter = ("estado", "prioridad", "sprints")
     ordering = ("-creada_en",)
     readonly_fields = ("creada_en", "actualizada_en", "progreso", "tareas_completadas", "total_tareas")
 
     fieldsets = (
         ("Información general", {
-            "fields": ("titulo", "descripcion", "estado", "prioridad", "owner", "sprint")
+            "fields": ("titulo", "descripcion", "estado", "prioridad", "owner", "sprints")
         }),
         ("Seguimiento y métricas", {
             "fields": ("progreso", "tareas_completadas", "total_tareas"),
@@ -48,7 +48,6 @@ class EpicaAdmin(admin.ModelAdmin):
             "classes": ("collapse",),
         }),
     )
-
 
 # ==========================
 # Tarea

@@ -1,41 +1,36 @@
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{% if form.instance.pk %}✏️ Editar Sprint{% else %}➕ Nuevo Sprint{% endif %} - NEUSI Task Manager</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
-        h2 { margin-bottom: 15px; }
-        .btn {
-            padding: 6px 12px;
-            margin: 3px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-primary { background-color: #007bff; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
-        label { font-weight: bold; display: block; margin-top: 10px; }
-        input, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-    <h2>{% if form.instance.pk %}✏️ Editar Sprint{% else %}➕ Nuevo Sprint{% endif %}</h2>
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+  <h2>➕ Nuevo Sprint</h2>
+  <div>
+    <a href="{% url 'sprint_list' %}" class="btn btn-secondary">↩️ Volver</a>
+  </div>
+</div>
 
-    <div class="card">
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">💾 Guardar</button>
-            <a href="{% url 'sprint_list' %}" class="btn btn-secondary">↩️ Volver</a>
-        </form>
-    </div>
+<form method="post" style="max-width:520px;">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
 
-</body>
-</html>
+  <div style="margin-bottom:12px;">
+    <label for="{{ form.nombre.id_for_label }}"><strong>Nombre</strong></label><br>
+    {{ form.nombre }}
+    {{ form.nombre.errors }}
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <label for="{{ form.inicio.id_for_label }}"><strong>Inicio</strong></label><br>
+    {{ form.inicio }}
+    {{ form.inicio.errors }}
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <label for="{{ form.fin.id_for_label }}"><strong>Fin</strong></label><br>
+    {{ form.fin }}
+    {{ form.fin.errors }}
+  </div>
+
+  <button type="submit" class="btn btn-primary">💾 Guardar</button>
+  <a href="{% url 'sprint_list' %}" class="btn btn-secondary">⬅️ Volver</a>
+</form>
+{% endblock %}
