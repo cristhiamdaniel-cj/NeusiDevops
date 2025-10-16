@@ -24,14 +24,31 @@ class DailyForm(forms.ModelForm):
             }),
         }
 
+from django import forms
+from .models import Tarea
 
 class TareaForm(forms.ModelForm):
+    # Opcional: definir aquí el selector para controlar UI/UX
+    ESFUERZO_CHOICES = [(None, "— Selecciona —")] + [(v, str(v)) for v in (1, 2, 3, 5, 8, 13, 21)]
+
+    # TypedChoiceField para guardar enteros; permite dejarlo vacío (None)
+    esfuerzo_sp = forms.TypedChoiceField(
+        required=False,
+        coerce=lambda v: int(v) if v not in (None, "",) else None,
+        empty_value=None,
+        choices=ESFUERZO_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Puntuación de esfuerzo (Story Points)",
+        help_text="Story points estimados (1, 2, 3, 5, 8, 13, 21). Opcional."
+    )
+
     class Meta:
         model = Tarea
-        # 🔹 Agregamos 'epica' (y dejamos sprint como FK simple)
+        # 🔹 Agregamos 'esfuerzo_sp' al formulario
         fields = [
             "epica", "titulo", "descripcion", "criterios_aceptacion",
-            "categoria", "asignado_a", "sprint"
+            "categoria", "asignado_a", "sprint",
+            "esfuerzo_sp",
         ]
         labels = {
             "epica": "Épica (opcional)",
@@ -41,9 +58,11 @@ class TareaForm(forms.ModelForm):
             "categoria": "Categoría (Matriz Eisenhower)",
             "asignado_a": "Responsable",
             "sprint": "Sprint asignado",
+            # "esfuerzo_sp": lo definimos arriba para controlar mejor
         }
         help_texts = {
             "criterios_aceptacion": "Explica claramente las condiciones para dar por completada esta tarea.",
+            # "esfuerzo_sp": lo definimos arriba
         }
         widgets = {
             "epica": forms.Select(attrs={"class": "form-select"}),
@@ -59,8 +78,20 @@ class TareaForm(forms.ModelForm):
             "categoria": forms.Select(attrs={"class": "form-select"}),
             "asignado_a": forms.Select(attrs={"class": "form-select"}),
             "sprint": forms.Select(attrs={"class": "form-select"}),
+            # "esfuerzo_sp": widget ya definido arriba
         }
 
+    # (Opcional) Si quieres que el valor pase también por un validador extra
+    # ya tienes el validador en el modelo; esto es redundante, pero útil si quieres
+    # devolver error del lado del form antes de llegar al modelo.
+    def clean_esfuerzo_sp(self):
+        v = self.cleaned_data.get("esfuerzo_sp")
+        validos = {1, 2, 3, 5, 8, 13, 21}
+        if v is None or v == "":
+            return None
+        if v not in validos:
+            raise forms.ValidationError("Los story points deben ser uno de: 1, 2, 3, 5, 8, 13 o 21.")
+        return v
 
 class EvidenciaForm(forms.ModelForm):
     class Meta:

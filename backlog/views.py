@@ -14,8 +14,15 @@ from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica
 from .forms import TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm
 
 # ==============================
-# Helpers de permisos
+# Helpers de permisos / Daily window
 # ==============================
+
+DAILY_INICIO = time(5, 0)   # 5:00 AM
+DAILY_FIN    = time(9, 0)   # 9:00 AM
+
+def en_ventana_daily(hora):
+    """True si la hora local está entre 5:00 y 9:00 AM (inclusive)."""
+    return DAILY_INICIO <= hora <= DAILY_FIN
 
 def _es_admin(request):
     integrante = getattr(request.user, "integrante", None)
@@ -273,10 +280,11 @@ def daily_view(request, integrante_id=None):
                 for field, value in form.cleaned_data.items():
                     setattr(daily, field, value)
 
-            if not (time(7, 0) <= hora_actual <= time(9, 0)):
+            if not en_ventana_daily(hora_actual):
                 daily.fuera_horario = True
-                messages.warning(request,
-                    "⚠️ Daily registrado fuera del horario (7:00–9:00 AM). "
+                messages.warning(
+                    request,
+                    "⚠️ Daily registrado fuera del horario (5:00–9:00 AM). "
                     "Se notificará a los administradores y se tomará como evidencia."
                 )
             else:
@@ -396,6 +404,8 @@ def backlog_lista(request):
         elif estado == "cerradas":
             tareas = tareas.filter(completada=True)
 
+    # Si quieres priorizar por esfuerzo, descomenta:
+    # tareas = tareas.order_by("sprint__inicio", "-esfuerzo_sp", "categoria", "titulo")
     tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
 
     return render(request, "backlog/backlog_lista.html", {
@@ -600,7 +610,7 @@ def daily_create_admin(request):
             daily = form.save(commit=False)
             daily.integrante = integrante
             hora_actual = localtime().time()
-            if not (time(7, 0) <= hora_actual <= time(9, 0)):
+            if not en_ventana_daily(hora_actual):
                 daily.fuera_horario = True
             daily.save()
             messages.success(request, f"✅ Daily registrado para {integrante.user.first_name}.")

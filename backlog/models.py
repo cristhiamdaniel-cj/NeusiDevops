@@ -1,6 +1,22 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+
+# ==============================
+# Validadores
+# ==============================
+def validar_story_points(value):
+    """
+    Story points usuales en planning (serie Fibonacci corta).
+    Permite nulo/blank en el campo, pero si viene valor debe ser uno de estos.
+    """
+    if value is None:
+        return
+    validos = (1, 2, 3, 5, 8, 13, 21)
+    if value not in validos:
+        raise ValidationError(f"Los story points deben ser uno de: {', '.join(map(str, validos))}.")
 
 
 # ==============================
@@ -35,8 +51,10 @@ class Integrante(models.Model):
     def puede_editar_tareas(self):
         permisos = self.ROL_PERMISOS.get(self.rol, [])
         return "editar_tareas" in permisos
+
     def es_visualizador(self):
         return self.rol == "Visualizador"
+
 
 # ==============================
 # Sprint
@@ -75,7 +93,7 @@ class Epica(models.Model):
         Integrante, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas_propias"
     )
 
-    # 🔹 CAMBIO: ahora ManyToMany (puede abarcar varios sprints)
+    # 🔹 ManyToMany (puede abarcar varios sprints)
     sprints = models.ManyToManyField(Sprint, blank=True, related_name="epicas")
 
     creada_en = models.DateTimeField(auto_now_add=True)
@@ -142,6 +160,14 @@ class Tarea(models.Model):
         help_text="Estado actual de la tarea en el workflow"
     )
 
+    # 🔹 Story points / Puntuación de esfuerzo
+    esfuerzo_sp = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[validar_story_points],
+        help_text="Story points (1, 2, 3, 5, 8, 13, 21)"
+    )
+
     # FK a Épica (opcional)
     epica = models.ForeignKey(
         Epica, on_delete=models.SET_NULL, null=True, blank=True, related_name="tareas"
@@ -155,6 +181,7 @@ class Tarea(models.Model):
         related_name="tareas_asignadas"
     )
     sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE)
+
     completada = models.BooleanField(default=False)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
     informe_cierre = models.FileField(
@@ -166,6 +193,10 @@ class Tarea(models.Model):
 
     def __str__(self):
         return f"{self.titulo} ({self.get_categoria_display()})"
+
+    @property
+    def esfuerzo_display(self):
+        return self.esfuerzo_sp if self.esfuerzo_sp is not None else "-"
 
 
 # ==============================
@@ -198,7 +229,7 @@ class Daily(models.Model):
     que_hara_hoy = models.TextField()
     impedimentos = models.TextField(blank=True, null=True)
 
-    # 🚨 Nuevo campo
+    # 🚨 Campo para marcar registros por fuera de la ventana 5–9 AM
     fuera_horario = models.BooleanField(default=False)
 
     def __str__(self):
