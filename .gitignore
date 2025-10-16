@@ -48,3 +48,8 @@ venv/lib/python3.12/site-packages/
 # Archivos de desarrollo interno
 README-develop.md
 
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
