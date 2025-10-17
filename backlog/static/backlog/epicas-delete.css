@@ -1,0 +1,38 @@
+:root{
+  --bg1:#f5eefc; --bg2:#e9f5ff; --card:#ffffff; --text:#23262d;
+  --warning:#f59e0b; --border:#e6e8ee; --shadow:0 10px 24px rgba(32,44,80,.08);
+  --radius:14px; --danger:#ef4444; --danger-700:#b91c1c;
+}
+
+body{
+  background: radial-gradient(1200px 600px at 10% -10%, var(--bg1), transparent 60%),
+              radial-gradient(1200px 600px at 110% 10%, var(--bg2), transparent 60%),
+              #f7f9fc;
+  color:var(--text);
+}
+
+h4.mb-3{ font-weight:700; margin-bottom:1rem !important; }
+
+/* Alerta destacada */
+.alert.alert-warning{
+  background:#fff8e6;
+  border:1px solid var(--border);
+  border-left:4px solid var(--warning);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  position:relative;
+  padding-left:2.25rem;
+}
+.alert.alert-warning::before{
+  content:"⚠️"; position:absolute; left:.75rem; top:.7rem; font-size:1.1rem;
+}
+
+/* Botones */
+.btn{ border-radius:10px; font-weight:700; border:0; }
+.btn-danger{ background:var(--danger); }
+.btn-danger:hover{ background:var(--danger-700); }
+.btn-outline-secondary{ color:#111827; border:1px solid var(--border); background:#fff; }
+.btn-outline-secondary:hover{ background:#f3f4f6; }
+
+form[method="post"] .btn-danger{ margin-right:.5rem; min-width:120px; }
+form[method="post"] .btn-outline-secondary{ min-width:120px; }

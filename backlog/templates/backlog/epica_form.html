@@ -1,5 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/epicas-form.css' %}?v=2">
+{% endblock %}
 {% block content %}
+
 <h4 class="mb-3">{% if epica %}Editar Épica{% else %}Nueva Épica{% endif %}</h4>
 
 <form method="post" novalidate>

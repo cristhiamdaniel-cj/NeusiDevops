@@ -1,5 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/epicas-delete.css' %}?v=2">
+{% endblock %}
 {% block content %}
+
 <h4 class="mb-3">Eliminar Épica</h4>
 <div class="alert alert-warning">
   ¿Estás seguro de eliminar la épica <strong>{{ epica.titulo }}</strong>?<br>
