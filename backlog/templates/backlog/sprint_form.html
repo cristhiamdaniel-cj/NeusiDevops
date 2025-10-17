@@ -1,10 +1,20 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/sprint_form.css' %}?v=2">
+<style>
+  .page-title__text::before{
+    background-image: url("{% static 'backlog/icons/Spring.png' %}");
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
   <h2>➕ Nuevo Sprint</h2>
   <div>
-    <a href="{% url 'sprint_list' %}" class="btn btn-secondary">↩️ Volver</a>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">↩️ Volver</a>
   </div>
 </div>
 
@@ -31,6 +41,6 @@
   </div>
 
   <button type="submit" class="btn btn-primary">💾 Guardar</button>
-  <a href="{% url 'sprint_list' %}" class="btn btn-secondary">⬅️ Volver</a>
+  <a href="{% url 'sprint_list' %}" class="btn btn-secondary">⬅️Ir a sprints</a>
 </form>
 {% endblock %}
