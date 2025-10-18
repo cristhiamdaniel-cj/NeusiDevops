@@ -62,4 +62,5 @@ venv/
 
 # Config y secretos
 .env
+.env
 .env.local

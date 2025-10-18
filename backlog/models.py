@@ -1,3 +1,4 @@
+# backlog/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -30,7 +31,7 @@ class Integrante(models.Model):
     ROL_PERMISOS = {
         "Lider Bases de datos": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
         "Scrum Master / PO": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
-        "Visualizador":   [],
+        "Visualizador": [],
     }
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -54,6 +55,28 @@ class Integrante(models.Model):
 
     def es_visualizador(self):
         return self.rol == "Visualizador"
+
+
+# ==============================
+# Proyecto (normalizado)
+# ==============================
+class Proyecto(models.Model):
+    codigo = models.CharField(
+        max_length=30,
+        unique=True,
+        help_text="Identificador corto del proyecto (ej. NEUCONTA, CPS, JURIDICO)."
+    )
+    nombre = models.CharField(max_length=150)
+    activo = models.BooleanField(default=True)
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["codigo"]
+
+    def __str__(self):
+        return f"{self.codigo} — {self.nombre}"
 
 
 # ==============================
@@ -84,16 +107,52 @@ class Epica(models.Model):
         ("BAJA", "Baja"),
     ]
 
+    # Nuevo: código legible de la épica (opcional pero recomendable)
+    codigo = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Código legible de la épica (ej. NEUSI-001)."
+    )
+
     titulo = models.CharField(max_length=200, unique=True)
     descripcion = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="ACTIVA")
     prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default="MEDIA")
 
+    # Nuevo: relación con Proyecto (normalizado)
+    proyecto = models.ForeignKey(
+        Proyecto,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="epicas",
+        help_text="Proyecto al que pertenece esta épica."
+    )
+
+    # Nuevo: fechas macro de la épica
+    fecha_inicio = models.DateField(null=True, blank=True)
+    fecha_fin = models.DateField(null=True, blank=True)
+
+    # Nuevo: KPIs / criterios de éxito
+    kpis = models.TextField(blank=True, help_text="Métricas clave esperadas para la épica")
+
+    # Nuevo: avance manual (0–100). Si no se define, se usa el cálculo por tareas.
+    avance_manual = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="0–100. Si se deja vacío, se calcula por tareas."
+    )
+
+    # Nuevo: URL de documentos (Drive/Notion/Repo)
+    documentos_url = models.URLField(blank=True, help_text="Enlace a carpeta o documento maestro")
+
     owner = models.ForeignKey(
         Integrante, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas_propias"
     )
 
-    # 🔹 ManyToMany (puede abarcar varios sprints)
+    # Puede abarcar varios sprints
     sprints = models.ManyToManyField(Sprint, blank=True, related_name="epicas")
 
     creada_en = models.DateTimeField(auto_now_add=True)
@@ -103,9 +162,10 @@ class Epica(models.Model):
         ordering = ["-creada_en"]
 
     def __str__(self):
-        return self.titulo
+        pref = f"{self.codigo} - " if self.codigo else ""
+        return f"{pref}{self.titulo}"
 
-    # Métricas rápidas
+    # ===== Métricas y utilidades =====
     @property
     def total_tareas(self) -> int:
         return self.tareas.count()
@@ -115,14 +175,30 @@ class Epica(models.Model):
         return self.tareas.filter(completada=True).count()
 
     @property
-    def progreso(self) -> float:
+    def progreso_calculado(self) -> float:
         total = self.total_tareas
         return round((self.tareas_completadas / total) * 100.0, 2) if total else 0.0
+
+    @property
+    def avance(self) -> float:
+        """
+        Avance efectivo mostrado:
+        - Si hay 'avance_manual', úsalo.
+        - Si no, usa 'progreso_calculado' por tareas.
+        """
+        return float(self.avance_manual) if self.avance_manual is not None else self.progreso_calculado
 
     # Útil para mostrar en admin/listas
     def sprints_list(self):
         return ", ".join(str(s) for s in self.sprints.all())
     sprints_list.short_description = "Sprints"
+
+    # Validaciones de consistencia
+    def clean(self):
+        if self.fecha_inicio and self.fecha_fin and self.fecha_inicio > self.fecha_fin:
+            raise ValidationError("La fecha de inicio no puede ser posterior a la fecha fin.")
+        if self.avance_manual is not None and not (0 <= self.avance_manual <= 100):
+            raise ValidationError("El avance manual debe estar entre 0 y 100.")
 
 
 # ==============================
@@ -160,7 +236,7 @@ class Tarea(models.Model):
         help_text="Estado actual de la tarea en el workflow"
     )
 
-    # 🔹 Story points / Puntuación de esfuerzo
+    # Story points / Puntuación de esfuerzo
     esfuerzo_sp = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -229,7 +305,7 @@ class Daily(models.Model):
     que_hara_hoy = models.TextField()
     impedimentos = models.TextField(blank=True, null=True)
 
-    # 🚨 Campo para marcar registros por fuera de la ventana 5–9 AM
+    # Campo para marcar registros por fuera de la ventana 5–9 AM
     fuera_horario = models.BooleanField(default=False)
 
     def __str__(self):

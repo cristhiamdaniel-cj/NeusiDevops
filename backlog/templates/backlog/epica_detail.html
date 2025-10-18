@@ -1,54 +1,157 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/epicas-detail.css' %}?v=6">
+<style>
+  /* Evita poner % en el template: la anchura se calcula con CSS info Jorge*/
+  .progress .pb {
+    height: 22px;
+    width: calc(var(--w, 0) * 1%);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <h4 class="mb-0">{{ epica.titulo }}</h4>
-  <div class="d-flex gap-2">
-    <span class="badge text-bg-info">{{ epica.get_estado_display }}</span>
-    <span class="badge text-bg-secondary">{{ epica.get_prioridad_display }}</span>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="mb-0">
+      {% if epica.codigo %}<span class="text-muted">{{ epica.codigo }}</span> - {% endif %}
+      {{ epica.titulo }}
+    </h4>
+    {% if epica.proyecto %}
+      <p class="text-muted small mb-0">
+        <strong>Proyecto:</strong> {{ epica.proyecto.codigo }} — {{ epica.proyecto.nombre }}
+      </p>
+    {% endif %}
+    <p class="text-muted small mb-0">
+      <strong>Fechas:</strong>
+      {% if epica.fecha_inicio %}{{ epica.fecha_inicio|date:"d M Y" }}{% else %}—{% endif %}
+      {% if epica.fecha_fin %} → {{ epica.fecha_fin|date:"d M Y" }}{% endif %}
+    </p>
+  </div>
+
+  <div class="text-end">
+    <div class="d-flex gap-2 justify-content-end mb-2">
+      <span class="badge bg-info text-dark">{{ epica.get_estado_display }}</span>
+      <span class="badge bg-secondary">{{ epica.get_prioridad_display }}</span>
+    </div>
+    <div>
+      {% if epica.documentos_url %}
+        <a href="{{ epica.documentos_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+          📂 Documentos
+        </a>
+      {% endif %}
+      <a href="{% url 'epica_edit' epica.id %}" class="btn btn-sm btn-outline-secondary">✏️ Editar</a>
+    </div>
   </div>
 </div>
 
-<p class="text-muted">{{ epica.descripcion|default:"(Sin descripción)" }}</p>
-<p class="mb-1"><strong>Owner:</strong> {{ epica.owner|default:"—" }}</p>
+<hr class="my-2">
 
-<p class="mb-1">
-  <strong>Sprints:</strong>
-  {% for s in epica.sprints.all %}
-    {{ s }}{% if not forloop.last %}, {% endif %}
-  {% empty %}
-    —
-  {% endfor %}
-</p>
+<!-- Descripción -->
+<p class="mb-3">{{ epica.descripcion|default:"(Sin descripción)" }}</p>
 
-<p class="mb-3"><strong>Progreso:</strong> {{ epica.progreso }}% ({{ epica.tareas_completadas }}/{{ epica.total_tareas }})</p>
+<!-- KPIs -->
+{% if epica.kpis %}
+<div class="alert alert-light border-start border-info border-4 py-2">
+  <strong>🎯 KPIs / Criterios de éxito:</strong><br>
+  {{ epica.kpis|linebreaksbr }}
+</div>
+{% endif %}
 
-<div class="card">
-  <div class="card-header">Tareas de la épica</div>
+<!-- Owner y Sprints -->
+<div class="row mb-3">
+  <div class="col-md-6">
+    <p class="mb-1"><strong>👤 Owner:</strong> {{ epica.owner|default:"—" }}</p>
+  </div>
+  <div class="col-md-6">
+    <p class="mb-1">
+      <strong>🏁 Sprints:</strong>
+      {% for s in epica.sprints.all %}
+        {{ s.nombre }}{% if not forloop.last %}, {% endif %}
+      {% empty %}
+        <span class="text-muted">—</span>
+      {% endfor %}
+    </p>
+  </div>
+</div>
+
+<!-- Avance (sin % en el template) -->
+<div class="mb-3">
+  <strong>📊 Avance:</strong>
+  {% with p=epica.avance|default_if_none:0 %}
+  <div class="progress mt-1">
+    <div
+      class="pb progress-bar {% if p >= 100 %}bg-success{% elif p >= 60 %}bg-info{% elif p >= 30 %}bg-warning text-dark{% else %}bg-danger{% endif %}"
+      role="progressbar"
+      style="--w: {{ p|floatformat:0 }};">
+      {{ p|floatformat:0 }}%
+    </div>
+  </div>
+  <small class="text-muted">
+    {{ epica.tareas_completadas }}/{{ epica.total_tareas }} tareas completadas
+    {% if epica.avance_manual %}(avance manual definido){% endif %}
+  </small>
+  {% endwith %}
+</div>
+
+<!-- Tabla de tareas -->
+<div class="card shadow-sm">
+  <div class="card-header bg-light fw-bold">
+    🧾 Tareas asociadas a la épica
+  </div>
   <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead>
+    <table class="table table-hover table-striped mb-0 align-middle">
+      <thead class="table-light">
         <tr>
-          <th>Título</th>
-          <th>Estado</th>
-          <th>Categoría</th>
-          <th>Asignado</th>
-          <th>Sprint</th>
+          <th style="width: 35%;">Título</th>
+          <th style="width: 12%;">Estado</th>
+          <th style="width: 15%;">Categoría</th>
+          <th style="width: 18%;">Asignado</th>
+          <th style="width: 20%;">Sprint</th>
         </tr>
       </thead>
       <tbody>
         {% for t in tareas %}
           <tr>
-            <td><a href="{% url 'detalle_tarea' t.id %}">{{ t.titulo }}</a></td>
-            <td>{{ t.get_estado_display }}</td>
+            <td>
+              <a href="{% url 'detalle_tarea' t.id %}" class="text-decoration-none fw-semibold">{{ t.titulo }}</a>
+              {% if t.criterios_aceptacion %}
+                <div class="small text-muted">{{ t.criterios_aceptacion|truncatechars:90 }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if t.estado == "COMPLETADO" %}
+                <span class="badge bg-success">{{ t.get_estado_display }}</span>
+              {% elif t.estado == "EN_PROGRESO" %}
+                <span class="badge bg-info text-dark">{{ t.get_estado_display }}</span>
+              {% elif t.estado == "BLOQUEADO" %}
+                <span class="badge bg-danger">{{ t.get_estado_display }}</span>
+              {% elif t.estado == "APROBADO" %}
+                <span class="badge bg-warning text-dark">{{ t.get_estado_display }}</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ t.get_estado_display }}</span>
+              {% endif %}
+            </td>
             <td>{{ t.get_categoria_display }}</td>
             <td>{{ t.asignado_a|default:"—" }}</td>
-            <td>{{ t.sprint }}</td>
+            <td>{{ t.sprint|default:"—" }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="5" class="text-muted p-3">Sin tareas asociadas.</td></tr>
+          <tr>
+            <td colspan="5" class="text-center text-muted p-3">
+              No hay tareas asociadas a esta épica.
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<div class="mt-3">
+  <a class="btn btn-secondary" href="{% url 'epica_list' %}">⬅️ Volver a la lista de Épicas</a>
+</div>
+
 {% endblock %}

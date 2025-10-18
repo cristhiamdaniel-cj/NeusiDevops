@@ -1,0 +1,140 @@
+/* ================================
+   Fondo lila fijo (debajo de todo)
+   ================================ */
+body{
+  background: transparent; /* por si algo lo sobreescribe */
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #ead6ff, transparent 60%),
+    radial-gradient(1200px 600px at 110% 10%, #e6dbff, transparent 60%),
+    #f4efff;
+  pointer-events:none;
+}
+
+/* =====================================
+   Icono grande decorativo (a la derecha)
+   ===================================== */
+body::after{
+  content:"";
+  position:fixed;
+  top:50%;
+  right:10vw;                         /* mueve más a la izquierda ↑ aumentando el valor */
+  transform:translateY(-50%);
+  width:460px;                        /* tamaño del icono */
+  height:460px;
+  pointer-events:none;
+  opacity:.95;
+  z-index:1;
+  background:
+    radial-gradient(300px 300px at 75% 25%, rgba(124,58,237,.10), transparent 60%),
+    radial-gradient(230px 230px at 25% 75%, rgba(99,102,241,.10), transparent 60%),
+    url("/static/backlog/icons/Spring.png") no-repeat center / contain; /* ← icono */
+  filter: drop-shadow(0 20px 40px rgba(32,44,80,.08));
+}
+
+/* Asegura que el contenido quede por encima del fondo */
+body > *{ position:relative; z-index:2; }
+
+/* =============================
+   Tarjeta / formulario existente
+   ============================= */
+form[method="post"]{
+  position: relative;                 /* necesitamos esto para el título flotante */
+  width:min(920px, 94vw);
+  margin-left:clamp(40px, 12vw, 220px);  /* aire a la izquierda */
+  margin-top:56px;                    /* espacio para el título arriba */
+  padding:30px;
+  border-radius:60px;
+  border:1px solid #a10ce7;
+  box-shadow:0 20px 60px rgba(32,44,80,.12);
+  background:#fff;
+}
+
+/* Campos cómodos y alineados a la izquierda */
+form[method="post"] input,
+form[method="post"] select,
+form[method="post"] textarea{
+  text-align:left !important;
+  padding:12px 14px !important;
+  font-size:18px;
+  border:1px solid #061a41;
+  border-radius:10px;
+}
+form[method="post"] input::placeholder,
+form[method="post"] textarea::placeholder{
+  text-align:left;
+  color:#9ca3af;
+}
+
+/* Botones básicos por si no usas framework */
+.btn{ border-radius:10px; font-weight:800; border:0; padding:8px 12px; }
+.btn-primary{ background:#7c3aed; color:#111 !important; }
+.btn-primary:hover{ background:#6d28d9; }
+.btn-secondary{ background:#fff; border:1px solid #e6e8ee; color:#111 !important; }
+.btn-secondary:hover{ background:#f3f4f6; }
+form[method="post"] .btn + .btn{ margin-left:8px; }
+
+/* ======================================
+   Título “➕ Nuevo Sprint” ARRIBA del form
+   ====================================== */
+/* Ocultamos el <h2> original visualmente (sigue accesible) */
+h2{
+  position:absolute !important;
+  width:1px; height:1px;
+  padding:0; margin:0;
+  overflow:hidden; clip:rect(0 0 0 0);
+  white-space:nowrap; border:0;
+}
+
+/* Título flotante, alineado al borde izquierdo del cuadro */
+form[method="post"]::before{
+  content:"➕ Nuevo Sprint";
+  position:absolute;
+  top:-40px;                      /* encima del cuadro */
+  left:8px;                       /* alineado al borde del form */
+  font-weight:800;
+  font-size:24px;
+  color:#5b21b6;
+  z-index:3;
+  pointer-events:none;
+}
+
+/* =================
+   Ajustes responsivo
+   ================= */
+@media (max-width: 1400px){
+  body::after{ right:8vw; width:440px; height:440px; }
+  form[method="post"]{ width:min(880px, 94vw); margin-left:clamp(32px, 10vw, 200px); }
+}
+@media (max-width: 1200px){
+  body::after{ right:6vw; width:400px; height:400px; opacity:.92; }
+  form[method="post"]{ width:min(840px, 94vw); margin-left:clamp(28px, 8vw, 160px); }
+  form[method="post"]::before{ top:-38px; left:6px; font-size:22px; }
+}
+@media (max-width: 992px){
+  /* En tablets: icono más chico y form centrado */
+  body::after{ right:4vw; width:340px; height:340px; opacity:.88; }
+  form[method="post"]{ width:min(92vw, 780px); margin-left:auto; margin-right:auto; }
+  form[method="post"]::before{ top:-36px; left:6px; font-size:20px; }
+}
+@media (max-width: 576px){
+  /* En móviles: icono al fondo, centrado abajo */
+  body::after{
+    position:absolute;
+    top:auto; bottom:24px; right:50%;
+    transform:translateX(50%);
+    width:58vw; height:58vw; opacity:.8;
+  }
+  form[method="post"]{
+    width:94vw;
+    margin-left:auto; margin-right:auto;
+    padding:22px;
+    border-radius:22px;
+  }
+  form[method="post"]::before{ top:-30px; left:4px; font-size:18px; }
+}

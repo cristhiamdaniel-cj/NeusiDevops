@@ -62,4 +62,5 @@ urlpatterns = [
     path("epicas/<int:epica_id>/", views.epica_detail, name="epica_detail"),
     path("epicas/<int:epica_id>/editar/", views.epica_edit, name="epica_edit"),
     path("epicas/<int:epica_id>/eliminar/", views.epica_delete, name="epica_delete"),
+    path("proyectos/nuevo/", views.proyecto_create, name="proyecto_create"),
 ]

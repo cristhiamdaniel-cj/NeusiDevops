@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/proyecto-form.css' %}?v=1">
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-3">{% if proyecto %}✏️ Editar Proyecto{% else %}➕ Nuevo Proyecto{% endif %}</h4>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <!-- Código -->
+      <div class="mb-3">
+        <label for="{{ form.codigo.id_for_label }}" class="form-label">
+          {{ form.codigo.label }}
+        </label>
+        {{ form.codigo }}
+        {% if form.codigo.help_text %}
+          <div class="form-text">{{ form.codigo.help_text }}</div>
+        {% endif %}
+        {% for error in form.codigo.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Nombre -->
+      <div class="mb-3">
+        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+          {{ form.nombre.label }}
+        </label>
+        {{ form.nombre }}
+        {% if form.nombre.help_text %}
+          <div class="form-text">{{ form.nombre.help_text }}</div>
+        {% endif %}
+        {% for error in form.nombre.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <!-- Activo -->
+      <div class="form-check mb-3">
+        {{ form.activo }}
+        <label for="{{ form.activo.id_for_label }}" class="form-check-label">
+          {{ form.activo.label }}
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mt-3 d-flex gap-2">
+    <button class="btn btn-primary" type="submit">💾 Guardar</button>
+    <a class="btn btn-outline-secondary" href="{% url 'epica_create' %}">↩️ Volver a Épica</a>
+  </div>
+</form>
+{% endblock %}
