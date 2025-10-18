@@ -1,6 +1,12 @@
 {% extends "base.html" %}
-{% block content %}
+{% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/sprints_list.css' %}?v=4">
+{% endblock %}
+
+
+{% block content %}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
   <h2>📅 Sprints</h2>
   <div>

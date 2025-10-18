@@ -1,5 +1,4 @@
 /* =====================  NEUSI · DAILY (Formulario)  ===================== */
-
 /* Paleta */
 :root{
   --brand-deep:#3B0764;
@@ -16,22 +15,37 @@
   --red:#dc3545;
 }
 
-/* Base + fondo marca */
+/* Reseteos suaves y base */
+*,
+*::before,
+*::after{ box-sizing:border-box; }
 html, body{ height:100%; margin:0; }
 body{
   font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   color: var(--ink);
   padding: 20px;
+
+  /* Fondo suave "niebla lila" consistente con el resto del sitio */
   background:
-    radial-gradient(1200px 700px at 10% -10%, rgba(255,122,122,.20), transparent 60%),
-    radial-gradient(900px 600px at 95% 10%, rgba(109,40,217,.28), transparent 60%),
-    linear-gradient(135deg,#4c1d95 0%, #3b0764 35%, #6d28d9 100%);
+    radial-gradient(1200px 600px at 10% -10%, #ead6ff 0%, transparent 60%),
+    radial-gradient(1200px 600px at 110% 10%, #e6dbff 0%, transparent 60%),
+    #f4efff;
   background-attachment: fixed;
 }
 
+/* Profundidad sutil (no invasiva) */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 500px at 80% 85%, rgba(124,58,237,.06), transparent 60%),
+    radial-gradient(700px 400px at 20% 90%, rgba(99,102,241,.05), transparent 60%);
+}
+body > *{ position:relative; z-index:1; }
+
 /* Encabezado (el contenedor inline que ya traes) */
 body > div[style*="justify-content: space-between"]{
-  background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.82));
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86));
   border: 1px solid rgba(16,24,40,.08);
   border-radius: var(--radius);
   box-shadow: 0 20px 44px rgba(16,24,40,.12);
@@ -54,28 +68,31 @@ h2{
   font-weight: 800 !important;
   text-decoration: none !important;
   color: #fff !important;
+  background: #7c3aed; /* fallback si no aplican variantes */
   box-shadow: 0 10px 22px rgba(16,24,40,.12);
   transition: transform .06s ease, filter .2s ease, box-shadow .2s ease;
   cursor: pointer;
-  position: relative; z-index: 2; pointer-events:auto;
 }
-.btn:hover{ filter:brightness(1.06); box-shadow:0 16px 34px rgba(16,24,40,.16); }
-.btn:active{ transform: translateY(1px); }
 .btn-primary{  background: var(--blue) !important; }
 .btn-secondary{ background: var(--gray) !important; }
 .btn-danger{   background: var(--red) !important; }
+.btn:hover{ filter:brightness(1.06); box-shadow:0 16px 34px rgba(16,24,40,.16); }
+.btn:active{ transform: translateY(1px); }
 
 /* Card del formulario */
 .card{
-  background: rgba(255,255,255,.94) !important;
+  background: rgba(255,255,255,.96) !important;
   border: 1px solid rgba(16,24,40,.10) !important;
   border-radius: var(--radius) !important;
-  box-shadow: 0 22px 46px rgba(16,24,40,.14) !important;
+  box-shadow: 0 16px 36px rgba(16,24,40,.12) !important;
   padding: 18px !important;
 }
 
 /* Labels e inputs */
-label{ font-weight:800; color:#1b2233; margin: 12px 0 6px; display:block; }
+label{
+  font-weight:800; color:#1b2233;
+  margin: 12px 0 6px; display:block;
+}
 textarea, input[type="text"]{
   width:100%;
   padding:12px 14px;
@@ -106,6 +123,12 @@ textarea:focus, input[type="text"]:focus{
 
 /* Botones al pie */
 div[style*="margin-top: 15px;"] .btn{ margin-right: 6px; }
+
+/* Accesibilidad: menos movimiento si el usuario lo pide */
+@media (prefers-reduced-motion: reduce){
+  .btn{ transition:none; }
+  textarea, input[type="text"]{ transition:none; }
+}
 
 /* Responsivo */
 @media (max-width: 900px){
