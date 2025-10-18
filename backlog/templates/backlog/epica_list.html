@@ -1,5 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/epicas-list.css' %}?v=5">
+{% endblock %}
+
 {% block content %}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>🧱 Épicas</h4>
   {% if admin %}
@@ -7,41 +13,132 @@
   {% endif %}
 </div>
 
-<div class="card">
+<!-- 🔹 Filtro por Proyecto -->
+<form method="get" class="mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label for="proyecto" class="form-label">Proyecto</label>
+      <select name="proyecto" id="proyecto" class="form-select" onchange="this.form.submit()">
+        <option value="">-- Todos los proyectos --</option>
+        {% for p in proyectos %}
+          <option value="{{ p.id }}" {% if proyecto_id == p.id|stringformat:'s' %}selected{% endif %}>
+            {{ p.codigo }} — {{ p.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</form>
+
+<div class="card shadow-sm">
   <div class="card-body p-0">
-    <table class="table table-striped mb-0">
-      <thead>
+    <table class="table table-striped table-hover align-middle mb-0">
+      <thead class="table-light">
         <tr>
-          <th>Título</th>
-          <th>Estado</th>
-          <th>Prioridad</th>
-          <th>Owner</th>
-          <th>Sprint</th>
-          <th class="text-end">Progreso</th>
-          <th style="width: 120px;"></th>
+          <th style="width: 22%;">Código / Título</th>
+          <th style="width: 14%;">Proyecto</th>
+          <th style="width: 10%;">Estado</th>
+          <th style="width: 10%;">Prioridad</th>
+          <th style="width: 12%;">Owner</th>
+          <th style="width: 15%;">Sprints</th>
+          <th class="text-end" style="width: 10%;">Avance</th>
+          <th style="width: 90px;"></th>
         </tr>
       </thead>
       <tbody>
         {% for e in epicas %}
           <tr>
-            <td><a href="{% url 'epica_detail' e.id %}">{{ e.titulo }}</a></td>
-            <td>{{ e.get_estado_display }}</td>
-            <td>{{ e.get_prioridad_display }}</td>
+            <!-- Código + título -->
+            <td>
+              <a href="{% url 'epica_detail' e.id %}" class="fw-bold text-decoration-none">
+                {% if e.codigo %}<span class="text-muted">{{ e.codigo }}</span> - {% endif %}
+                {{ e.titulo }}
+              </a>
+              {% if e.kpis %}
+                <div class="small text-muted">{{ e.kpis|truncatechars:80 }}</div>
+              {% endif %}
+            </td>
+
+            <!-- Proyecto -->
+            <td>
+              {% if e.proyecto %}
+                {{ e.proyecto.codigo }} — {{ e.proyecto.nombre }}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Estado -->
+            <td>
+              {% if e.estado == "ACTIVA" %}
+                <span class="badge bg-success">{{ e.get_estado_display }}</span>
+              {% elif e.estado == "EN_PAUSA" %}
+                <span class="badge bg-warning text-dark">{{ e.get_estado_display }}</span>
+              {% elif e.estado == "CERRADA" %}
+                <span class="badge bg-secondary">{{ e.get_estado_display }}</span>
+              {% else %}
+                <span class="badge bg-info text-dark">{{ e.get_estado_display }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Prioridad -->
+            <td>
+              {% if e.prioridad == "ALTA" %}
+                <span class="text-danger fw-bold">{{ e.get_prioridad_display }}</span>
+              {% elif e.prioridad == "MEDIA" %}
+                <span class="text-warning fw-bold">{{ e.get_prioridad_display }}</span>
+              {% else %}
+                <span class="text-muted">{{ e.get_prioridad_display }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Owner -->
             <td>{{ e.owner|default:"—" }}</td>
-            <td>{{ e.sprint|default:"—" }}</td>
-            <td class="text-end">{{ e.progreso }}% ({{ e.tareas_completadas }}/{{ e.total_tareas }})</td>
+
+            <!-- Sprints -->
+            <td>
+              {% with ep_list=e.sprints.all %}
+                {% if ep_list %}
+                  {% for s in ep_list %}
+                    {{ s.nombre }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+
+            <!-- Avance -->
+            <td class="text-end">
+              <div class="d-flex flex-column align-items-end">
+                <span class="fw-bold">{{ e.avance|floatformat:0 }}%</span>
+                <small class="text-muted">
+                  {{ e.tareas_completadas }}/{{ e.total_tareas }}
+                </small>
+              </div>
+            </td>
+
+            <!-- Acciones -->
             <td class="text-end">
               {% if admin %}
-                <a class="btn btn-sm btn-outline-secondary" href="{% url 'epica_edit' e.id %}">✏️</a>
-                <a class="btn btn-sm btn-outline-danger" href="{% url 'epica_delete' e.id %}">🗑️</a>
+                <a class="btn btn-sm btn-outline-secondary" title="Editar" href="{% url 'epica_edit' e.id %}">✏️</a>
               {% endif %}
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-muted p-3">No hay épicas registradas.</td></tr>
+          <tr>
+            <td colspan="8" class="text-center text-muted p-3">
+              No hay épicas registradas.
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<div class="mt-3">
+  <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">↩️ Volver al Backlog</a>
+</div>
+
 {% endblock %}

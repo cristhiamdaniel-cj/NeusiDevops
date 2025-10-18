@@ -21,6 +21,7 @@ urlpatterns = [
     path("tarea/<int:tarea_id>/editar/", views.editar_tarea, name="editar_tarea"),  # Editar
     path("tarea/<int:tarea_id>/cerrar/", views.cerrar_tarea, name="cerrar_tarea"),  # Cerrar
     path("tarea/<int:tarea_id>/eliminar/", views.eliminar_tarea, name="eliminar_tarea"),  # Eliminar
+    path("tarea/<int:tarea_id>/cambiar-categoria/", views.cambiar_categoria_tarea, name="cambiar_categoria_tarea"),
 
     # 📎 Evidencias
     path("tarea/<int:tarea_id>/evidencia/", views.agregar_evidencia, name="agregar_evidencia"),  # Agregar
@@ -61,4 +62,5 @@ urlpatterns = [
     path("epicas/<int:epica_id>/", views.epica_detail, name="epica_detail"),
     path("epicas/<int:epica_id>/editar/", views.epica_edit, name="epica_edit"),
     path("epicas/<int:epica_id>/eliminar/", views.epica_delete, name="epica_delete"),
+    path("proyectos/nuevo/", views.proyecto_create, name="proyecto_create"),
 ]

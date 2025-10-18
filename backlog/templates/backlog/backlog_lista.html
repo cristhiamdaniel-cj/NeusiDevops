@@ -2,225 +2,201 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>🚀 NEUSI Task Manager</title>
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=2">
-
-    <style>
-        .btn {
-            padding: 6px 12px;
-            margin: 3px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-        }
-        .btn-primary { background-color: #007bff; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-info { background-color: #17a2b8; }
-        .btn-warning { background-color: #ffc107; color: #000; }
-        .btn-delete { background-color: #8B0000; }
-        .btn-success { background-color: #28a745; }
-        .tarea-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            background: #f8f9fa;
-        }
-        .tarea-titulo {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-        }
-        .tarea-meta {
-            font-size: 0.9em;
-            color: #666;
-            margin: 4px 0;
-        }
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: white;
-            font-size: 0.8em;
-        }
-        .badge-ui { background-color: #dc3545; }
-        .badge-nui { background-color: #28a745; }
-        .badge-uni { background-color: #ffc107; color: #000; }
-        .badge-nuni { background-color: #6c757d; }
-        .badge-epica { background-color: #007bff; }
-    </style>
+  <title>🚀 NEUSI Task Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=2">
+  <style>
+    .btn{padding:6px 12px;margin:3px;border:none;border-radius:5px;text-decoration:none;color:#fff;font-weight:bold}
+    .btn-primary{background:#007bff}.btn-secondary{background:#6c757d}.btn-danger{background:#dc3545}
+    .btn-info{background:#17a2b8}.btn-warning{background:#ffc107;color:#000}.btn-success{background:#28a745}
+    .btn-delete{background:#8B0000}
+    .tarea-card{border:1px solid #ddd;padding:15px;margin:10px 0;border-radius:8px;background:#f8f9fa}
+    .tarea-titulo{font-size:1.2em;font-weight:700;color:#333;margin-bottom:8px}
+    .tarea-meta{font-size:.9em;color:#666;margin:4px 0}
+    .badge{padding:4px 8px;border-radius:4px;color:#fff;font-size:.8em}
+    .badge-ui{background:#dc3545}.badge-nui{background:#28a745}.badge-uni{background:#ffc107;color:#000}.badge-nuni{background:#6c757d}
+    .badge-epica{background:#007bff}
+    .helper-links small a{text-decoration:underline;font-weight:600}
+  </style>
 </head>
 <body>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1>🚀 NEUSI Task Manager</h1>
-        
-        {% if request.user.is_authenticated %}
-        <div style="text-align: right;">
-            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
-        </div>
-        {% endif %}
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <h2><img src="{% static 'backlog/img/logo2.png' %}" alt="Logo NEUSI" class="me-3" style="height:45px;"> NEUSI Task Manager</h2  >
+    {% if request.user.is_authenticated %}
+    <div style="text-align:right;">
+      <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+      <span style="margin:0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+      <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
     </div>
+    {% endif %}
+  </div>
 
-    <h2>📋 Backlog en Lista</h2>
+  <h2>📋 Backlog en Lista</h2>
 
-    {% if request.user.is_authenticated and request.user.integrante %}
-        <div style="margin-bottom: 15px;">
-            <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily de Hoy</a>
-        </div>
+  {% if request.user.is_authenticated and request.user.integrante %}
+    <div style="margin-bottom:15px;">
+      <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily de Hoy</a>
+    </div>
+  {% endif %}
+
+  <form method="get" style="margin-bottom:20px;padding:15px;background:#e9ecef;border-radius:5px;">
+    <input type="hidden" name="filtrar" value="1">
+
+    {% if puede_ver_todo %}
+      <!-- Persona -->
+      <label for="persona">Persona:</label>
+      <select name="persona" id="persona">
+        <option value="">-- Todos --</option>
+        {% for i in integrantes %}
+          <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
+            {{ i.user.first_name }} {{ i.user.last_name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Sprint -->
+      <label for="sprint" style="margin-left:15px;">Sprint:</label>
+      <select name="sprint" id="sprint">
+        <option value="">-- Todos --</option>
+        {% for s in sprints %}
+          <option value="{{ s.id }}" {% if sprint_id == s.id|stringformat:"s" %}selected{% endif %}>
+            Sprint {{ s.inicio }} - {{ s.fin }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <span class="helper-links" style="margin-left:8px;">
+        <small>
+          <a href="{% url 'sprint_list' %}">Ver Sprints</a>
+          {% if tiene_permisos_admin %} • <a href="{% url 'sprint_create' %}">Crear Sprint</a>{% endif %}
+        </small>
+      </span>
+
+      <!-- Épica -->
+      <label for="epica" style="margin-left:15px;">Épica:</label>
+      <select name="epica" id="epica">
+        <option value="">-- Todas --</option>
+        {% for e in epicas %}
+          <option value="{{ e.id }}" {% if epica_id == e.id|stringformat:"s" %}selected{% endif %}>
+            {{ e.titulo }}
+          </option>
+        {% endfor %}
+      </select>
+    {% else %}
+      <div style="background:#fff3cd;padding:10px;border-radius:5px;border:1px solid #ffeaa7;color:#856404;margin-bottom:15px;">
+        <strong>📋 Vista Personal:</strong> Solo puedes ver tus tareas asignadas.
+        Para ver todas las tareas del equipo, contacta a Daniel Campos o Andrés Gómez.
+      </div>
     {% endif %}
 
-    <form method="get" style="margin-bottom: 20px; padding: 15px; background: #e9ecef; border-radius: 5px;">
-        {% if tiene_permisos_admin %}
-        <label for="persona">Persona:</label>
-        <select name="persona" id="persona">
-            <option value="">-- Todos --</option>
-            {% for i in integrantes %}
-                <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
-                    {{ i.user.first_name }} {{ i.user.last_name }}
-                </option>
-            {% endfor %}
-        </select>
+    <!-- Estado -->
+    <label for="estado" {% if puede_ver_todo %}style="margin-left:15px;"{% endif %}>Estado:</label>
+    <select name="estado" id="estado">
+      <option value="">-- Todos --</option>
+      <option value="abiertas" {% if estado == "abiertas" %}selected{% endif %}>Abiertas</option>
+      <option value="cerradas" {% if estado == "cerradas" %}selected{% endif %}>Cerradas</option>
+    </select>
 
-        <label for="sprint" style="margin-left: 15px;">Sprint:</label>
-        <select name="sprint" id="sprint">
-            <option value="">-- Todos --</option>
-            {% for s in sprints %}
-                <option value="{{ s.id }}" {% if sprint_id == s.id|stringformat:"s" %}selected{% endif %}>
-                    Sprint {{ s.inicio }} - {{ s.fin }}
-                </option>
-            {% endfor %}
-        </select>
+    <button type="submit" class="btn btn-secondary" style="margin-left:15px;">Filtrar</button>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-danger">❌ Limpiar</a>
+  </form>
 
-        <!-- 🔹 Nuevo filtro por Épica -->
-        <label for="epica" style="margin-left: 15px;">Épica:</label>
-        <select name="epica" id="epica">
-            <option value="">-- Todas --</option>
-            {% for e in epicas %}
-                <option value="{{ e.id }}" {% if epica_id == e.id|stringformat:"s" %}selected{% endif %}>
-                    {{ e.titulo }}
-                </option>
-            {% endfor %}
-        </select>
+  <div style="margin-bottom:15px;">
+    {% if tiene_permisos_admin %}
+      <a href="{% url 'nueva_tarea' %}" class="btn btn-primary">➕ Nueva tarea</a>
+    {% else %}
+      <span class="btn" style="background:#ccc;color:#666;cursor:not-allowed;">➕ Nueva tarea (Sin permisos)</span>
+    {% endif %}
+    <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
+    <a href="{% url 'kanban_board' %}" class="btn btn-success">📋 Ver Kanban</a>
+    <a href="{% url 'sprint_list' %}" class="btn btn-info">📅 Sprints</a>
+    {% if tiene_permisos_admin %}
+      <a href="{% url 'sprint_create' %}" class="btn btn-warning">➕ Nuevo Sprint</a>
+      <a href="{% url 'epica_list' %}" class="btn btn-info">🧱 Épicas</a>
+    {% endif %}
+  </div>
 
-        {% else %}
-        <div style="background: #fff3cd; padding: 10px; border-radius: 5px; border: 1px solid #ffeaa7; color: #856404; margin-bottom: 15px;">
-            <strong>📋 Vista Personal:</strong> Solo puedes ver tus tareas asignadas. 
-            Para ver todas las tareas del equipo, contacta a Daniel Campos o Andrés Gómez.
+  <hr>
+
+  {% for tarea in tareas %}
+    <div class="tarea-card">
+      <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
+
+      {% if tarea.epica %}
+        <div class="tarea-meta">
+          <span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span>
         </div>
-        {% endif %}
+      {% endif %}
 
-        <label for="estado" {% if tiene_permisos_admin %}style="margin-left: 15px;"{% endif %}>Estado:</label>
-        <select name="estado" id="estado">
-            <option value="">-- Todos --</option>
-            <option value="abiertas" {% if estado == "abiertas" %}selected{% endif %}>Abiertas</option>
-            <option value="cerradas" {% if estado == "cerradas" %}selected{% endif %}>Cerradas</option>
-        </select>
+      <div class="tarea-meta">
+        <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
+          {{ tarea.get_categoria_display }}
+        </span>
+      </div>
 
-        <button type="submit" class="btn btn-secondary" style="margin-left: 15px;">Filtrar</button>
-        <a href="{% url 'backlog_lista' %}" class="btn btn-danger">❌ Limpiar</a>
-    </form>
-
-    <div style="margin-bottom: 15px;">
-        {% if request.user.integrante.puede_crear_tareas %}
-            <a href="{% url 'nueva_tarea' %}" class="btn btn-primary">➕ Nueva tarea</a>
+      <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
+      <div class="tarea-meta"><strong>Asignado:</strong> {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</div>
+      <div class="tarea-meta">
+        <strong>Estado:</strong>
+        {% if tarea.completada %}
+          ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
         {% else %}
-            <span class="btn" style="background-color: #ccc; color: #666; cursor: not-allowed;">➕ Nueva tarea (Sin permisos)</span>
+          ⏳ Abierta
         {% endif %}
-        <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
-        <a href="{% url 'kanban_board' %}" class="btn btn-success">📋 Ver Kanban</a>
+      </div>
+
+      <div style="margin-top:10px;">
+        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
+
+        {% if not tarea.completada %}
+          {% if tiene_permisos_admin or tarea.asignado_a.user_id == request.user.id %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">
+              ✅ Cerrar Tarea
+            </button>
+          {% endif %}
+        {% endif %}
+
         {% if tiene_permisos_admin %}
-            <a href="{% url 'epica_list' %}" class="btn btn-info">🧱 Épicas</a>
+          <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">🗑️ Eliminar</a>
         {% endif %}
+      </div>
     </div>
 
-    <hr>
-
-    {% for tarea in tareas %}
-        <div class="tarea-card">
-            <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
-            
-            <!-- 🔹 Badge de Épica -->
-            {% if tarea.epica %}
-                <div class="tarea-meta">
-                    <span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span>
-                </div>
-            {% endif %}
-
-            <div class="tarea-meta">
-                <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
-                    {{ tarea.get_categoria_display }}
-                </span>
+    <!-- Modal cierre de tarea -->
+    <div class="modal fade" id="cerrarTareaModal{{ tarea.id }}" tabindex="-1" aria-labelledby="cerrarTareaLabel{{ tarea.id }}" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <form method="post" action="{% url 'cerrar_tarea' tarea.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-header">
+              <h5 class="modal-title" id="cerrarTareaLabel{{ tarea.id }}">📑 Cierre de Tarea: {{ tarea.titulo }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            
-            <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
-            <div class="tarea-meta"><strong>Asignado:</strong> {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</div>
-            <div class="tarea-meta">
-                <strong>Estado:</strong> 
-                {% if tarea.completada %}
-                    ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
-                {% else %}
-                    ⏳ Abierta
-                {% endif %}
+            <div class="modal-body">
+              <p>⚠️ Para cerrar esta tarea es obligatorio adjuntar un informe. Será evaluado por los administradores.</p>
+              <div class="mb-3">
+                <label for="informe_cierre_{{ tarea.id }}" class="form-label">📎 Informe de Cierre</label>
+                <input type="file" class="form-control" name="informe_cierre" id="informe_cierre_{{ tarea.id }}" required>
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" name="confirmacion" id="confirmacion_{{ tarea.id }}" value="confirmo" required>
+                <label class="form-check-label" for="confirmacion_{{ tarea.id }}">✅ Confirmo que adjunté el informe</label>
+              </div>
             </div>
-
-            <div style="margin-top: 10px;">
-                <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
-                {% if not tarea.completada %}
-                    <!-- Botón abre modal -->
-                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">
-                        ✅ Cerrar Tarea
-                    </button>
-                {% endif %}
-                
-                {% if tiene_permisos_admin %}
-                    <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">🗑️ Eliminar</a>
-                {% endif %}
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancelar</button>
+              <button type="submit" class="btn btn-danger">✅ Confirmar Cierre</button>
             </div>
+          </form>
         </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="tarea-card">
+      <p>No hay tareas registradas con los filtros seleccionados.</p>
+    </div>
+  {% endfor %}
 
-        <!-- Modal cierre de tarea -->
-        <div class="modal fade" id="cerrarTareaModal{{ tarea.id }}" tabindex="-1" aria-labelledby="cerrarTareaLabel{{ tarea.id }}" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <form method="post" action="{% url 'cerrar_tarea' tarea.id %}" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="modal-header">
-                  <h5 class="modal-title" id="cerrarTareaLabel{{ tarea.id }}">📑 Cierre de Tarea: {{ tarea.titulo }}</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                  <p>⚠️ Para cerrar esta tarea es obligatorio adjuntar un informe. Será evaluado por los administradores.</p>
-                  <div class="mb-3">
-                    <label for="informe_cierre_{{ tarea.id }}" class="form-label">📎 Informe de Cierre</label>
-                    <input type="file" class="form-control" name="informe_cierre" id="informe_cierre_{{ tarea.id }}" required>
-                  </div>
-                  <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" name="confirmacion" id="confirmacion_{{ tarea.id }}" value="confirmo" required>
-                    <label class="form-check-label" for="confirmacion_{{ tarea.id }}">✅ Confirmo que adjunté el informe</label>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancelar</button>
-                  <button type="submit" class="btn btn-danger">✅ Confirmar Cierre</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-    {% empty %}
-        <div class="tarea-card">
-            <p>No hay tareas registradas con los filtros seleccionados.</p>
-        </div>
-    {% endfor %}
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -7,185 +7,180 @@
     <style>
     body { position: relative; isolation: isolate; }
     .btn { position: relative; z-index: 10; }
-    /* Desactivar clics de posibles overlays globales */
     #particles-js, canvas.particles, canvas#bg-net, .drag-overlay, .matrix-overlay {
       pointer-events: none !important;
       z-index: 0 !important;
     }
 
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
-        h2 { margin-bottom: 15px; }
-        .btn {
-            padding: 6px 12px;
-            margin: 3px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-primary { background-color: #007bff; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-success { background-color: #28a745; }
-        .btn-info { background-color: #17a2b8; }
-        .card {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background: #f8f9fa;
-        }
-        tr.fuera-horario {
-            background: #f8d7da;
-        }
-        .estado-fuera {
-            color: #d9534f;
-            font-weight: bold;
-        }
-        .estado-ok {
-            color: #28a745;
-            font-weight: bold;
-        }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 20px; }
+    h2 { margin-bottom: 15px; }
+    .btn {
+        padding: 6px 12px;
+        margin: 3px;
+        border: none;
+        border-radius: 5px;
+        text-decoration: none;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .btn-primary { background-color: #007bff; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-success { background-color: #28a745; }
+    .btn-info { background-color: #17a2b8; }
+    .card {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+    th { background: #f8f9fa; }
+    tr.fuera-horario { background: #f8d7da; }
+    .estado-fuera { color: #d9534f; font-weight: bold; }
+    .estado-ok { color: #28a745; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- Encabezado -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2>📝 Resumen de Dailies</h2>
-        {% if request.user.is_authenticated %}
-        <div style="text-align: right;">
-            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
-        </div>
-        {% endif %}
-    </div>
-
-     <!-- Accesos rápidos -->
-    <div style="margin-bottom: 15px;">
-        <!-- Opción A: form GET que navega a daily_personal -->
-        <form method="get" action="{% url 'daily_personal' %}" style="display:inline;">
-            <button type="submit" class="btn btn-success">📅 Mi Daily Personal</button>
-        </form>
-
-        {% if tiene_permisos_admin %}
-            <a href="{% url 'daily_create_admin' %}" class="btn btn-primary">➕ Crear Daily</a>
-        {% endif %}
-    </div>
-
-    <!-- Filtros Administrativos -->
-    {% if tiene_permisos_admin %}
-    <div class="card">
-        <h4>🔧 Filtros Administrativos:</h4>
-        <form method="get" style="display: inline-flex; align-items: center; gap: 15px;">
-            <label for="persona">Ver dailies de:</label>
-            <select name="persona" id="persona" onchange="this.form.submit()">
-                <option value="">-- Todas las personas --</option>
-                {% for i in integrantes %}
-                    <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
-                        {{ i.user.first_name }} {{ i.user.last_name }}
-                    </option>
-                {% endfor %}
-            </select>
-            {% if persona_id %}
-                <a href="{% url 'daily_resumen' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
-            {% endif %}
-        </form>
-        <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
-            💡 Como administrador, puedes ver los dailies de todo el equipo y filtrar por persona específica.
-        </div>
-    </div>
-    {% else %}
-    <div class="card" style="background: #fff3cd; border: 1px solid #ffeaa7;">
-        <h4 style="color: #856404;">📋 Vista Personal</h4>
-        <p style="color: #856404; margin: 0;">
-            Solo puedes ver tu propio historial de dailies.  
-            Para acceder a los dailies del equipo completo, contacta a Daniel Campos o Andrés Gómez.
-        </p>
+<!-- Encabezado -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>📝 Resumen de Dailies</h2>
+    {% if request.user.is_authenticated %}
+    <div style="text-align: right;">
+        <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
     </div>
     {% endif %}
+</div>
 
-    <!-- Accesos a Backlog -->
-    <div style="margin-bottom: 15px;">
-        <a href="{% url 'backlog_lista' %}" class="btn btn-success">📋 Ver Backlog</a>
-        <a href="{% url 'backlog_matriz' %}" class="btn btn-info">📊 Ver Matriz</a>
+<!-- Accesos rápidos -->
+<div style="margin-bottom: 15px;">
+    <form method="get" action="{% url 'daily_personal' %}" style="display:inline;">
+        <button type="submit" class="btn btn-success">📅 Mi Daily Personal</button>
+    </form>
+
+    {% if tiene_permisos_admin %}
+        <a href="{% url 'daily_create_admin' %}" class="btn btn-primary">➕ Crear Daily</a>
+    {% endif %}
+</div>
+
+<!-- 🔎 Filtros (Admin o Visualizador) -->
+{% if puede_filtrar %}
+<div class="card">
+    <h4>🔎 Filtros:</h4>
+    <form method="get" style="display: inline-flex; align-items: center; gap: 15px;">
+        <label for="persona">Ver dailies de:</label>
+        <select name="persona" id="persona" onchange="this.form.submit()">
+            <option value="">-- Todas las personas --</option>
+            {% for i in integrantes %}
+                <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
+                    {{ i.user.first_name }} {{ i.user.last_name }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if persona_id %}
+            <a href="{% url 'daily_resumen' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
+        {% endif %}
+    </form>
+    <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+        {% if tiene_permisos_admin %}
+            💡 Como administrador, puedes ver y filtrar los dailies de todo el equipo.
+        {% else %}
+            👀 Como visualizador, puedes ver y filtrar los dailies de todo el equipo (solo lectura).
+        {% endif %}
     </div>
+</div>
+{% else %}
+<div class="card" style="background: #fff3cd; border: 1px solid #ffeaa7;">
+    <h4 style="color: #856404;">📋 Vista Personal</h4>
+    <p style="color: #856404; margin: 0;">
+        Solo puedes ver tu propio historial de dailies.
+        Para acceder a los dailies del equipo completo, contacta a Daniel Campos o Andrés Gómez.
+    </p>
+</div>
+{% endif %}
 
-    <!-- Tabla de Dailies -->
-    <table>
-        <tr>
-            <th>👤 Integrante</th>
-            <th>📅 Fecha</th>
-            <th>✅ Ayer</th>
-            <th>🎯 Hoy</th>
-            <th>⛔ Impedimentos</th>
-            <th>⏰ Estado</th>
-            {% if tiene_permisos_admin %}
-            <th>⚙ Acciones</th>
-            {% endif %}
-        </tr>
-        {% for d in registros %}
-        <tr class="{% if d.fuera_horario %}fuera-horario{% endif %}">
-            <td><strong>{{ d.integrante.user.first_name }}</strong></td>
-            <td>{{ d.fecha }}</td>
-            <td>{{ d.que_hizo_ayer }}</td>
-            <td>{{ d.que_hara_hoy }}</td>
-            <td>{{ d.impedimentos|default:"-" }}</td>
-            <td>
-                {% if d.fuera_horario %}
-                    <span class="estado-fuera">⚠ Fuera de horario</span>
-                {% else %}
-                    <span class="estado-ok">✅ En horario</span>
-                {% endif %}
-            </td>
-            {% if tiene_permisos_admin %}
-            <td>
-                <form method="post" action="{% url 'eliminar_daily' d.id %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" 
-                            onclick="return confirm('⚠ ¿Seguro que deseas eliminar este Daily?')" 
-                            class="btn btn-danger btn-sm">
-                        🗑 Eliminar
-                    </button>
-                </form>
-            </td>
-            {% endif %}
-        </tr>
-        {% empty %}
-        <tr><td colspan="7" style="text-align: center; padding: 20px; color: #666;">No hay registros de daily.</td></tr>
-        {% endfor %}
-    </table>
+<!-- Accesos a Backlog -->
+<div style="margin-bottom: 15px;">
+    <a href="{% url 'backlog_lista' %}" class="btn btn-success">📋 Ver Backlog</a>
+    <a href="{% url 'backlog_matriz' %}" class="btn btn-info">📊 Ver Matriz</a>
+</div>
 
-     <!-- Refuerzo JS para navegación del botón -->
-  <script>
-    (function(){
-      var b = document.getElementById('btn-daily-personal');
-      if(!b) return;
-      b.addEventListener('click', function(e){
-        e.preventDefault();
-        var href = this.getAttribute('href');
-        if (!href) return;
-        // Forzar la navegación por si algún overlay capta el clic
-        window.location.assign(href);
-      });
-    })();
-  </script>
+<!-- Tabla de Dailies -->
+<table>
+    <tr>
+        <th>👤 Integrante</th>
+        <th>📅 Fecha</th>
+        <th>✅ Ayer</th>
+        <th>🎯 Hoy</th>
+        <th>⛔ Impedimentos</th>
+        <th>⏰ Estado</th>
+        {% if tiene_permisos_admin %}
+        <th>⚙ Acciones</th>
+        {% endif %}
+    </tr>
+    {% for d in registros %}
+    <tr class="{% if d.fuera_horario %}fuera-horario{% endif %}">
+        <td><strong>{{ d.integrante.user.first_name }}</strong></td>
+        <td>{{ d.fecha }}</td>
+        <td>{{ d.que_hizo_ayer }}</td>
+        <td>{{ d.que_hara_hoy }}</td>
+        <td>{{ d.impedimentos|default:"-" }}</td>
+        <td>
+            {% if d.fuera_horario %}
+                <span class="estado-fuera">⚠ Fuera de horario</span>
+            {% else %}
+                <span class="estado-ok">✅ En horario</span>
+            {% endif %}
+        </td>
+        {% if tiene_permisos_admin %}
+        <td>
+            <form method="post" action="{% url 'eliminar_daily' d.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" 
+                        onclick="return confirm('⚠ ¿Seguro que deseas eliminar este Daily?')" 
+                        class="btn btn-danger btn-sm">
+                    🗑 Eliminar
+                </button>
+            </form>
+        </td>
+        {% endif %}
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+            No hay registros de daily.
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- JS de refuerzo -->
+<script>
+(function(){
+  var b = document.getElementById('btn-daily-personal');
+  if(!b) return;
+  b.addEventListener('click', function(e){
+    e.preventDefault();
+    var href = this.getAttribute('href');
+    if (!href) return;
+    window.location.assign(href);
+  });
+})();
+</script>
 
 </body>
 </html>
