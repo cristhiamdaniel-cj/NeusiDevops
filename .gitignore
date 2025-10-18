@@ -58,6 +58,12 @@ __pycache__/
 # Entornos y dependencias
 .venv/
 venv/
+db.sqlite3
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
 .Python
 
 # Config y secretos
