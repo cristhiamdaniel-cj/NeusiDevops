@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Integrante, Sprint, Epica, Tarea, Evidencia, Daily
+from .models import Integrante, Sprint, Epica, Tarea, Evidencia, Daily, Proyecto
 
 
 # ==========================
@@ -22,32 +22,32 @@ class SprintAdmin(admin.ModelAdmin):
     list_filter = ("inicio", "fin")
     search_fields = ("nombre",)
     ordering = ("-inicio",)
-
-
 # ==========================
-# Épica
+# Proyecto y Epica
 # ==========================
+
+@admin.register(Proyecto)
+class ProyectoAdmin(admin.ModelAdmin):
+    list_display = ("codigo", "nombre", "activo", "creado_en")
+    list_filter = ("activo",)
+    search_fields = ("codigo", "nombre")
+
 @admin.register(Epica)
 class EpicaAdmin(admin.ModelAdmin):
-    list_display = ("id", "titulo", "estado", "prioridad", "owner", "sprints_list", "progreso")
-    search_fields = ("titulo", "descripcion", "owner__user__username")
-    list_filter = ("estado", "prioridad", "sprints")
-    ordering = ("-creada_en",)
-    readonly_fields = ("creada_en", "actualizada_en", "progreso", "tareas_completadas", "total_tareas")
-
-    fieldsets = (
-        ("Información general", {
-            "fields": ("titulo", "descripcion", "estado", "prioridad", "owner", "sprints")
-        }),
-        ("Seguimiento y métricas", {
-            "fields": ("progreso", "tareas_completadas", "total_tareas"),
-            "classes": ("collapse",),
-        }),
-        ("Fechas", {
-            "fields": ("creada_en", "actualizada_en"),
-            "classes": ("collapse",),
-        }),
+    list_display = (
+        "codigo", "titulo", "proyecto", "estado", "prioridad",
+        "progreso",      # <- método de esta clase
+        "sprints_list", "creada_en"
     )
+    list_filter = ("proyecto", "estado", "prioridad")
+    search_fields = ("codigo", "titulo", "descripcion", "kpis")
+    autocomplete_fields = ("proyecto", "owner", "sprints")
+    readonly_fields = ("progreso", "creada_en", "actualizada_en")  # <- aquí también
+
+    @admin.display(description="Avance (%)")
+    def progreso(self, obj):
+        # usa la propiedad 'avance' del modelo (manual o calculado)
+        return f"{obj.avance:.0f}%"
 
 # ==========================
 # Tarea

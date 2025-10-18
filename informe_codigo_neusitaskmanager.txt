@@ -1,0 +1,2035 @@
+==============================================================
+📅 Fecha: vie 17 oct 2025 23:04:03 UTC
+📂 Proyecto detectado: /home/desarrollo/NeuralWasi/NeusiDevops
+==============================================================
+
+📁 ESTRUCTURA DE DIRECTORIOS:
+/home/desarrollo/NeuralWasi/NeusiDevops
+├── backlog
+│   ├── admin.py
+│   ├── api_docs
+│   │   ├── README_AUTH_BACKEND_LOGIN.md
+│   │   ├── README_BACKEND_EPICAS_API.md
+│   │   ├── README_BACKEND_MATRIZ_API.md
+│   │   ├── README_BACKEND_SPRINTS_API.md
+│   │   ├── README_BACKEND_TAREAS_API.md
+│   │   └── README_BACKLOG_API.md
+│   ├── apps.py
+│   ├── forms.py
+│   ├── __init__.py
+│   ├── migrations
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_daily.py
+│   │   ├── 0003_alter_daily_unique_together_daily_hora_and_more.py
+│   │   ├── 0004_tarea_criterios_aceptacion_tarea_fecha_cierre_and_more.py
+│   │   ├── 0005_remove_evidencia_fecha_evidencia_actualizado_en_and_more.py
+│   │   ├── 0006_daily_fuera_horario.py
+│   │   ├── 0007_sprint_nombre.py
+│   │   ├── 0008_tarea_estado.py
+│   │   ├── 0009_epica_tarea_epica.py
+│   │   ├── 0010_remove_epica_sprint_epica_sprints.py
+│   │   ├── 0011_tarea_esfuerzo_sp.py
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   ├── models.py
+│   ├── __pycache__
+│   │   ├── admin.cpython-312.pyc
+│   │   ├── apps.cpython-312.pyc
+│   │   ├── forms.cpython-312.pyc
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── models.cpython-312.pyc
+│   │   ├── urls.cpython-312.pyc
+│   │   └── views.cpython-312.pyc
+│   ├── static
+│   │   └── backlog
+│   ├── templates
+│   │   ├── auth
+│   │   └── backlog
+│   ├── tests.py
+│   ├── urls.py
+│   └── views.py
+├── db.sqlite3
+├── db.sqlite3.bak_20251015_2256
+├── db.sqlite3.bak_20251016_1740
+├── db.sqlite3.bak_20251016_2244
+├── db.sqlite3.bak_20251017_1405
+├── db.sqlite3.bak_20251017_2246
+├── disponibilidad
+│   ├── admin.py
+│   ├── apps.py
+│   ├── __init__.py
+│   ├── migrations
+│   │   ├── 0001_initial.py
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   ├── models.py
+│   ├── __pycache__
+│   │   ├── admin.cpython-312.pyc
+│   │   ├── apps.cpython-312.pyc
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── models.cpython-312.pyc
+│   │   ├── urls.cpython-312.pyc
+│   │   └── views.cpython-312.pyc
+│   ├── templates
+│   │   └── disponibilidad
+│   ├── templatetags
+│   │   ├── disponibilidad_extras.py
+│   │   ├── disponibilidad_filters.py
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   ├── tests.py
+│   ├── urls.py
+│   └── views.py
+├── evidencias
+│   ├── contrato_Sergio_arboleda_.pdf
+│   ├── informe_avance_2025_mKk3qPQ.pdf
+│   └── informe_avance_2025.pdf
+├── informe_codigo_neusitaskmanager.txt
+├── manage.py
+├── media
+│   ├── evidencias
+│   │   └── formato_informe_estado_de_avance.docx
+│   └── informes_cierre
+│       └── modelos_de_costo.pdf
+├── neusi-frontend
+│   ├── eslint.config.mjs
+│   ├── next.config.ts
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── postcss.config.mjs
+│   ├── public
+│   │   ├── backlog
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── js
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   └── window.svg
+│   ├── README.md
+│   ├── src
+│   │   ├── app
+│   │   ├── components
+│   │   └── lib
+│   └── tsconfig.json
+├── neusitaskmanager_v1_1
+│   └── venv
+│       ├── bin
+│       ├── include
+│       ├── lib
+│       ├── lib64 -> lib
+│       └── pyvenv.cfg
+├── neusi_tasks
+│   ├── asgi.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── settings.cpython-312.pyc
+│   │   ├── urls.cpython-312.pyc
+│   │   └── wsgi.cpython-312.pyc
+│   ├── settings.py
+│   ├── urls.py
+│   ├── urls.py.backup
+│   └── wsgi.py
+├── README.md
+├── requirements.txt
+├── scripts
+│   ├── extract_core_neusi.sh
+│   └── informe_codigo_neusitaskmanager.sh
+├── staticfiles
+│   ├── admin
+│   │   ├── css
+│   │   ├── img
+│   │   └── js
+│   └── backlog
+│       ├── auth-bg.js
+│       ├── auth.css
+│       ├── backlog.css
+│       ├── daily-form.css
+│       ├── daily-resumen.css
+│       ├── home.css
+│       ├── img
+│       ├── login.css
+│       └── login-effects.js
+├── templates
+│   └── base.html
+└── venv
+    ├── bin
+    │   ├── activate
+    │   ├── activate.csh
+    │   ├── activate.fish
+    │   ├── Activate.ps1
+    │   ├── django-admin
+    │   ├── pip
+    │   ├── pip3
+    │   ├── pip3.12
+    │   ├── python -> python3
+    │   ├── python3 -> /usr/bin/python3
+    │   ├── python3.12 -> python3
+    │   ├── sqlformat
+    │   └── wheel
+    ├── include
+    │   └── python3.12
+    ├── lib
+    │   └── python3.12
+    ├── lib64 -> lib
+    └── pyvenv.cfg
+
+55 directories, 114 files
+
+📏 ESTADÍSTICAS DE CÓDIGO:
+Archivos Python: 2970
+Plantillas HTML: 418
+Archivos JS: 276
+Líneas totales Python: 692829
+
+🧩 APLICACIONES DETECTADAS:
+/home/desarrollo/NeuralWasi/NeusiDevops/backlog/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/disponibilidad/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/apps/config.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/conf/app_template/apps.py-tpl
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/admin/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/admindocs/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/auth/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/contenttypes/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/flatpages/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/gis/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/humanize/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/messages/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/postgres/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/redirects/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/sessions/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/sitemaps/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/sites/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/staticfiles/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/syndication/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/db/migrations/state.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/authtoken/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/scripts/informe_codigo_neusitaskmanager.sh
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/apps/config.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/conf/app_template/apps.py-tpl
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/admin/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/admindocs/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/auth/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/contenttypes/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/flatpages/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/gis/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/humanize/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/messages/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/postgres/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/redirects/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/sessions/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/sitemaps/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/sites/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/staticfiles/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/syndication/apps.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/db/migrations/state.py
+
+🗄️ MODELOS DETECTADOS:
+/home/desarrollo/NeuralWasi/NeusiDevops/backlog/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/disponibilidad/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/admin/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/auth/base_user.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/auth/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/contenttypes/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/flatpages/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/gis/db/backends/oracle/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/gis/db/backends/postgis/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/gis/db/backends/spatialite/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/gis/utils/ogrinspect.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/redirects/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/sessions/base_session.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/contrib/sites/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/core/management/commands/inspectdb.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/db/migrations/recorder.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/db/models/fields/related.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/django/db/models/query_utils.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/authtoken/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/serializers.py
+/home/desarrollo/NeuralWasi/NeusiDevops/scripts/informe_codigo_neusitaskmanager.sh
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/admin/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/auth/base_user.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/auth/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/contenttypes/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/flatpages/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/gis/db/backends/oracle/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/gis/db/backends/postgis/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/gis/db/backends/spatialite/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/gis/utils/ogrinspect.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/redirects/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/sessions/base_session.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/contrib/sites/models.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/core/management/commands/inspectdb.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/db/migrations/recorder.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/db/models/fields/related.py
+/home/desarrollo/NeuralWasi/NeusiDevops/venv/lib/python3.12/site-packages/django/db/models/query_utils.py
+
+👁️‍🗨️ VISTAS DEFINIDAS:
+/home/desarrollo/NeuralWasi/NeusiDevops/disponibilidad/views.py:def mi_disponibilidad(request):
+/home/desarrollo/NeuralWasi/NeusiDevops/disponibilidad/views.py:def actualizar_horario(request):
+/home/desarrollo/NeuralWasi/NeusiDevops/disponibilidad/views.py:def ver_disponibilidad_equipo(request):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/mixins.py:    def create(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/mixins.py:    def list(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/mixins.py:    def retrieve(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/mixins.py:    def update(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/mixins.py:    def partial_update(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/mixins.py:    def destroy(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def allow_request(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def get_ident(self, request):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def get_cache_key(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def allow_request(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def get_cache_key(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def get_cache_key(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def allow_request(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/throttling.py:    def get_cache_key(self, request, view):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def determine_version(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def reverse(self, viewname, args=None, kwargs=None, request=None, format=None, **extra):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def determine_version(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def determine_version(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def reverse(self, viewname, args=None, kwargs=None, request=None, format=None, **extra):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def determine_version(self, request, *args, **kwargs):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def reverse(self, viewname, args=None, kwargs=None, request=None, format=None, **extra):
+/home/desarrollo/NeuralWasi/NeusiDevops/neusitaskmanager_v1_1/venv/lib/python3.12/site-packages/rest_framework/versioning.py:    def get_versioned_viewname(self, viewname, request):
+
+🌐 ENDPOINTS / URLs:
+    path('', views.mi_disponibilidad, name='mi_disponibilidad'),
+    path('equipo/', views.ver_disponibilidad_equipo, name='equipo_disponibilidad'),
+    path('actualizar-horario/', views.actualizar_horario, name='actualizar_horario'),
+        re_path(r'^(?P<version>[v1|v2]+)/users/$', users_list, name='users-list'),
+        re_path(r'^(?P<version>[v1|v2]+)/users/(?P<pk>[0-9]+)/$', users_detail, name='users-detail')
+        path('/users/', users_list, name='users-list'),
+        path('/users/<int
+        path('v1/', include('users.urls', namespace='v1')),
+        path('v2/', include('users.urls', namespace='v2'))
+                new_pattern = path(route, include((patterns, app_name), namespace), kwargs)
+                new_pattern = re_path(regex, include((patterns, app_name), namespace), kwargs)
+                new_pattern = path(route, view, kwargs, name)
+                new_pattern = re_path(regex, view, kwargs, name)
+            self.get_full_path())
+   path('docs/', include_docs_urls(title='Your API',
+            root_url = path('', view, name=self.root_view_name)
+    iri = request.get_full_path()
+def common_path(paths)
+        return common_path(prefixes)
+            path = self.coerce_path(path, method, view)
+    def coerce_path(self, path, method, view)
+        path('auth/', include('rest_framework.urls'))
+    path('login/', views.LoginView.as_view(template_name='rest_framework/login.html'), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+        path('', docs_view, name='docs-index'),
+        path('schema.js', schema_js_view, name='schema-js')
+    path('', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    def _get_path(self, parsed)
+            "PATH_INFO"
+            "path"
+def extend_sys_path(*paths)
+    def file_path(self, url)
+        os_rel_path = self.file_path(request.path)
+        os_rel_path = posixpath.normpath(unquote(os_rel_path))
+        label_as_path = os.path.abspath(label)
+        if self.method is None or not self.get_full_path()
+            self.get_full_path(),
+    def get_full_path(self, force_append_slash=False)
+        return self._get_full_path(self.path, force_append_slash)
+        return self._get_full_path(self.path_info, force_append_slash)
+    def _get_full_path(self, path, force_append_slash)
+            escape_uri_path(path),
+        using request.get_full_path(). If the location is absolute, convert it
+            location = "//%s" % self.get_full_path()
+def is_django_path(path)
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    final_path = abspath(join(base, *paths))
+    base_path = abspath(base)
+def to_path(value)
+def get_language_from_path(path)
+    return _trans.get_language_from_path(path)
+def get_language_from_path(request)
+def get_language_from_path(path, strict=False)
+        lang_code = get_language_from_path(request.path_info)
+def escape_uri_path(path)
+        target_path = os.path.abspath(to_path)
+        filename = os.path.abspath(os.path.join(target_path, name))
+            if os.path.commonpath([target_path, filename]) != target_path
+    def path(self)
+        return self.storage.path(self.name)
+                "path"
+def compile_json_path(key_transforms, include_root=True)
+            lhs_json_path = compile_json_path(lhs_key_transforms)
+            rhs_json_path = compile_json_path(rhs_key_transforms, include_root=False)
+        return compile_json_path([key_transform], include_root=False)
+        json_path = compile_json_path(key_transforms)
+        json_path = compile_json_path(key_transforms)
+        json_path = compile_json_path(key_transforms)
+            json_path = compile_json_path(key_transforms)
+        _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                path, final_field, targets, rest = self.names_to_path(
+                # names_to_path() validates the lookup. A descriptive
+                self.names_to_path(item.split(LOOKUP_SEP), self.model._meta)
+                            self.names_to_path(f.split(LOOKUP_SEP), self.model._meta)
+        name, imports = DeconstructableSerializer._serialize_path(path)
+    def _serialize_path(path)
+            name, imports = self._serialize_path(qs_path)
+        return repr(os.fspath(self.value)), {}
+    def path(self)
+msgstr "فائل کا راستہ(path("
+    2. Add a URL to urlpatterns
+    2. Add a URL to urlpatterns
+    2. Add a URL to urlpatterns
+    path('admin/', admin.site.urls),
+    path("setlang/", set_language, name="set_language"),
+        re_path(
+            zone_info_file = zoneinfo_root.joinpath(*self.TIME_ZONE.split("/"))
+def builtin_template_path(name)
+    def html_template_path(self)
+        return builtin_template_path("technical_500.html")
+    def text_template_path(self)
+        return builtin_template_path("technical_500.txt")
+            path=self.request.get_full_path(),
+    with builtin_template_path("technical_404.html").open(encoding="utf-8") as fh
+    with builtin_template_path("default_urlconf.html").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+    kwarg either from the extra dictionary passed to the path() function or as
+        with builtin_template_path("i18n_catalog.js").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+        path('<path
+    path = posixpath.normpath(path).lstrip("/")
+        with builtin_template_path("directory_index.html").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+            with builtin_template_path("csrf_403.html").open(encoding="utf-8") as fh
+        language_from_path = translation.get_language_from_path(request.path_info)
+        language_from_path = translation.get_language_from_path(request.path_info)
+            path_valid = is_valid_path(language_path, urlconf)
+                and is_valid_path("%s/" % language_path, urlconf)
+                language_url = request.get_full_path(
+                "https
+                path = request.get_full_path()
+            if not is_valid_path(request.path_info, urlconf)
+                match = is_valid_path("%s/" % request.path_info, urlconf)
+        new_path = request.get_full_path(force_append_slash=True)
+            path = request.get_full_path()
+def is_valid_path(path, urlconf=None)
+def _path(route, view, kwargs=None, name=None, Pattern=None)
+                    "when migrating to django.urls.path().".format(self.describe()),
+        self.file_path = os.path.abspath(self.file_path)
+        hint = "Try using path() instead of a tuple."
+            "of path() and/or re_path() instances.".format(pattern),
+        self._dir = os.path.abspath(dir)
+            temp_location = self.file.temporary_file_path()
+    def temporary_file_path(self)
+        return os.path.abspath(self.base_location)
+    def _relative_path(self, name)
+        full_path = self.path(name)
+        return os.path.relpath(full_path, self.location)
+            relative_path = self._relative_path(name)
+            absolute_path = self.path(exc.filename)
+            os.remove(content.temporary_file_path())
+        return self._relative_path(name).replace("\\", "/")
+    def path(self, name)
+        return os.path.normpath(os.path.join(dirname, self.get_valid_name(filename)))
+    def path(self, name)
+        return os.path.abspath(self.base_location)
+        return File(open(self.path(name), mode))
+        full_path = self.path(name)
+                        content.temporary_file_path(),
+                full_path = self.path(name)
+        name = os.path.relpath(full_path, self.location)
+        name = self.path(name)
+        return os.path.lexists(self.path(name))
+        path = self.path(path)
+    def path(self, name)
+        return os.path.getsize(self.path(name))
+        return self._datetime_from_timestamp(os.path.getatime(self.path(name)))
+        return self._datetime_from_timestamp(os.path.getctime(self.path(name)))
+        return self._datetime_from_timestamp(os.path.getmtime(self.path(name)))
+def is_ignored_path(path, ignore_patterns)
+                if is_ignored_path(
+                    os.path.normpath(os.path.join(dirpath, dirname)), ignore_patterns
+            if os.path.sep in os.path.normpath(fixture_name)
+        return [os.path.realpath(d) for d in dirs]
+    def path(self)
+    def path(self)
+    def work_path(self)
+            self.locale_paths = [os.path.abspath(os.path.join("conf", "locale"))]
+                self.locale_paths.append(os.path.abspath("locale"))
+                os.path.normpath(p)
+                    is_ignored_path(
+                        os.path.normpath(os.path.join(dirpath, dirname)),
+                    or os.path.join(os.path.abspath(dirpath), dirname) in ignored_roots
+                        0, os.path.join(os.path.abspath(dirpath), dirname)
+                file_path = os.path.normpath(os.path.join(dirpath, filename))
+                if file_ext not in self.extensions or is_ignored_path(
+                        if os.path.abspath(dirpath).startswith(os.path.dirname(path))
+                file_path = os.path.normpath(build_files[0].path)
+        django_dir = os.path.normpath(os.path.join(os.path.dirname(django.__file__)))
+                    migration_string = self.get_relative_path(writer.path)
+                        rel_prev_path = self.get_relative_path(prev_path)
+                            migration_path = self.get_relative_path(writer.path)
+    def get_relative_path(path)
+            migration_string = os.path.relpath(path)
+                obj = import_dotted_path(path) if "." in path else import_module(path)
+            top_dir = os.path.abspath(os.path.expanduser(target))
+            expanded_template = os.path.normpath(expanded_template)
+                absolute_path = os.path.abspath(expanded_template)
+                    attr = get_fields_from_path(model, name)[-1]
+def reverse_field_path(model, path)
+def get_fields_from_path(model, path)
+                        path('my_view/', self.admin_view(some_view))
+                    request.get_full_path(),
+            path("", wrap(self.index), name="index"),
+            path("login/", self.login, name="login"),
+            path("logout/", wrap(self.logout), name="logout"),
+            path(
+            path(
+            path("autocomplete/", wrap(self.autocomplete_view), name="autocomplete"),
+            path("jsi18n/", wrap(self.i18n_javascript, cacheable=True), name="jsi18n"),
+            path(
+                path(
+                re_path(regex, wrap(self.app_index), name="app_list"),
+            urlpatterns.append(re_path(r"(?P<url>.*)$", wrap(self.catch_all_view)))
+            "app_path"
+                        request.get_full_path(force_append_slash=True)
+                    field = get_fields_from_path(obj.model, item)[-1]
+                get_fields_from_path(obj.model, field)
+                field = get_fields_from_path(obj.model, obj.date_hierarchy)[-1]
+            path("", wrap(self.changelist_view), name="%s_%s_changelist" % info),
+            path("add/", wrap(self.add_view), name="%s_%s_add" % info),
+            path(
+            path(
+            path(
+            path(
+                return HttpResponseRedirect(request.get_full_path())
+            return HttpResponseRedirect(request.get_full_path())
+                return HttpResponseRedirect(request.get_full_path())
+                    field = get_fields_from_path(self.model, field_path)[-1]
+        field = get_fields_from_path(cl.model, field_name)[-1]
+        parent_model, reverse_path = reverse_field_path(model, field_path)
+        path = to_path(path)
+        full_path = request.get_full_path()
+                    old_path=request.get_full_path(force_append_slash=True),
+    path(
+    path(
+    path(
+    path(
+    path(
+    path(
+    path(
+    re_path(
+    path(
+        self.storage_path = self._get_storage_path()
+    def _get_storage_path(cls)
+        storage_path = cls._get_storage_path()
+            path = self.request.get_full_path()
+            path(
+                    return HttpResponseRedirect(request.get_full_path())
+                path = request.get_full_path()
+        if redirect_to != request.get_full_path()
+    path("login/", views.LoginView.as_view(), name="login"),
+    path("logout/", views.LogoutView.as_view(), name="logout"),
+    path(
+    path(
+    path("password_reset/", views.PasswordResetView.as_view(), name="password_reset"),
+    path(
+    path(
+    path(
+            path = request.get_full_path()
+    path("<path
+            if settings.STATIC_ROOT and os.path.abspath(
+            ) == os.path.abspath(root)
+            matched_path = storage.path(path)
+            self.storage.path("")
+                match = self.storage.path(path)
+    def file_path(self, url)
+        return serve(request, self.file_path(request.path), insecure=True)
+        path('<path
+    normalized_path = posixpath.normpath(path).lstrip("/")
+    def path(self, name)
+        return super().path(name)
+        name = posixpath.normpath(name)
+            self.storage.path("")
+        self.ignore_patterns = list({os.path.normpath(p) for p in ignore_patterns})
+                    full_path = self.storage.path(fpath)
+                        full_path = self.storage.path(prefixed_path)
+        source_path = source_storage.path(path)
+            full_path = self.storage.path(prefixed_path)
+        source_path = source_storage.path(path)
+            result = (os.path.realpath(path) for path in result)
+        items.update(cwd / to_path(dir) for dir in backend.engine.dirs if dir)
+                cwd / to_path(directory)
+                if directory and not is_django_path(directory)
+        path('client/<int
+        path('clients/', include('app_name.urls'))
+                    construct_relative_path(
+def construct_relative_path(
+    new_name = posixpath.normpath(
+    bits[1] = construct_relative_path(parser.origin.template_name, bits[1])
+    bits[1] = construct_relative_path(
+            file = data.temporary_file_path()
+    def path(self)
+                else format_html('<script src="{}"></script>', self.absolute_path(path))
+                        self.absolute_path(path),
+    def absolute_path(self, path)
+            _CACERT_CTX = as_file(files("pip._vendor.certifi").joinpath("cacert.pem"))
+        return files("pip._vendor.certifi").joinpath("cacert.pem").read_text(encoding="ascii")
+            _CACERT_CTX = get_path("pip._vendor.certifi", "cacert.pem")
+    def file_path(self)
+    def _adjust_path(self, path)
+        return os.path.realpath(path)
+    def _make_path(self, resource_name)
+        return self._adjust_path(result)
+        path = self._make_path(resource_name)
+    def _adjust_path(self, path)
+def finder_for_path(path)
+            executable = os.path.join(sysconfig.get_path('scripts'), 'python%s' % sysconfig.get_config_var('EXE'))
+        script = os.path.join(self.source_dir, convert_path(script))
+    def get_rel_path(root, path)
+                resource_file = get_rel_path(resources_root, abs_path)
+                    rel_path = get_rel_path(abs_base, abs_path)
+def convert_path(pathname)
+            raise DistlibException("file '%r' does not exist" % os.path.abspath(source))
+        path = os.path.abspath(path)
+    d, p = os.path.splitdrive(os.path.abspath(path) if use_abspath else path)
+        self.base = os.path.abspath(os.path.normpath(base))
+    def check_path(path)
+        p = os.path.abspath(os.path.join(dest_dir, path))
+    dest_dir = os.path.abspath(dest_dir)
+                    check_path(name)
+                    check_path(name)
+                path = os.path.normpath(path)
+def url_to_file_path(url
+    def site_data_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_data_dir)
+    def site_cache_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_cache_dir)
+        path = os.path.normpath(get_win_folder(const))
+        path = os.path.normpath(get_win_folder("CSIDL_COMMON_APPDATA"))
+        path = os.path.normpath(get_win_folder("CSIDL_LOCAL_APPDATA"))
+        path = os.path.normpath(get_win_folder("CSIDL_COMMON_APPDATA"))
+        return os.path.normpath(get_win_folder("CSIDL_PERSONAL"))
+        return os.path.normpath(get_win_folder("CSIDL_DOWNLOADS"))
+        return os.path.normpath(get_win_folder("CSIDL_MYPICTURES"))
+        return os.path.normpath(get_win_folder("CSIDL_MYVIDEO"))
+        return os.path.normpath(get_win_folder("CSIDL_MYMUSIC"))
+        return os.path.normpath(get_win_folder("CSIDL_DESKTOPDIRECTORY"))
+        path = os.path.normpath(os.path.join(get_win_folder("CSIDL_LOCAL_APPDATA"), "Temp"))  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Documents")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Downloads")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Pictures")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Videos")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Music")  # noqa
+    def _first_item_as_path_if_multipath(self, directory
+    def user_data_path(self) -> Path
+    def site_data_path(self) -> Path
+    def user_config_path(self) -> Path
+    def site_config_path(self) -> Path
+    def user_cache_path(self) -> Path
+    def site_cache_path(self) -> Path
+    def user_state_path(self) -> Path
+    def user_log_path(self) -> Path
+    def user_documents_path(self) -> Path
+    def user_downloads_path(self) -> Path
+    def user_pictures_path(self) -> Path
+    def user_videos_path(self) -> Path
+    def user_music_path(self) -> Path
+    def user_desktop_path(self) -> Path
+    def user_runtime_path(self) -> Path
+    def site_runtime_path(self) -> Path
+    def site_data_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_data_dir)
+    def site_config_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_config_dir)
+    def site_cache_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_cache_dir)
+def user_data_path(
+def site_data_path(
+def user_config_path(
+def site_config_path(
+def site_cache_path(
+def user_cache_path(
+def user_state_path(
+def user_log_path(
+def user_documents_path() -> Path
+def user_downloads_path() -> Path
+def user_pictures_path() -> Path
+def user_videos_path() -> Path
+def user_music_path() -> Path
+def user_desktop_path() -> Path
+def user_runtime_path(
+def site_runtime_path(
+    def _in_proc_script_path()
+        return resources.path(__package__, "_in_process.py")
+    def _in_proc_script_path()
+            resources.files(__package__).joinpath("_in_process.py")
+    abs_source = os.path.abspath(source_tree)
+    abs_requested = os.path.normpath(os.path.join(abs_source, requested))
+        self.source_dir = abspath(source_dir)
+                "metadata_directory"
+            metadata_directory = abspath(metadata_directory)
+                "wheel_directory"
+                "metadata_directory"
+            metadata_directory = abspath(metadata_directory)
+                "wheel_directory"
+                "sdist_directory"
+            with _in_proc_script_path() as script
+                    [python, abspath(str(script)), hook_name, td],
+            link_path = None if filename.startswith("<") else os.path.abspath(filename)
+    def from_path(
+        syntax = Syntax.from_path(
+    _IMPORT_CWD = os.path.abspath(os.getcwd())
+            path = os.path.normpath(os.path.abspath(path))
+WHEEL_DIR = os.path.abspath(os.path.dirname(__file__))
+    def get_cache_path(self, archive_name
+        self._warn_unsafe_extraction_path(extract_path)
+    def _warn_unsafe_extraction_path(path)
+    def set_extraction_path(self, path
+    def _get_metadata_path(self, name)
+        path = self._get_metadata_path(name)
+        path = self._get_metadata_path(name)
+        self._validate_resource_path(resource_name)
+    def _validate_resource_path(path)
+        path = os.path.normpath(path)
+            real_path = manager.get_cache_path(self.egg_name, self._parts(zip_path))
+    def _get_metadata_path(self, name)
+        if _is_egg_path(subitem)
+def find_on_path(importer
+        if not only and _is_egg_path(entry)
+        _rebuild_mod_path(path, packageName, module)
+def _rebuild_mod_path(orig_path, package_name, module
+    def position_in_sys_path(path)
+def normalize_path(filename
+def normalize_path(filename
+def normalize_path(filename
+    return os.path.normcase(os.path.realpath(os.path.normpath(_cygwin_patch(filename))))
+    os.path.abspath() works around this limitation. A fix in os.getcwd()
+    return os.path.abspath(filename) if sys.platform == 'cygwin' else filename
+        return normalize_path(filename)
+def _is_egg_path(path)
+            # We need to access _get_metadata_path() on the provider object
+            # since _get_metadata_path() is marked private.
+            path = self._provider._get_metadata_path(name)
+        # provider doesn't support _get_metadata_path().
+        loc = normalize_path(self.location)
+                normalize_path(fn).startswith(loc) or fn.startswith(self.location)
+        return normalize_path(location)
+                displaying_path = display_path(self.location)
+def _convert_installed_files_path(
+    For best compatibility with symlinks, this does not use ``abspath()`` or
+                return url_to_path(direct_url.url)
+            egg_link_path = egg_link_path_from_sys_path(self.raw_name)
+        return self.installed_location.startswith(normalize_path(user_site))
+        return self.installed_location.startswith(normalize_path(site_packages))
+            _convert_installed_files_path(pathlib.Path(p).parts, info_rel.parts)
+        return normalize_path(str(self._installed_location))
+        for child in self._info_location.joinpath("scripts").iterdir()
+            target_location = str(path.joinpath(target_rel))
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+    filename = os.path.realpath(filename)
+    def path(self) -> str
+        path = os.path.realpath(tempfile.mkdtemp(prefix=f"pip-{kind}-"))
+                path = os.path.realpath(path)
+            path = os.path.realpath(tempfile.mkdtemp(prefix=f"pip-{kind}-"))
+    def check_against_path(self, path
+    pip_pkg_dir = os.path.abspath(pip_pkg_dir)
+def display_path(path
+    path = os.path.normcase(os.path.abspath(path))
+def normalize_path(path
+        path = os.path.realpath(path)
+        path = os.path.abspath(path)
+    return path.startswith(normalize_path(sys.prefix))
+    marker = os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED")
+def egg_link_path_from_sys_path(raw_name
+    path = os.path.normpath(os.path.abspath(path))
+def url_to_path(url
+    site_mod_dir = os.path.dirname(os.path.abspath(site.__file__))
+    def _get_cache_path(self, name
+        metadata_path = self._get_cache_path(key)
+        path = self._get_cache_path(key)
+        path = self._get_cache_path(key)
+        metadata_path = self._get_cache_path(key)
+        path = self._get_cache_path(key) + ".body"
+        path = self._get_cache_path(key) + ".body"
+        pathname = url_to_path(request.url)
+        if cli and cli.startswith(sysconfig.get_path("scripts"))
+            scripts = Path(sysconfig.get_path("scripts"))
+            path_no_drive = os.path.splitdrive(os.path.abspath(scheme["headers"]))[1]
+    prefix = os.path.normpath(sys.prefix)
+site_packages
+    return os.path.abspath(src_prefix)
+        cmd.exec_prefix == f"{os.path.normpath(sys.exec_prefix)}/local"
+        and cmd.prefix == f"{os.path.normpath(sys.prefix)}/local"
+def make_pyproject_path(unpacked_source_directory
+            display_path(dest),
+    return os.path.relpath(location, repo_root)
+                    display_path(dest),
+                        display_path(dest),
+                display_path(dest),
+            logger.warning("Deleting %s", display_path(dest))
+            logger.warning("Backing up %s to %s", display_path(dest), dest_dir)
+                display_path(dest),
+        logger.info("Cloning %s%s to %s", url, rev_display, display_path(dest))
+        repo_root = os.path.abspath(os.path.join(git_dir, ".."))
+        return os.path.normpath(r.rstrip("\r\n"))
+            display_path(dest),
+            display_path(dest),
+            repo_root = os.path.abspath(os.path.join(location, repo_root))
+        return os.path.normpath(r.rstrip("\r\n"))
+            options.cache_dir = normalize_path(options.cache_dir)
+    value = os.path.abspath(value)
+    current_path = os.path.abspath(directory)
+        relpath = os.path.relpath(path, head)
+        normalized_dist_location = normalize_path(dist_location)
+            for p in {sysconfig.get_path("stdlib"), sysconfig.get_path("platstdlib")}
+                self.source_dir = os.path.normpath(os.path.abspath(link.file_path))
+                location = display_path(self.satisfied_by.location)
+                comes_from = self.comes_from.from_path()
+    def from_path(self) -> str | None
+                comes_from = self.comes_from.from_path()
+    def setup_py_path(self) -> str
+    def setup_cfg_path(self) -> str
+    def pyproject_toml_path(self) -> str
+        return make_pyproject_path(self.unpacked_source_directory)
+                display_path(self.source_dir),
+                f"The file {display_path(archive_path)} exists. (i)gnore, (w)ipe, "
+                logger.warning("Deleting %s", display_path(archive_path))
+                    display_path(archive_path),
+                    display_path(dest_file),
+            dir = os.path.normcase(os.path.abspath(self.unpacked_source_directory))
+        logger.info("Saved %s", display_path(archive_path))
+def _looks_like_path(name
+def _get_url_from_path(path
+    if _looks_like_path(name) and os.path.isdir(path)
+    if len(urlreq_parts) >= 2 and not _looks_like_path(urlreq_parts[0])
+    path = os.path.normpath(os.path.abspath(name))
+        url = _get_url_from_path(p, name)
+            link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
+            req_dir = os.path.dirname(os.path.abspath(filename))
+            filename, constraint, [{os.path.abspath(filename)
+                    req_path = os.path.abspath(
+        path = url_to_path(location)
+    location = os.path.normcase(os.path.abspath(editable_project_location))
+def get_legacy_build_wheel_path(
+        wheel_path = get_legacy_build_wheel_path(
+    def _entry_path(self, key
+        entry_path = self._entry_path(key)
+        os.unlink(self._entry_path(key))
+            hashes.check_against_path(from_path)
+        hashes.check_against_path(from_path)
+            hashes.check_against_path(download_path)
+            information = str(display_path(req.link.file_path))
+                comes_from = req.comes_from.from_path()
+                hashes.check_against_path(file_path)
+            download_path = display_path(download_location)
+        os.path.normcase(os.path.normpath(i)).rstrip(os.sep)
+        os.path.normcase(os.path.normpath(os.path.dirname(sys.executable)))
+        if os.path.normcase(os.path.normpath(parent_dir)) not in not_warn_dirs
+            "NOTE
+def _record_to_fs_path(record_path
+def _fs_to_record_path(path
+        path = os.path.relpath(path, lib_dir)
+            digest, length = rehash(_record_to_fs_path(new_record_path, lib_dir))
+        path = _fs_to_record_path(f, lib_dir)
+        newpath = _fs_to_record_path(destfile, lib_dir)
+    def is_dir_path(path
+            normed_path = os.path.normpath(record_path)
+            normed_path = os.path.normpath(record_path)
+    def is_data_scheme_path(path
+    def is_script_scheme_path(path
+    def pyc_output_path(path
+                        pyc_path = pyc_output_path(path)
+        self.cmd_opts.add_option(cmdoptions.list_path())
+            options.target_dir = os.path.abspath(options.target_dir)
+        self.cmd_opts.add_option(cmdoptions.list_path())
+        self.cmd_opts.add_option(cmdoptions.list_path())
+            self.format_for_abspath(files)
+    def format_for_abspath(self, files
+        options.wheel_dir = normalize_path(options.wheel_dir)
+        options.download_dir = normalize_path(options.download_dir)
+def _clean_file_url_path(part
+def _clean_url_path(path
+    path = _clean_url_path(result.path, is_local_path=is_local_path)
+    def file_path(self) -> str
+        return url_to_path(self.url)
+    def path(self) -> str
+        self.simple_url = self._url_for_path("simple")
+        self.pypi_url = self._url_for_path("pypi")
+    def _url_for_path(self, path
+                new_link = normalize_path(link)
+                        Path(url_to_path(download_info.url))
+    path('admin/', admin.site.urls),
+    path('', include('backlog.urls')),
+    path('admin/', admin.site.urls),
+    path('', include('backlog.urls')),
+    path('disponibilidad/', include('disponibilidad.urls')),  # <- Agregar esta línea
+grep -r "path(" "$PROJECT_DIR" | awk -F "
+    path('', include(router.urls)),
+    path('matriz/', matriz_eisenhower, name='matriz-eisenhower'),
+        // Crea la vista/URL
+    path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
+    path("change-password/", views.change_password, name="change_password"),
+    path("", views.home, name="home"),
+    path("lista/", views.backlog_lista, name="backlog_lista"),
+    path("matriz/", views.backlog_matriz, name="backlog_matriz"),
+    path("nueva/", views.nueva_tarea, name="nueva_tarea"),  # Crear tarea
+    path("tarea/<int
+    path("tarea/<int
+    path("tarea/<int
+    path("tarea/<int
+    path("tarea/<int
+    path("tarea/<int
+    path(
+    path(
+    path("checklist/<int
+    path("daily/", views.daily_personal, name="daily_personal"),  # Acceso directo al daily personal
+    path("daily/<int
+    path("daily/resumen/", views.daily_resumen, name="daily_resumen"),  # Resumen de dailies
+    path("daily/eliminar/<int
+    path("daily/nuevo/", views.daily_create_admin, name="daily_create_admin"),
+    path("sprints/", views.sprint_list, name="sprint_list"),
+    path("sprints/nuevo/", views.sprint_create, name="sprint_create"),
+    path("sprints/<int
+    path("sprints/<int
+    path("kanban/", views.kanban_board, name="kanban_board"),
+    path("tarea/<int
+    path("epicas/", views.epica_list, name="epica_list"),
+    path("epicas/nueva/", views.epica_create, name="epica_create"),
+    path("epicas/<int
+    path("epicas/<int
+    path("epicas/<int
+    path('', views.mi_disponibilidad, name='mi_disponibilidad'),
+    path('equipo/', views.ver_disponibilidad_equipo, name='equipo_disponibilidad'),
+    path('actualizar-horario/', views.actualizar_horario, name='actualizar_horario'),
+        re_path(r'^(?P<version>[v1|v2]+)/users/$', users_list, name='users-list'),
+        re_path(r'^(?P<version>[v1|v2]+)/users/(?P<pk>[0-9]+)/$', users_detail, name='users-detail')
+        path('/users/', users_list, name='users-list'),
+        path('/users/<int
+        path('v1/', include('users.urls', namespace='v1')),
+        path('v2/', include('users.urls', namespace='v2'))
+                new_pattern = path(route, include((patterns, app_name), namespace), kwargs)
+                new_pattern = re_path(regex, include((patterns, app_name), namespace), kwargs)
+                new_pattern = path(route, view, kwargs, name)
+                new_pattern = re_path(regex, view, kwargs, name)
+            self.get_full_path())
+   path('docs/', include_docs_urls(title='Your API',
+            root_url = path('', view, name=self.root_view_name)
+    iri = request.get_full_path()
+def common_path(paths)
+        return common_path(prefixes)
+            path = self.coerce_path(path, method, view)
+    def coerce_path(self, path, method, view)
+        path('auth/', include('rest_framework.urls'))
+    path('login/', views.LoginView.as_view(template_name='rest_framework/login.html'), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+        path('', docs_view, name='docs-index'),
+        path('schema.js', schema_js_view, name='schema-js')
+    path('', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    def _get_path(self, parsed)
+def extend_sys_path(*paths)
+    def file_path(self, url)
+        os_rel_path = self.file_path(request.path)
+        os_rel_path = posixpath.normpath(unquote(os_rel_path))
+        label_as_path = os.path.abspath(label)
+        if self.method is None or not self.get_full_path()
+            self.get_full_path(),
+    def get_full_path(self, force_append_slash=False)
+        return self._get_full_path(self.path, force_append_slash)
+        return self._get_full_path(self.path_info, force_append_slash)
+    def _get_full_path(self, path, force_append_slash)
+            escape_uri_path(path),
+        using request.get_full_path(). If the location is absolute, convert it
+            location = "//%s" % self.get_full_path()
+def is_django_path(path)
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    final_path = abspath(join(base, *paths))
+    base_path = abspath(base)
+def to_path(value)
+def get_language_from_path(path)
+    return _trans.get_language_from_path(path)
+def get_language_from_path(request)
+def get_language_from_path(path, strict=False)
+        lang_code = get_language_from_path(request.path_info)
+def escape_uri_path(path)
+        target_path = os.path.abspath(to_path)
+        filename = os.path.abspath(os.path.join(target_path, name))
+            if os.path.commonpath([target_path, filename]) != target_path
+    def path(self)
+        return self.storage.path(self.name)
+def compile_json_path(key_transforms, include_root=True)
+            lhs_json_path = compile_json_path(lhs_key_transforms)
+            rhs_json_path = compile_json_path(rhs_key_transforms, include_root=False)
+        return compile_json_path([key_transform], include_root=False)
+        json_path = compile_json_path(key_transforms)
+        json_path = compile_json_path(key_transforms)
+        json_path = compile_json_path(key_transforms)
+            json_path = compile_json_path(key_transforms)
+        _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                path, final_field, targets, rest = self.names_to_path(
+                # names_to_path() validates the lookup. A descriptive
+                self.names_to_path(item.split(LOOKUP_SEP), self.model._meta)
+                            self.names_to_path(f.split(LOOKUP_SEP), self.model._meta)
+        name, imports = DeconstructableSerializer._serialize_path(path)
+    def _serialize_path(path)
+            name, imports = self._serialize_path(qs_path)
+        return repr(os.fspath(self.value)), {}
+    def path(self)
+msgstr "فائل کا راستہ(path("
+    path('admin/', admin.site.urls),
+    path("setlang/", set_language, name="set_language"),
+        re_path(
+            zone_info_file = zoneinfo_root.joinpath(*self.TIME_ZONE.split("/"))
+def builtin_template_path(name)
+    def html_template_path(self)
+        return builtin_template_path("technical_500.html")
+    def text_template_path(self)
+        return builtin_template_path("technical_500.txt")
+            path=self.request.get_full_path(),
+    with builtin_template_path("technical_404.html").open(encoding="utf-8") as fh
+    with builtin_template_path("default_urlconf.html").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+    kwarg either from the extra dictionary passed to the path() function or as
+        with builtin_template_path("i18n_catalog.js").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+        path('<path
+    path = posixpath.normpath(path).lstrip("/")
+        with builtin_template_path("directory_index.html").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+            with builtin_template_path("csrf_403.html").open(encoding="utf-8") as fh
+        language_from_path = translation.get_language_from_path(request.path_info)
+        language_from_path = translation.get_language_from_path(request.path_info)
+            path_valid = is_valid_path(language_path, urlconf)
+                and is_valid_path("%s/" % language_path, urlconf)
+                language_url = request.get_full_path(
+                path = request.get_full_path()
+            if not is_valid_path(request.path_info, urlconf)
+                match = is_valid_path("%s/" % request.path_info, urlconf)
+        new_path = request.get_full_path(force_append_slash=True)
+            path = request.get_full_path()
+def is_valid_path(path, urlconf=None)
+def _path(route, view, kwargs=None, name=None, Pattern=None)
+                    "when migrating to django.urls.path().".format(self.describe()),
+        self.file_path = os.path.abspath(self.file_path)
+        hint = "Try using path() instead of a tuple."
+            "of path() and/or re_path() instances.".format(pattern),
+        self._dir = os.path.abspath(dir)
+            temp_location = self.file.temporary_file_path()
+    def temporary_file_path(self)
+        return os.path.abspath(self.base_location)
+    def _relative_path(self, name)
+        full_path = self.path(name)
+        return os.path.relpath(full_path, self.location)
+            relative_path = self._relative_path(name)
+            absolute_path = self.path(exc.filename)
+            os.remove(content.temporary_file_path())
+        return self._relative_path(name).replace("\\", "/")
+    def path(self, name)
+        return os.path.normpath(os.path.join(dirname, self.get_valid_name(filename)))
+    def path(self, name)
+        return os.path.abspath(self.base_location)
+        return File(open(self.path(name), mode))
+        full_path = self.path(name)
+                        content.temporary_file_path(),
+                full_path = self.path(name)
+        name = os.path.relpath(full_path, self.location)
+        name = self.path(name)
+        return os.path.lexists(self.path(name))
+        path = self.path(path)
+    def path(self, name)
+        return os.path.getsize(self.path(name))
+        return self._datetime_from_timestamp(os.path.getatime(self.path(name)))
+        return self._datetime_from_timestamp(os.path.getctime(self.path(name)))
+        return self._datetime_from_timestamp(os.path.getmtime(self.path(name)))
+def is_ignored_path(path, ignore_patterns)
+                if is_ignored_path(
+                    os.path.normpath(os.path.join(dirpath, dirname)), ignore_patterns
+            if os.path.sep in os.path.normpath(fixture_name)
+        return [os.path.realpath(d) for d in dirs]
+    def path(self)
+    def path(self)
+    def work_path(self)
+            self.locale_paths = [os.path.abspath(os.path.join("conf", "locale"))]
+                self.locale_paths.append(os.path.abspath("locale"))
+                os.path.normpath(p)
+                    is_ignored_path(
+                        os.path.normpath(os.path.join(dirpath, dirname)),
+                    or os.path.join(os.path.abspath(dirpath), dirname) in ignored_roots
+                        0, os.path.join(os.path.abspath(dirpath), dirname)
+                file_path = os.path.normpath(os.path.join(dirpath, filename))
+                if file_ext not in self.extensions or is_ignored_path(
+                        if os.path.abspath(dirpath).startswith(os.path.dirname(path))
+                file_path = os.path.normpath(build_files[0].path)
+        django_dir = os.path.normpath(os.path.join(os.path.dirname(django.__file__)))
+                    migration_string = self.get_relative_path(writer.path)
+                        rel_prev_path = self.get_relative_path(prev_path)
+                            migration_path = self.get_relative_path(writer.path)
+    def get_relative_path(path)
+            migration_string = os.path.relpath(path)
+                obj = import_dotted_path(path) if "." in path else import_module(path)
+            top_dir = os.path.abspath(os.path.expanduser(target))
+            expanded_template = os.path.normpath(expanded_template)
+                absolute_path = os.path.abspath(expanded_template)
+                    attr = get_fields_from_path(model, name)[-1]
+def reverse_field_path(model, path)
+def get_fields_from_path(model, path)
+                        path('my_view/', self.admin_view(some_view))
+                    request.get_full_path(),
+            path("", wrap(self.index), name="index"),
+            path("login/", self.login, name="login"),
+            path("logout/", wrap(self.logout), name="logout"),
+            path(
+            path(
+            path("autocomplete/", wrap(self.autocomplete_view), name="autocomplete"),
+            path("jsi18n/", wrap(self.i18n_javascript, cacheable=True), name="jsi18n"),
+            path(
+                path(
+                re_path(regex, wrap(self.app_index), name="app_list"),
+            urlpatterns.append(re_path(r"(?P<url>.*)$", wrap(self.catch_all_view)))
+                        request.get_full_path(force_append_slash=True)
+                    field = get_fields_from_path(obj.model, item)[-1]
+                get_fields_from_path(obj.model, field)
+                field = get_fields_from_path(obj.model, obj.date_hierarchy)[-1]
+            path("", wrap(self.changelist_view), name="%s_%s_changelist" % info),
+            path("add/", wrap(self.add_view), name="%s_%s_add" % info),
+            path(
+            path(
+            path(
+            path(
+                return HttpResponseRedirect(request.get_full_path())
+            return HttpResponseRedirect(request.get_full_path())
+                return HttpResponseRedirect(request.get_full_path())
+                    field = get_fields_from_path(self.model, field_path)[-1]
+        field = get_fields_from_path(cl.model, field_name)[-1]
+        parent_model, reverse_path = reverse_field_path(model, field_path)
+        path = to_path(path)
+        full_path = request.get_full_path()
+                    old_path=request.get_full_path(force_append_slash=True),
+    path(
+    path(
+    path(
+    path(
+    path(
+    path(
+    path(
+    re_path(
+    path(
+        self.storage_path = self._get_storage_path()
+    def _get_storage_path(cls)
+        storage_path = cls._get_storage_path()
+            path = self.request.get_full_path()
+            path(
+                    return HttpResponseRedirect(request.get_full_path())
+                path = request.get_full_path()
+        if redirect_to != request.get_full_path()
+    path("login/", views.LoginView.as_view(), name="login"),
+    path("logout/", views.LogoutView.as_view(), name="logout"),
+    path(
+    path(
+    path("password_reset/", views.PasswordResetView.as_view(), name="password_reset"),
+    path(
+    path(
+    path(
+            path = request.get_full_path()
+    path("<path
+            if settings.STATIC_ROOT and os.path.abspath(
+            ) == os.path.abspath(root)
+            matched_path = storage.path(path)
+            self.storage.path("")
+                match = self.storage.path(path)
+    def file_path(self, url)
+        return serve(request, self.file_path(request.path), insecure=True)
+        path('<path
+    normalized_path = posixpath.normpath(path).lstrip("/")
+    def path(self, name)
+        return super().path(name)
+        name = posixpath.normpath(name)
+            self.storage.path("")
+        self.ignore_patterns = list({os.path.normpath(p) for p in ignore_patterns})
+                    full_path = self.storage.path(fpath)
+                        full_path = self.storage.path(prefixed_path)
+        source_path = source_storage.path(path)
+            full_path = self.storage.path(prefixed_path)
+        source_path = source_storage.path(path)
+            result = (os.path.realpath(path) for path in result)
+        items.update(cwd / to_path(dir) for dir in backend.engine.dirs if dir)
+                cwd / to_path(directory)
+                if directory and not is_django_path(directory)
+        path('client/<int
+        path('clients/', include('app_name.urls'))
+                    construct_relative_path(
+def construct_relative_path(
+    new_name = posixpath.normpath(
+    bits[1] = construct_relative_path(parser.origin.template_name, bits[1])
+    bits[1] = construct_relative_path(
+            file = data.temporary_file_path()
+    def path(self)
+                else format_html('<script src="{}"></script>', self.absolute_path(path))
+                        self.absolute_path(path),
+    def absolute_path(self, path)
+            _CACERT_CTX = as_file(files("pip._vendor.certifi").joinpath("cacert.pem"))
+        return files("pip._vendor.certifi").joinpath("cacert.pem").read_text(encoding="ascii")
+            _CACERT_CTX = get_path("pip._vendor.certifi", "cacert.pem")
+    def file_path(self)
+    def _adjust_path(self, path)
+        return os.path.realpath(path)
+    def _make_path(self, resource_name)
+        return self._adjust_path(result)
+        path = self._make_path(resource_name)
+    def _adjust_path(self, path)
+def finder_for_path(path)
+            executable = os.path.join(sysconfig.get_path('scripts'), 'python%s' % sysconfig.get_config_var('EXE'))
+        script = os.path.join(self.source_dir, convert_path(script))
+    def get_rel_path(root, path)
+                resource_file = get_rel_path(resources_root, abs_path)
+                    rel_path = get_rel_path(abs_base, abs_path)
+def convert_path(pathname)
+            raise DistlibException("file '%r' does not exist" % os.path.abspath(source))
+        path = os.path.abspath(path)
+    d, p = os.path.splitdrive(os.path.abspath(path) if use_abspath else path)
+        self.base = os.path.abspath(os.path.normpath(base))
+    def check_path(path)
+        p = os.path.abspath(os.path.join(dest_dir, path))
+    dest_dir = os.path.abspath(dest_dir)
+                    check_path(name)
+                    check_path(name)
+                path = os.path.normpath(path)
+def url_to_file_path(url
+    def site_data_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_data_dir)
+    def site_cache_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_cache_dir)
+        path = os.path.normpath(get_win_folder(const))
+        path = os.path.normpath(get_win_folder("CSIDL_COMMON_APPDATA"))
+        path = os.path.normpath(get_win_folder("CSIDL_LOCAL_APPDATA"))
+        path = os.path.normpath(get_win_folder("CSIDL_COMMON_APPDATA"))
+        return os.path.normpath(get_win_folder("CSIDL_PERSONAL"))
+        return os.path.normpath(get_win_folder("CSIDL_DOWNLOADS"))
+        return os.path.normpath(get_win_folder("CSIDL_MYPICTURES"))
+        return os.path.normpath(get_win_folder("CSIDL_MYVIDEO"))
+        return os.path.normpath(get_win_folder("CSIDL_MYMUSIC"))
+        return os.path.normpath(get_win_folder("CSIDL_DESKTOPDIRECTORY"))
+        path = os.path.normpath(os.path.join(get_win_folder("CSIDL_LOCAL_APPDATA"), "Temp"))  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Documents")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Downloads")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Pictures")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Videos")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Music")  # noqa
+    def _first_item_as_path_if_multipath(self, directory
+    def user_data_path(self) -> Path
+    def site_data_path(self) -> Path
+    def user_config_path(self) -> Path
+    def site_config_path(self) -> Path
+    def user_cache_path(self) -> Path
+    def site_cache_path(self) -> Path
+    def user_state_path(self) -> Path
+    def user_log_path(self) -> Path
+    def user_documents_path(self) -> Path
+    def user_downloads_path(self) -> Path
+    def user_pictures_path(self) -> Path
+    def user_videos_path(self) -> Path
+    def user_music_path(self) -> Path
+    def user_desktop_path(self) -> Path
+    def user_runtime_path(self) -> Path
+    def site_runtime_path(self) -> Path
+    def site_data_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_data_dir)
+    def site_config_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_config_dir)
+    def site_cache_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_cache_dir)
+def user_data_path(
+def site_data_path(
+def user_config_path(
+def site_config_path(
+def site_cache_path(
+def user_cache_path(
+def user_state_path(
+def user_log_path(
+def user_documents_path() -> Path
+def user_downloads_path() -> Path
+def user_pictures_path() -> Path
+def user_videos_path() -> Path
+def user_music_path() -> Path
+def user_desktop_path() -> Path
+def user_runtime_path(
+def site_runtime_path(
+    def _in_proc_script_path()
+        return resources.path(__package__, "_in_process.py")
+    def _in_proc_script_path()
+            resources.files(__package__).joinpath("_in_process.py")
+    abs_source = os.path.abspath(source_tree)
+    abs_requested = os.path.normpath(os.path.join(abs_source, requested))
+        self.source_dir = abspath(source_dir)
+            metadata_directory = abspath(metadata_directory)
+            metadata_directory = abspath(metadata_directory)
+            with _in_proc_script_path() as script
+                    [python, abspath(str(script)), hook_name, td],
+            link_path = None if filename.startswith("<") else os.path.abspath(filename)
+    def from_path(
+        syntax = Syntax.from_path(
+    _IMPORT_CWD = os.path.abspath(os.getcwd())
+            path = os.path.normpath(os.path.abspath(path))
+WHEEL_DIR = os.path.abspath(os.path.dirname(__file__))
+    def get_cache_path(self, archive_name
+        self._warn_unsafe_extraction_path(extract_path)
+    def _warn_unsafe_extraction_path(path)
+    def set_extraction_path(self, path
+    def _get_metadata_path(self, name)
+        path = self._get_metadata_path(name)
+        path = self._get_metadata_path(name)
+        self._validate_resource_path(resource_name)
+    def _validate_resource_path(path)
+        path = os.path.normpath(path)
+            real_path = manager.get_cache_path(self.egg_name, self._parts(zip_path))
+    def _get_metadata_path(self, name)
+        if _is_egg_path(subitem)
+def find_on_path(importer
+        if not only and _is_egg_path(entry)
+        _rebuild_mod_path(path, packageName, module)
+def _rebuild_mod_path(orig_path, package_name, module
+    def position_in_sys_path(path)
+def normalize_path(filename
+def normalize_path(filename
+def normalize_path(filename
+    return os.path.normcase(os.path.realpath(os.path.normpath(_cygwin_patch(filename))))
+    os.path.abspath() works around this limitation. A fix in os.getcwd()
+    return os.path.abspath(filename) if sys.platform == 'cygwin' else filename
+        return normalize_path(filename)
+def _is_egg_path(path)
+            # We need to access _get_metadata_path() on the provider object
+            # since _get_metadata_path() is marked private.
+            path = self._provider._get_metadata_path(name)
+        # provider doesn't support _get_metadata_path().
+        loc = normalize_path(self.location)
+                normalize_path(fn).startswith(loc) or fn.startswith(self.location)
+        return normalize_path(location)
+                displaying_path = display_path(self.location)
+def _convert_installed_files_path(
+    For best compatibility with symlinks, this does not use ``abspath()`` or
+                return url_to_path(direct_url.url)
+            egg_link_path = egg_link_path_from_sys_path(self.raw_name)
+        return self.installed_location.startswith(normalize_path(user_site))
+        return self.installed_location.startswith(normalize_path(site_packages))
+            _convert_installed_files_path(pathlib.Path(p).parts, info_rel.parts)
+        return normalize_path(str(self._installed_location))
+        for child in self._info_location.joinpath("scripts").iterdir()
+            target_location = str(path.joinpath(target_rel))
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+    filename = os.path.realpath(filename)
+    def path(self) -> str
+        path = os.path.realpath(tempfile.mkdtemp(prefix=f"pip-{kind}-"))
+                path = os.path.realpath(path)
+            path = os.path.realpath(tempfile.mkdtemp(prefix=f"pip-{kind}-"))
+    def check_against_path(self, path
+    pip_pkg_dir = os.path.abspath(pip_pkg_dir)
+def display_path(path
+    path = os.path.normcase(os.path.abspath(path))
+def normalize_path(path
+        path = os.path.realpath(path)
+        path = os.path.abspath(path)
+    return path.startswith(normalize_path(sys.prefix))
+    marker = os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED")
+def egg_link_path_from_sys_path(raw_name
+    path = os.path.normpath(os.path.abspath(path))
+def url_to_path(url
+    site_mod_dir = os.path.dirname(os.path.abspath(site.__file__))
+    def _get_cache_path(self, name
+        metadata_path = self._get_cache_path(key)
+        path = self._get_cache_path(key)
+        path = self._get_cache_path(key)
+        metadata_path = self._get_cache_path(key)
+        path = self._get_cache_path(key) + ".body"
+        path = self._get_cache_path(key) + ".body"
+        pathname = url_to_path(request.url)
+        if cli and cli.startswith(sysconfig.get_path("scripts"))
+            scripts = Path(sysconfig.get_path("scripts"))
+            path_no_drive = os.path.splitdrive(os.path.abspath(scheme["headers"]))[1]
+    prefix = os.path.normpath(sys.prefix)
+    return os.path.abspath(src_prefix)
+        cmd.exec_prefix == f"{os.path.normpath(sys.exec_prefix)}/local"
+        and cmd.prefix == f"{os.path.normpath(sys.prefix)}/local"
+def make_pyproject_path(unpacked_source_directory
+            display_path(dest),
+    return os.path.relpath(location, repo_root)
+                    display_path(dest),
+                        display_path(dest),
+                display_path(dest),
+            logger.warning("Deleting %s", display_path(dest))
+            logger.warning("Backing up %s to %s", display_path(dest), dest_dir)
+                display_path(dest),
+        logger.info("Cloning %s%s to %s", url, rev_display, display_path(dest))
+        repo_root = os.path.abspath(os.path.join(git_dir, ".."))
+        return os.path.normpath(r.rstrip("\r\n"))
+            display_path(dest),
+            display_path(dest),
+            repo_root = os.path.abspath(os.path.join(location, repo_root))
+        return os.path.normpath(r.rstrip("\r\n"))
+            options.cache_dir = normalize_path(options.cache_dir)
+    value = os.path.abspath(value)
+    current_path = os.path.abspath(directory)
+        relpath = os.path.relpath(path, head)
+        normalized_dist_location = normalize_path(dist_location)
+            for p in {sysconfig.get_path("stdlib"), sysconfig.get_path("platstdlib")}
+                self.source_dir = os.path.normpath(os.path.abspath(link.file_path))
+                location = display_path(self.satisfied_by.location)
+                comes_from = self.comes_from.from_path()
+    def from_path(self) -> str | None
+                comes_from = self.comes_from.from_path()
+    def setup_py_path(self) -> str
+    def setup_cfg_path(self) -> str
+    def pyproject_toml_path(self) -> str
+        return make_pyproject_path(self.unpacked_source_directory)
+                display_path(self.source_dir),
+                f"The file {display_path(archive_path)} exists. (i)gnore, (w)ipe, "
+                logger.warning("Deleting %s", display_path(archive_path))
+                    display_path(archive_path),
+                    display_path(dest_file),
+            dir = os.path.normcase(os.path.abspath(self.unpacked_source_directory))
+        logger.info("Saved %s", display_path(archive_path))
+def _looks_like_path(name
+def _get_url_from_path(path
+    if _looks_like_path(name) and os.path.isdir(path)
+    if len(urlreq_parts) >= 2 and not _looks_like_path(urlreq_parts[0])
+    path = os.path.normpath(os.path.abspath(name))
+        url = _get_url_from_path(p, name)
+            link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
+            req_dir = os.path.dirname(os.path.abspath(filename))
+            filename, constraint, [{os.path.abspath(filename)
+                    req_path = os.path.abspath(
+        path = url_to_path(location)
+    location = os.path.normcase(os.path.abspath(editable_project_location))
+def get_legacy_build_wheel_path(
+        wheel_path = get_legacy_build_wheel_path(
+    def _entry_path(self, key
+        entry_path = self._entry_path(key)
+        os.unlink(self._entry_path(key))
+            hashes.check_against_path(from_path)
+        hashes.check_against_path(from_path)
+            hashes.check_against_path(download_path)
+            information = str(display_path(req.link.file_path))
+                comes_from = req.comes_from.from_path()
+                hashes.check_against_path(file_path)
+            download_path = display_path(download_location)
+        os.path.normcase(os.path.normpath(i)).rstrip(os.sep)
+        os.path.normcase(os.path.normpath(os.path.dirname(sys.executable)))
+        if os.path.normcase(os.path.normpath(parent_dir)) not in not_warn_dirs
+def _record_to_fs_path(record_path
+def _fs_to_record_path(path
+        path = os.path.relpath(path, lib_dir)
+            digest, length = rehash(_record_to_fs_path(new_record_path, lib_dir))
+        path = _fs_to_record_path(f, lib_dir)
+        newpath = _fs_to_record_path(destfile, lib_dir)
+    def is_dir_path(path
+            normed_path = os.path.normpath(record_path)
+            normed_path = os.path.normpath(record_path)
+    def is_data_scheme_path(path
+    def is_script_scheme_path(path
+    def pyc_output_path(path
+                        pyc_path = pyc_output_path(path)
+        self.cmd_opts.add_option(cmdoptions.list_path())
+            options.target_dir = os.path.abspath(options.target_dir)
+        self.cmd_opts.add_option(cmdoptions.list_path())
+        self.cmd_opts.add_option(cmdoptions.list_path())
+            self.format_for_abspath(files)
+    def format_for_abspath(self, files
+        options.wheel_dir = normalize_path(options.wheel_dir)
+        options.download_dir = normalize_path(options.download_dir)
+def _clean_file_url_path(part
+def _clean_url_path(path
+    path = _clean_url_path(result.path, is_local_path=is_local_path)
+    def file_path(self) -> str
+        return url_to_path(self.url)
+    def path(self) -> str
+        if is_path(font)
+        if not is_path(font)
+def load_path(filename)
+def is_path(f)
+    return is_path(f) and os.path.isdir(f)
+    if is_path(im)
+        if is_path(fp)
+        elif is_path(fp)
+        if not filename and hasattr(fp, "name") and is_path(fp.name)
+    elif is_path(fp)
+    def _get_path(self, parsed)
+            "PATH_INFO"
+            "path"
+def extend_sys_path(*paths)
+    def file_path(self, url)
+        os_rel_path = self.file_path(request.path)
+        os_rel_path = posixpath.normpath(unquote(os_rel_path))
+        label_as_path = os.path.abspath(label)
+        if self.method is None or not self.get_full_path()
+            self.get_full_path(),
+    def get_full_path(self, force_append_slash=False)
+        return self._get_full_path(self.path, force_append_slash)
+        return self._get_full_path(self.path_info, force_append_slash)
+    def _get_full_path(self, path, force_append_slash)
+            escape_uri_path(path),
+        using request.get_full_path(). If the location is absolute, convert it
+            location = "//%s" % self.get_full_path()
+def is_django_path(path)
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    final_path = abspath(join(base, *paths))
+    base_path = abspath(base)
+def to_path(value)
+def get_language_from_path(path)
+    return _trans.get_language_from_path(path)
+def get_language_from_path(request)
+def get_language_from_path(path, strict=False)
+        lang_code = get_language_from_path(request.path_info)
+def escape_uri_path(path)
+        target_path = os.path.abspath(to_path)
+        filename = os.path.abspath(os.path.join(target_path, name))
+    def path(self)
+        return self.storage.path(self.name)
+                "path"
+def compile_json_path(key_transforms, include_root=True)
+            lhs_json_path = compile_json_path(lhs_key_transforms)
+            rhs_json_path = compile_json_path(rhs_key_transforms, include_root=False)
+        return compile_json_path([key_transform], include_root=False)
+        json_path = compile_json_path(key_transforms)
+        json_path = compile_json_path(key_transforms)
+        json_path = compile_json_path(key_transforms)
+            json_path = compile_json_path(key_transforms)
+        _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+    def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False)
+                        filtered_relation_path, field, _, _ = self.names_to_path(
+                path, final_field, targets, rest = self.names_to_path(
+                # names_to_path() validates the lookup. A descriptive
+                self.names_to_path(item.split(LOOKUP_SEP), self.model._meta)
+                            self.names_to_path(f.split(LOOKUP_SEP), self.model._meta)
+        name, imports = DeconstructableSerializer._serialize_path(path)
+    def _serialize_path(path)
+            name, imports = self._serialize_path(qs_path)
+        return repr(os.fspath(self.value)), {}
+    def path(self)
+msgstr "فائل کا راستہ(path("
+    2. Add a URL to urlpatterns
+    2. Add a URL to urlpatterns
+    2. Add a URL to urlpatterns
+    path('admin/', admin.site.urls),
+    path("setlang/", set_language, name="set_language"),
+        re_path(
+            zone_info_file = zoneinfo_root.joinpath(*self.TIME_ZONE.split("/"))
+def builtin_template_path(name)
+    def html_template_path(self)
+        return builtin_template_path("technical_500.html")
+    def text_template_path(self)
+        return builtin_template_path("technical_500.txt")
+            path=self.request.get_full_path(),
+    with builtin_template_path("technical_404.html").open(encoding="utf-8") as fh
+    with builtin_template_path("default_urlconf.html").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+    kwarg either from the extra dictionary passed to the path() function or as
+        with builtin_template_path("i18n_catalog.js").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+        path('<path
+    path = posixpath.normpath(path).lstrip("/")
+        with builtin_template_path("directory_index.html").open(encoding="utf-8") as fh
+def builtin_template_path(name)
+            with builtin_template_path("csrf_403.html").open(encoding="utf-8") as fh
+        language_from_path = translation.get_language_from_path(request.path_info)
+        language_from_path = translation.get_language_from_path(request.path_info)
+            path_valid = is_valid_path(language_path, urlconf)
+                and is_valid_path("%s/" % language_path, urlconf)
+                language_url = request.get_full_path(
+                "https
+                path = request.get_full_path()
+            if not is_valid_path(request.path_info, urlconf)
+                match = is_valid_path("%s/" % request.path_info, urlconf)
+        new_path = request.get_full_path(force_append_slash=True)
+            path = request.get_full_path()
+def is_valid_path(path, urlconf=None)
+def _path(route, view, kwargs=None, name=None, Pattern=None)
+                    "when migrating to django.urls.path().".format(self.describe()),
+        self.file_path = os.path.abspath(self.file_path)
+        hint = "Try using path() instead of a tuple."
+            "of path() and/or re_path() instances.".format(pattern),
+        self._dir = os.path.abspath(dir)
+            temp_location = self.file.temporary_file_path()
+    def temporary_file_path(self)
+        return os.path.abspath(self.base_location)
+    def _relative_path(self, name)
+        full_path = self.path(name)
+        return os.path.relpath(full_path, self.location)
+            relative_path = self._relative_path(name)
+            absolute_path = self.path(exc.filename)
+            os.remove(content.temporary_file_path())
+        return self._relative_path(name).replace("\\", "/")
+    def path(self, name)
+        return os.path.normpath(os.path.join(dirname, self.get_valid_name(filename)))
+    def path(self, name)
+        return os.path.abspath(self.base_location)
+        return File(open(self.path(name), mode))
+        full_path = self.path(name)
+                        content.temporary_file_path(),
+                full_path = self.path(name)
+        name = os.path.relpath(full_path, self.location)
+        name = self.path(name)
+        return os.path.lexists(self.path(name))
+        path = self.path(path)
+    def path(self, name)
+        return os.path.getsize(self.path(name))
+        return self._datetime_from_timestamp(os.path.getatime(self.path(name)))
+        return self._datetime_from_timestamp(os.path.getctime(self.path(name)))
+        return self._datetime_from_timestamp(os.path.getmtime(self.path(name)))
+def is_ignored_path(path, ignore_patterns)
+                if is_ignored_path(
+                    os.path.normpath(os.path.join(dirpath, dirname)), ignore_patterns
+            if os.path.sep in os.path.normpath(fixture_name)
+        return [os.path.realpath(d) for d in dirs]
+    def path(self)
+    def path(self)
+    def work_path(self)
+            self.locale_paths = [os.path.abspath(os.path.join("conf", "locale"))]
+                self.locale_paths.append(os.path.abspath("locale"))
+                os.path.normpath(p)
+                    is_ignored_path(
+                        os.path.normpath(os.path.join(dirpath, dirname)),
+                    or os.path.join(os.path.abspath(dirpath), dirname) in ignored_roots
+                        0, os.path.join(os.path.abspath(dirpath), dirname)
+                file_path = os.path.normpath(os.path.join(dirpath, filename))
+                if file_ext not in self.extensions or is_ignored_path(
+                        if os.path.abspath(dirpath).startswith(os.path.dirname(path))
+                file_path = os.path.normpath(build_files[0].path)
+        django_dir = os.path.normpath(os.path.join(os.path.dirname(django.__file__)))
+                    migration_string = self.get_relative_path(writer.path)
+                        rel_prev_path = self.get_relative_path(prev_path)
+                            migration_path = self.get_relative_path(writer.path)
+    def get_relative_path(path)
+            migration_string = os.path.relpath(path)
+                obj = import_dotted_path(path) if "." in path else import_module(path)
+            top_dir = os.path.abspath(os.path.expanduser(target))
+            expanded_template = os.path.normpath(expanded_template)
+                absolute_path = os.path.abspath(expanded_template)
+                    attr = get_fields_from_path(model, name)[-1]
+def reverse_field_path(model, path)
+def get_fields_from_path(model, path)
+                        path('my_view/', self.admin_view(some_view))
+                    request.get_full_path(),
+            path("", wrap(self.index), name="index"),
+            path("login/", self.login, name="login"),
+            path("logout/", wrap(self.logout), name="logout"),
+            path(
+            path(
+            path("autocomplete/", wrap(self.autocomplete_view), name="autocomplete"),
+            path("jsi18n/", wrap(self.i18n_javascript, cacheable=True), name="jsi18n"),
+            path(
+                path(
+                re_path(regex, wrap(self.app_index), name="app_list"),
+            urlpatterns.append(re_path(r"(?P<url>.*)$", wrap(self.catch_all_view)))
+            "app_path"
+                        request.get_full_path(force_append_slash=True)
+                    field = get_fields_from_path(obj.model, item)[-1]
+                get_fields_from_path(obj.model, field)
+                field = get_fields_from_path(obj.model, obj.date_hierarchy)[-1]
+            path("", wrap(self.changelist_view), name="%s_%s_changelist" % info),
+            path("add/", wrap(self.add_view), name="%s_%s_add" % info),
+            path(
+            path(
+            path(
+            path(
+                return HttpResponseRedirect(request.get_full_path())
+            return HttpResponseRedirect(request.get_full_path())
+                return HttpResponseRedirect(request.get_full_path())
+                    field = get_fields_from_path(self.model, field_path)[-1]
+        field = get_fields_from_path(cl.model, field_name)[-1]
+        parent_model, reverse_path = reverse_field_path(model, field_path)
+        path = to_path(path)
+        full_path = request.get_full_path()
+                    old_path=request.get_full_path(force_append_slash=True),
+    path(
+    path(
+    path(
+    path(
+    path(
+    path(
+    path(
+    re_path(
+    path(
+        self.storage_path = self._get_storage_path()
+    def _get_storage_path(cls)
+        storage_path = cls._get_storage_path()
+            path = self.request.get_full_path()
+            path(
+                    return HttpResponseRedirect(request.get_full_path())
+                path = request.get_full_path()
+        if redirect_to != request.get_full_path()
+    path("login/", views.LoginView.as_view(), name="login"),
+    path("logout/", views.LogoutView.as_view(), name="logout"),
+    path(
+    path(
+    path("password_reset/", views.PasswordResetView.as_view(), name="password_reset"),
+    path(
+    path(
+    path(
+            path = request.get_full_path()
+    path("<path
+            if settings.STATIC_ROOT and os.path.abspath(
+            ) == os.path.abspath(root)
+            matched_path = storage.path(path)
+            self.storage.path("")
+                match = self.storage.path(path)
+    def file_path(self, url)
+        return serve(request, self.file_path(request.path), insecure=True)
+        path('<path
+    normalized_path = posixpath.normpath(path).lstrip("/")
+    def path(self, name)
+        return super().path(name)
+        name = posixpath.normpath(name)
+            self.storage.path("")
+        self.ignore_patterns = list({os.path.normpath(p) for p in ignore_patterns})
+                    full_path = self.storage.path(fpath)
+                        full_path = self.storage.path(prefixed_path)
+        source_path = source_storage.path(path)
+            full_path = self.storage.path(prefixed_path)
+        source_path = source_storage.path(path)
+            result = (os.path.realpath(path) for path in result)
+        items.update(cwd / to_path(dir) for dir in backend.engine.dirs if dir)
+                cwd / to_path(directory)
+                if directory and not is_django_path(directory)
+        path('client/<int
+        path('clients/', include('app_name.urls'))
+                    construct_relative_path(
+def construct_relative_path(
+    new_name = posixpath.normpath(
+    bits[1] = construct_relative_path(parser.origin.template_name, bits[1])
+    bits[1] = construct_relative_path(
+            file = data.temporary_file_path()
+    def path(self)
+                else format_html('<script src="{}"></script>', self.absolute_path(path))
+                        self.absolute_path(path),
+    def absolute_path(self, path)
+            _CACERT_CTX = as_file(files("pip._vendor.certifi").joinpath("cacert.pem"))
+        return files("pip._vendor.certifi").joinpath("cacert.pem").read_text(encoding="ascii")
+            _CACERT_CTX = get_path("pip._vendor.certifi", "cacert.pem")
+    def file_path(self)
+    def _adjust_path(self, path)
+        return os.path.realpath(path)
+    def _make_path(self, resource_name)
+        return self._adjust_path(result)
+        path = self._make_path(resource_name)
+    def _adjust_path(self, path)
+def finder_for_path(path)
+        self.base = os.path.abspath(os.path.normpath(base or os.getcwd()))
+        self.files.add(os.path.normpath(item))
+            patterns = [convert_path(word) for word in words[1
+            thedir = convert_path(words[1])
+            patterns = [convert_path(word) for word in words[2
+            dir_pattern = convert_path(words[1])
+                    self.dirname = os.path.abspath(dirname)
+                        rp = os.path.relpath(p, path)
+                rp = to_posix(os.path.relpath(p, path))
+                        outfile = os.path.join(paths[where], convert_path(rp))
+                        outfile = os.path.join(libdir, convert_path(u_arcname))
+                        fn = os.path.basename(convert_path(arcname))
+                        dest = os.path.join(cache_base, convert_path(relpath))
+        pathname = os.path.abspath(os.path.join(self.dirname, self.filename))
+        pathname = os.path.abspath(os.path.join(self.dirname, self.filename))
+                    path = os.path.join(workdir, convert_path(u_arcname))
+                sysconfig.get_path('scripts'),
+        script = os.path.join(self.source_dir, convert_path(script))
+            finder = resources.finder_for_path(path)
+    def get_file_path(self, name, relative_path)
+        return dist.get_resource_path(relative_path)
+        self.finder = finder = resources.finder_for_path(path)
+                # base_location = os.path.abspath(base_location)
+    def get_resource_path(self, relative_path)
+                    path = os.path.relpath(path, base)
+                record_path = os.path.relpath(record_path, base)
+        finder = resources.finder_for_path(self.path)
+        def parse_requires_path(req_path)
+                requires = parse_requires_path(req_path)
+                requires = parse_requires_path(req_path)
+                    p = os.path.normpath(os.path.join(self.path, line))
+                        p = os.path.normpath(os.path.join(self.path, line))
+        path = os.path.abspath(path)
+                                      pathname2url(os.path.abspath(fn)),
+                                      pathname2url(os.path.abspath(fn)),
+    def get_rel_path(root, path)
+                resource_file = get_rel_path(resources_root, abs_path)
+                    rel_path = get_rel_path(abs_base, abs_path)
+def convert_path(pathname)
+                                   os.path.abspath(source))
+        path = os.path.abspath(path)
+    d, p = os.path.splitdrive(os.path.abspath(path))
+        self.base = os.path.abspath(os.path.normpath(base))
+    def check_path(path)
+        p = os.path.abspath(os.path.join(dest_dir, path))
+    dest_dir = os.path.abspath(dest_dir)
+                    check_path(name)
+                    check_path(name)
+                path = os.path.normpath(path)
+    def _get_nix_font_path(self, name, style)
+            path = self._get_nix_font_path(self.font_name, name)
+                path = self._get_nix_font_path(self.font_name, stylename)
+    def _get_mac_font_path(self, font_map, name, style)
+            path = self._get_mac_font_path(font_map, self.font_name, name)
+                path = self._get_mac_font_path(font_map, self.font_name, stylename)
+def url_to_file_path(url
+        path = os.path.normpath(get_win_folder(const))
+        path = os.path.normpath(get_win_folder("CSIDL_COMMON_APPDATA"))
+        path = os.path.normpath(get_win_folder("CSIDL_LOCAL_APPDATA"))
+        path = os.path.normpath(get_win_folder("CSIDL_COMMON_APPDATA"))
+        return os.path.normpath(get_win_folder("CSIDL_PERSONAL"))
+        return os.path.normpath(get_win_folder("CSIDL_DOWNLOADS"))
+        return os.path.normpath(get_win_folder("CSIDL_MYPICTURES"))
+        return os.path.normpath(get_win_folder("CSIDL_MYVIDEO"))
+        return os.path.normpath(get_win_folder("CSIDL_MYMUSIC"))
+        path = os.path.normpath(os.path.join(get_win_folder("CSIDL_LOCAL_APPDATA"), "Temp"))  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Documents")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Downloads")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Pictures")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Videos")  # noqa
+        return os.path.join(os.path.normpath(os.environ["USERPROFILE"]), "Music")  # noqa
+    def user_data_path(self) -> Path
+    def site_data_path(self) -> Path
+    def user_config_path(self) -> Path
+    def site_config_path(self) -> Path
+    def user_cache_path(self) -> Path
+    def site_cache_path(self) -> Path
+    def user_state_path(self) -> Path
+    def user_log_path(self) -> Path
+    def user_documents_path(self) -> Path
+    def user_downloads_path(self) -> Path
+    def user_pictures_path(self) -> Path
+    def user_videos_path(self) -> Path
+    def user_music_path(self) -> Path
+    def user_runtime_path(self) -> Path
+        return self._with_multi_path(path)
+    def _with_multi_path(self, path
+        return self._with_multi_path(path)
+    def site_data_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_data_dir)
+    def site_config_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_config_dir)
+    def site_cache_path(self) -> Path
+        return self._first_item_as_path_if_multipath(self.site_cache_dir)
+    def _first_item_as_path_if_multipath(self, directory
+def user_data_path(
+def site_data_path(
+def user_config_path(
+def site_config_path(
+def site_cache_path(
+def user_cache_path(
+def user_state_path(
+def user_log_path(
+def user_documents_path() -> Path
+def user_downloads_path() -> Path
+def user_pictures_path() -> Path
+def user_videos_path() -> Path
+def user_music_path() -> Path
+def user_runtime_path(
+    filename = os.path.normcase(os.path.abspath(filename))
+    directory = os.path.normcase(os.path.abspath(directory))
+    def _in_proc_script_path()
+        return resources.path(__package__, '_in_process.py')
+    def _in_proc_script_path()
+            resources.files(__package__).joinpath('_in_process.py'))
+    abs_source = os.path.abspath(source_tree)
+    abs_requested = os.path.normpath(os.path.join(abs_source, requested))
+        self.source_dir = abspath(source_dir)
+            'metadata_directory'
+            metadata_directory = abspath(metadata_directory)
+            'wheel_directory'
+            'metadata_directory'
+            metadata_directory = abspath(metadata_directory)
+            'wheel_directory'
+            'sdist_directory'
+            with _in_proc_script_path() as script
+                    [python, abspath(str(script)), hook_name, td],
+            link_path = None if filename.startswith("<") else os.path.abspath(filename)
+    def from_path(
+        syntax = Syntax.from_path(
+    _IMPORT_CWD = os.path.abspath(os.getcwd())
+            path = os.path.normpath(os.path.abspath(path))
+WHEEL_DIR = os.path.abspath(os.path.dirname(__file__))
+    def get_cache_path(self, archive_name, names=())
+        self._warn_unsafe_extraction_path(extract_path)
+    def _warn_unsafe_extraction_path(path)
+    def set_extraction_path(self, path)
+    def _get_metadata_path(self, name)
+        path = self._get_metadata_path(name)
+        path = self._get_metadata_path(name)
+        self._validate_resource_path(resource_name)
+    def _validate_resource_path(path)
+        path = os.path.normpath(path)
+            real_path = manager.get_cache_path(self.egg_name, self._parts(zip_path))
+    def _get_metadata_path(self, name)
+        if _is_egg_path(subitem)
+def find_on_path(importer, path_item, only=False)
+        if not only and _is_egg_path(entry)
+        _rebuild_mod_path(path, packageName, module)
+def _rebuild_mod_path(orig_path, package_name, module)
+    def position_in_sys_path(path)
+def normalize_path(filename)
+    return os.path.normcase(os.path.realpath(os.path.normpath(_cygwin_patch(filename))))
+    os.path.abspath() works around this limitation. A fix in os.getcwd()
+    return os.path.abspath(filename) if sys.platform == 'cygwin' else filename
+        _cache[filename] = result = normalize_path(filename)
+def _is_egg_path(path)
+            # We need to access _get_metadata_path() on the provider object
+            # since _get_metadata_path() is marked private.
+            path = self._provider._get_metadata_path(name)
+        # provider doesn't support _get_metadata_path().
+        loc = normalize_path(self.location)
+                normalize_path(fn).startswith(loc) or fn.startswith(self.location)
+        return normalize_path(location)
+                displaying_path = display_path(self.location)
+def _convert_installed_files_path(
+    For best compatibility with symlinks, this does not use ``abspath()`` or
+                return url_to_path(direct_url.url)
+            egg_link_path = egg_link_path_from_sys_path(self.raw_name)
+        return self.installed_location.startswith(normalize_path(user_site))
+        return self.installed_location.startswith(normalize_path(site_packages))
+            _convert_installed_files_path(pathlib.Path(p).parts, info_rel.parts)
+        return normalize_path(str(self._installed_location))
+        for child in self._info_location.joinpath("scripts").iterdir()
+            target_location = str(path.joinpath(target_rel))
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+    filename = os.path.realpath(filename)
+    def path(self) -> str
+        path = os.path.realpath(tempfile.mkdtemp(prefix=f"pip-{kind}-"))
+                path = os.path.realpath(path)
+            path = os.path.realpath(tempfile.mkdtemp(prefix=f"pip-{kind}-"))
+    def check_against_path(self, path
+    pip_pkg_dir = os.path.abspath(pip_pkg_dir)
+def display_path(path
+    path = os.path.normcase(os.path.abspath(path))
+def normalize_path(path
+        path = os.path.realpath(path)
+        path = os.path.abspath(path)
+    return path.startswith(normalize_path(sys.prefix))
+    marker = os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED")
+def egg_link_path_from_sys_path(raw_name
+    path = os.path.normpath(os.path.abspath(path))
+def url_to_path(url
+    site_mod_dir = os.path.dirname(os.path.abspath(site.__file__))
+    def _get_cache_path(self, name
+        metadata_path = self._get_cache_path(key)
+        path = self._get_cache_path(key)
+        path = self._get_cache_path(key)
+        metadata_path = self._get_cache_path(key)
+        path = self._get_cache_path(key) + ".body"
+        pathname = url_to_path(request.url)
+        if cli and cli.startswith(sysconfig.get_path("scripts"))
+            scripts = Path(sysconfig.get_path("scripts"))
+            path_no_drive = os.path.splitdrive(os.path.abspath(scheme["headers"]))[1]
+    prefix = os.path.normpath(sys.prefix)
+site_packages
+    return os.path.abspath(src_prefix)
+        cmd.exec_prefix == f"{os.path.normpath(sys.exec_prefix)}/local"
+        and cmd.prefix == f"{os.path.normpath(sys.prefix)}/local"
+def make_pyproject_path(unpacked_source_directory
+            display_path(dest),
+    return os.path.relpath(location, repo_root)
+                    display_path(dest),
+                        display_path(dest),
+                display_path(dest),
+            logger.warning("Deleting %s", display_path(dest))
+            logger.warning("Backing up %s to %s", display_path(dest), dest_dir)
+                display_path(dest),
+        logger.info("Cloning %s%s to %s", url, rev_display, display_path(dest))
+        repo_root = os.path.abspath(os.path.join(git_dir, ".."))
+        return os.path.normpath(r.rstrip("\r\n"))
+            display_path(dest),
+            display_path(dest),
+            repo_root = os.path.abspath(os.path.join(location, repo_root))
+        return os.path.normpath(r.rstrip("\r\n"))
+            options.cache_dir = normalize_path(options.cache_dir)
+    value = os.path.abspath(value)
+    current_path = os.path.abspath(directory)
+        relpath = os.path.relpath(path, head)
+        normalized_dist_location = normalize_path(dist_location)
+            for p in {sysconfig.get_path("stdlib"), sysconfig.get_path("platstdlib")}
+                self.source_dir = os.path.normpath(os.path.abspath(link.file_path))
+                location = display_path(self.satisfied_by.location)
+                comes_from = self.comes_from.from_path()
+    def from_path(self) -> Optional[str]
+                comes_from = self.comes_from.from_path()
+    def setup_py_path(self) -> str
+    def setup_cfg_path(self) -> str
+    def pyproject_toml_path(self) -> str
+        return make_pyproject_path(self.unpacked_source_directory)
+                display_path(self.source_dir),
+                f"The file {display_path(archive_path)} exists. (i)gnore, (w)ipe, "
+                logger.warning("Deleting %s", display_path(archive_path))
+                    display_path(archive_path),
+                    display_path(dest_file),
+            dir = os.path.normcase(os.path.abspath(self.unpacked_source_directory))
+        logger.info("Saved %s", display_path(archive_path))
+def _looks_like_path(name
+def _get_url_from_path(path
+    if _looks_like_path(name) and os.path.isdir(path)
+    if len(urlreq_parts) >= 2 and not _looks_like_path(urlreq_parts[0])
+    path = os.path.normpath(os.path.abspath(name))
+        url = _get_url_from_path(p, name)
+            link = Link(path_to_url(os.path.normpath(os.path.abspath(link.path))))
+            req_dir = os.path.dirname(os.path.abspath(filename))
+        path = url_to_path(location)
+    location = os.path.normcase(os.path.abspath(editable_project_location))
+def get_legacy_build_wheel_path(
+        wheel_path = get_legacy_build_wheel_path(
+    def _entry_path(self, key
+        entry_path = self._entry_path(key)
+        os.unlink(self._entry_path(key))
+            hashes.check_against_path(from_path)
+        hashes.check_against_path(from_path)
+            hashes.check_against_path(download_path)
+            information = str(display_path(req.link.file_path))
+                comes_from = req.comes_from.from_path()
+                hashes.check_against_path(file_path)
+            download_path = display_path(download_location)
+        os.path.normcase(os.path.normpath(i)).rstrip(os.sep)
+        os.path.normcase(os.path.normpath(os.path.dirname(sys.executable)))
+        if os.path.normcase(os.path.normpath(parent_dir)) not in not_warn_dirs
+            "NOTE
+def _record_to_fs_path(record_path
+def _fs_to_record_path(path
+        path = os.path.relpath(path, lib_dir)
+            digest, length = rehash(_record_to_fs_path(new_record_path, lib_dir))
+        path = _fs_to_record_path(f, lib_dir)
+        newpath = _fs_to_record_path(destfile, lib_dir)
+    def is_dir_path(path
+            normed_path = os.path.normpath(record_path)
+            normed_path = os.path.normpath(record_path)
+    def is_data_scheme_path(path
+    def is_script_scheme_path(path
+    def pyc_output_path(path
+                        pyc_path = pyc_output_path(path)
+        self.cmd_opts.add_option(cmdoptions.list_path())
+            options.target_dir = os.path.abspath(options.target_dir)
+        self.cmd_opts.add_option(cmdoptions.list_path())
+        self.cmd_opts.add_option(cmdoptions.list_path())
+            self.format_for_abspath(files)
+    def format_for_abspath(self, files
+        options.wheel_dir = normalize_path(options.wheel_dir)
+        options.download_dir = normalize_path(options.download_dir)
+def _clean_file_url_path(part
+def _clean_url_path(path
+    path = _clean_url_path(result.path, is_local_path=is_local_path)
+    def file_path(self) -> str
+        return url_to_path(self.url)
+    def path(self) -> str
+        self.simple_url = self._url_for_path("simple")
+        self.pypi_url = self._url_for_path("pypi")
+    def _url_for_path(self, path
+                new_link = normalize_path(link)
+                path = os.path.normpath(os.path.join(root, name))
+                    arcname = os.path.relpath(path, base_dir).replace(os.path.sep, "/")
+            basedir_observed = os.path.normpath(os.path.join(self.data_dir, ".."))
+            destination.joinpath(zinfo.filename).chmod(permissions)
+
+📦 DEPENDENCIAS (requirements.txt):
+asgiref==3.9.2
+Django==5.2.6
+Pillow==10.0.1
+sqlparse==0.5.3
+wheel==0.45.1
+

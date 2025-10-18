@@ -21,7 +21,7 @@
 </head>
 <body>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-    <h1>🚀 NEUSI Task Manager</h1>
+    <h2><img src="{% static 'backlog/img/logo2.png' %}" alt="Logo NEUSI" class="me-3" style="height:45px;"> NEUSI Task Manager</h2  >
     {% if request.user.is_authenticated %}
     <div style="text-align:right;">
       <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>

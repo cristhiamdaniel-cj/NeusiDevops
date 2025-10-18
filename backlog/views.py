@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.utils.timezone import localtime, now
 
 from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica
-from .forms import TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm
+from .forms import TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm, ProyectoForm
 
 # ==============================
 # Helpers de permisos / Daily window
@@ -783,27 +783,58 @@ def cambiar_categoria_tarea(request, tarea_id):
 # CRUD de Épicas
 # ==============================
 
+from .models import Epica, Proyecto
+
 @login_required
 def epica_list(request):
+    """
+    Lista todas las épicas visibles para el usuario actual.
+    - Scrum Master / PO y Visualizador: ven todas las épicas.
+    - Miembros normales: solo las épicas donde tengan tareas asignadas.
+    - Permite filtrar por proyecto (FK normalizado).
+    """
     integrante, admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
+    # Base de épicas
     if puede_ver_todo:
-        epicas = (Epica.objects
-                  .select_related("owner")
-                  .prefetch_related("sprints")
-                  .order_by("-creada_en"))
+        epicas = (
+            Epica.objects
+            .select_related("owner", "proyecto")      # 🔹 precarga relaciones
+            .prefetch_related("sprints")
+            .order_by("-creada_en")
+        )
     else:
         if integrante:
-            epicas = (Epica.objects
-                      .filter(tareas__asignado_a=integrante)
-                      .select_related("owner")
-                      .prefetch_related("sprints")
-                      .distinct()
-                      .order_by("-creada_en"))
+            epicas = (
+                Epica.objects
+                .filter(tareas__asignado_a=integrante)
+                .select_related("owner", "proyecto")
+                .prefetch_related("sprints")
+                .distinct()
+                .order_by("-creada_en")
+            )
         else:
             epicas = Epica.objects.none()
 
-    return render(request, "backlog/epica_list.html", {"epicas": epicas, "admin": admin})
+    # 🔹 Filtro por proyecto (si aplica)
+    proyecto_id = request.GET.get("proyecto")
+    if proyecto_id:
+        try:
+            epicas = epicas.filter(proyecto_id=int(proyecto_id))
+        except ValueError:
+            pass
+
+    # 🔹 Lista de proyectos activos para el filtro en el template
+    proyectos = Proyecto.objects.filter(activo=True).order_by("codigo")
+
+    context = {
+        "epicas": epicas,
+        "admin": admin,
+        "proyectos": proyectos,
+        "proyecto_id": proyecto_id,
+    }
+
+    return render(request, "backlog/epica_list.html", context)
 
 @login_required
 def epica_create(request):
@@ -861,18 +892,97 @@ def epica_delete(request, epica_id):
 
     return render(request, "backlog/epica_confirm_delete.html", {"epica": epica})
 
+# ==============================
+# Detalle de Épica
+# ==============================
+
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models import Count, Q
+
 @login_required
 def epica_detail(request, epica_id):
-    epica = (Epica.objects
-             .select_related("owner")
-             .prefetch_related("sprints")
-             .get(pk=epica_id))
+    """
+    Muestra el detalle de una épica:
+    - Datos de la épica (incluye proyecto, owner, sprints)
+    - Tareas asociadas (precargadas)
+    - Métricas: total, completadas, progreso calculado y avance efectivo (manual o calculado)
+    - Buckets por estado para una UI tipo tablero
+    Permisos:
+    - Admin (Scrum/PO) y Visualizador: pueden ver cualquier épica.
+    - Miembro normal: solo si tiene tareas dentro de esta épica.
+    """
+    integrante, es_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    tareas = (epica.tareas
-              .select_related("asignado_a__user", "sprint")
-              .order_by("estado", "categoria", "titulo"))
+    # Carga principal de la épica con relaciones
+    epica = (
+        Epica.objects
+        .select_related("owner", "proyecto")   # ← FK
+        .prefetch_related("sprints")           # ← M2M
+        .get(pk=epica_id)
+    )
 
-    return render(request, "backlog/epica_detail.html", {
+    # Permisos de acceso
+    if not puede_ver_todo:
+        # Solo permite ver si el usuario tiene tareas en esta épica
+        tiene_tareas = epica.tareas.filter(asignado_a=integrante).exists() if integrante else False
+        if not tiene_tareas:
+            messages.error(request, "❌ No tienes permisos para ver esta épica.")
+            return redirect("epica_list")
+
+    # Trae tareas con relaciones precargadas para eficiencia
+    tareas_qs = (
+        epica.tareas
+        .select_related("asignado_a__user", "sprint")  # personas y sprint
+        .order_by("estado", "categoria", "titulo")
+    )
+
+    # Métricas
+    total_tareas = tareas_qs.count()
+    completadas = tareas_qs.filter(completada=True).count()
+    progreso_calculado = round((completadas / total_tareas) * 100.0, 2) if total_tareas else 0.0
+    avance_efectivo = epica.avance  # usa manual si existe, si no el calculado del modelo
+
+    # Buckets por estado (útil para tabs o columnas)
+    estados = {
+        "NUEVO": tareas_qs.filter(estado="NUEVO"),
+        "APROBADO": tareas_qs.filter(estado="APROBADO"),
+        "EN_PROGRESO": tareas_qs.filter(estado="EN_PROGRESO"),
+        "BLOQUEADO": tareas_qs.filter(estado="BLOQUEADO"),
+        "COMPLETADO": tareas_qs.filter(estado="COMPLETADO"),
+    }
+
+    # Conteos por estado (para cabeceras o badges)
+    conteos_por_estado = (
+        tareas_qs.values("estado")
+        .annotate(total=Count("id"))
+        .order_by()
+    )
+    conteos_map = {c["estado"]: c["total"] for c in conteos_por_estado}
+
+    context = {
         "epica": epica,
-        "tareas": tareas,
-    })
+        "tareas": tareas_qs,                  
+        "estados": estados,                   
+        "conteos": conteos_map,               
+        "total_tareas": total_tareas,
+        "tareas_completadas": completadas,
+        "progreso_calculado": progreso_calculado,
+        "avance_efectivo": avance_efectivo,   
+        "puede_ver_todo": puede_ver_todo,
+        "es_admin": es_admin,
+        "es_visualizador": es_visualizador,
+    }
+    return render(request, "backlog/epica_detail.html", context)
+
+@login_required
+def proyecto_create(request):
+    if request.method == "POST":
+        form = ProyectoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Proyecto creado correctamente.")
+            return redirect("epica_create")  # o epica_edit si estabas editando
+    else:
+        form = ProyectoForm()
+    return render(request, "backlog/proyecto_form.html", {"form": form})
