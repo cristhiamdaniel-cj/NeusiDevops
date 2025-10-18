@@ -1,3 +1,4 @@
+# views.py
 from functools import wraps
 from datetime import time, datetime, timedelta
 import json
@@ -9,9 +10,12 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.timezone import localtime, now
+from django.db.models import Q, Count
 
-from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica
-from .forms import TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm, ProyectoForm
+from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica, Proyecto
+from .forms import (
+    TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm, ProyectoForm
+)
 
 # ==============================
 # Helpers de permisos / Daily window
@@ -41,6 +45,34 @@ def _flags_usuario(request):
     es_visualizador = bool(integrante and getattr(integrante, "es_visualizador", lambda: False)())
     puede_ver_todo = bool(puede_admin or es_visualizador)
     return integrante, puede_admin, es_visualizador, puede_ver_todo
+
+def _es_responsable(tarea: Tarea, integrante: Integrante) -> bool:
+    """
+    Verdadero si el integrante está asignado a la tarea
+    (ya sea por el M2M `asignados` o por el FK legado `asignado_a`).
+    """
+    if not integrante:
+        return False
+    if tarea.asignado_a_id == getattr(integrante, "id", None):
+        return True
+    return tarea.asignados.filter(id=integrante.id).exists()
+
+def _queryset_visible_tareas(integrante: Integrante, puede_ver_todo: bool):
+    """
+    Construye el queryset base de tareas según permisos:
+    - Admin/Visualizador ven todo.
+    - Usuario normal: solo tareas que le corresponden (M2M o FK).
+    """
+    base = (
+        Tarea.objects
+        .select_related("asignado_a__user", "sprint", "epica")
+        .prefetch_related("asignados__user")
+    )
+    if puede_ver_todo:
+        return base
+    if not integrante:
+        return Tarea.objects.none()
+    return base.filter(Q(asignados=integrante) | Q(asignado_a=integrante)).distinct()
 
 # ==============================
 # Decoradores de permisos
@@ -92,7 +124,7 @@ def editar_tarea(request, tarea_id):
         return redirect("home")
 
     if request.method == "POST":
-        form = TareaForm(request.POST, instance=tarea)
+        form = TareaForm(request.POST, request.FILES, instance=tarea)
         if form.is_valid():
             tarea_actualizada = form.save()
             messages.success(request, f"✅ Tarea '{tarea_actualizada.titulo}' actualizada correctamente.")
@@ -107,25 +139,61 @@ def editar_tarea(request, tarea_id):
 def nueva_tarea(request):
     """Crear una nueva tarea en el backlog"""
     if request.method == "POST":
-        form = TareaForm(request.POST)
+        form = TareaForm(request.POST, request.FILES)
         if form.is_valid():
             tarea = form.save()
             messages.success(request, f"✅ Tarea '{tarea.titulo}' creada correctamente.")
             return redirect("backlog_lista")
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = TareaForm()
     return render(request, "backlog/nueva_tarea.html", {"form": form})
 
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from backlog.models import Tarea
+from backlog.forms import EvidenciaForm
+
+
 @login_required
 def detalle_tarea(request, tarea_id):
-    """Vista detallada de una tarea con evidencias"""
-    tarea = get_object_or_404(Tarea, id=tarea_id)
+    """Vista detallada de una tarea con evidencias y permisos según rol"""
+    tarea = get_object_or_404(
+        Tarea.objects.select_related("sprint", "epica").prefetch_related("asignados__user"),
+        id=tarea_id
+    )
+
     evidencias = tarea.evidencias.all().order_by("-creado_en")
     form = EvidenciaForm()
+
+    # Obtener el integrante asociado al usuario
+    integrante = getattr(request.user, "integrante", None)
+
+    # === Permisos por rol y asignación ===
+    tiene_permisos_admin = bool(integrante and integrante.puede_crear_tareas())
+    permite_editar_rol = bool(integrante and integrante.puede_editar_tareas())
+
+    # Es responsable si está en la lista M2M o es el asignado principal
+    es_responsable = bool(
+        integrante and (
+            tarea.asignados.filter(id=integrante.id).exists() or tarea.asignado_a_id == integrante.id
+        )
+    )
+
+    # Definir permisos efectivos
+    puede_editar = bool(tiene_permisos_admin or permite_editar_rol or es_responsable)
+    puede_cerrar = bool(tiene_permisos_admin or es_responsable)
+
+    # Renderizar plantilla
     return render(request, "backlog/detalle_tarea.html", {
         "tarea": tarea,
         "evidencias": evidencias,
         "form": form,
+        "tiene_permisos_admin": tiene_permisos_admin,
+        "puede_editar": puede_editar,
+        "puede_cerrar": puede_cerrar,
     })
 
 @login_required
@@ -164,11 +232,12 @@ def editar_evidencia(request, tarea_id, evidencia_id):
 
 @login_required
 def cerrar_tarea(request, tarea_id):
-    """Cerrar una tarea con informe obligatorio (solo dueño de la tarea)"""
+    """Cerrar una tarea con informe obligatorio (responsable o admin)"""
     tarea = get_object_or_404(Tarea, id=tarea_id)
+    integrante, es_admin, _, _ = _flags_usuario(request)
 
-    if tarea.asignado_a and tarea.asignado_a.user != request.user:
-        messages.error(request, "❌ Solo puedes cerrar tus propias tareas.")
+    if not es_admin and not _es_responsable(tarea, integrante):
+        messages.error(request, "❌ Solo responsables o administradores pueden cerrar la tarea.")
         return redirect("backlog_lista")
 
     if tarea.completada:
@@ -247,7 +316,7 @@ def home(request):
 
 @login_required
 def daily_view(request, integrante_id=None):
-    # ❌ Visualizador no registra dailies
+    # Visualizador no registra dailies
     _, es_admin, es_visualizador, _ = _flags_usuario(request)
     if es_visualizador:
         messages.warning(request, "El rol Visualizador no puede registrar dailies.")
@@ -308,7 +377,7 @@ def daily_view(request, integrante_id=None):
 
 @login_required
 def daily_personal(request):
-    # ❌ Visualizador: redirige a resumen directamente
+    # Visualizador: redirige a resumen directamente
     integrante, _, es_visualizador, _ = _flags_usuario(request)
     if es_visualizador:
         messages.info(request, "Eres Visualizador: solo puedes consultar dailies.")
@@ -325,7 +394,7 @@ def daily_personal(request):
 @login_required
 def daily_resumen(request):
     integrante, es_admin, es_visualizador, _ = _flags_usuario(request)
-    puede_filtrar = es_admin or es_visualizador  # ← admin y visualizador pueden filtrar/ver todo
+    puede_filtrar = es_admin or es_visualizador  # admin y visualizador pueden filtrar/ver todo
 
     if puede_filtrar:
         registros = Daily.objects.select_related("integrante__user").order_by("-fecha")
@@ -349,8 +418,8 @@ def daily_resumen(request):
     return render(request, "backlog/daily_resumen.html", {
         "registros": registros,
         "integrantes": integrantes,
-        "tiene_permisos_admin": es_admin,   # sigue controlando el botón Eliminar
-        "puede_filtrar": puede_filtrar,     # ← nuevo flag para el template
+        "tiene_permisos_admin": es_admin,
+        "puede_filtrar": puede_filtrar,
         "persona_id": persona_id,
     })
 
@@ -361,28 +430,26 @@ def daily_resumen(request):
 def backlog_lista(request):
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    # Base visible (admin o visualizador ven TODO)
+    # Base visible
+    tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
+
+    # Listas para filtros
+    sprints = Sprint.objects.all().order_by("inicio")
     if puede_ver_todo:
-        tareas = Tarea.objects.all().select_related("asignado_a__user", "sprint", "epica")
-        integrantes = (
-            Integrante.objects
-            .filter(id__in=Tarea.objects.exclude(asignado_a__isnull=True)
-                                     .values_list("asignado_a_id", flat=True))
-            .select_related("user")
-            .distinct()
-            .order_by("user__first_name", "user__last_name")
-        )
+        # Integrantes con tareas (por cualquiera de los dos campos)
+        integrantes = (Integrante.objects
+                       .filter(Q(tareas_asignadas__isnull=False) | Q(tareas_asignadas_legacy__isnull=False))
+                       .select_related("user")
+                       .distinct()
+                       .order_by("user__first_name", "user__last_name"))
         epicas = Epica.objects.filter(tareas__isnull=False).distinct().order_by("titulo")
     else:
-        tareas = (Tarea.objects
-                  .filter(asignado_a=integrante)
-                  .select_related("sprint", "epica")) if integrante else Tarea.objects.none()
         integrantes = []
-        epicas = Epica.objects.filter(tareas__asignado_a=integrante).distinct()
+        epicas = Epica.objects.filter(
+            Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante)
+        ).distinct().order_by("titulo")
 
-    sprints = Sprint.objects.all().order_by("inicio")
-
-    # Filtros solo si presiona “Filtrar”
+    # Filtros (solo si presiona “Filtrar”)
     aplicar_filtros = request.GET.get("filtrar") == "1"
     persona_id = request.GET.get("persona") if aplicar_filtros else None
     sprint_id  = request.GET.get("sprint")  if aplicar_filtros else None
@@ -391,21 +458,26 @@ def backlog_lista(request):
 
     if aplicar_filtros:
         if persona_id:
-            try: tareas = tareas.filter(asignado_a__id=int(persona_id))
-            except ValueError: pass
+            try:
+                pid = int(persona_id)
+                tareas = tareas.filter(Q(asignados__id=pid) | Q(asignado_a__id=pid)).distinct()
+            except ValueError:
+                pass
         if sprint_id:
-            try: tareas = tareas.filter(sprint__id=int(sprint_id))
-            except ValueError: pass
+            try:
+                tareas = tareas.filter(sprint__id=int(sprint_id))
+            except ValueError:
+                pass
         if epica_id:
-            try: tareas = tareas.filter(epica__id=int(epica_id))
-            except ValueError: pass
+            try:
+                tareas = tareas.filter(epica__id=int(epica_id))
+            except ValueError:
+                pass
         if estado == "abiertas":
             tareas = tareas.filter(completada=False)
         elif estado == "cerradas":
             tareas = tareas.filter(completada=True)
 
-    # Si quieres priorizar por esfuerzo, descomenta:
-    # tareas = tareas.order_by("sprint__inicio", "-esfuerzo_sp", "categoria", "titulo")
     tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
 
     return render(request, "backlog/backlog_lista.html", {
@@ -426,15 +498,18 @@ def backlog_lista(request):
 def backlog_matriz(request):
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
+    tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
+    integrantes = []
+    persona_id = request.GET.get("persona")
+
     if puede_ver_todo:
-        tareas = Tarea.objects.all().select_related("asignado_a__user", "sprint", "epica")
-        integrantes = Integrante.objects.all()
-        persona_id = request.GET.get("persona")
+        integrantes = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
         if persona_id:
-            tareas = tareas.filter(asignado_a__id=persona_id)
-    else:
-        tareas = Tarea.objects.filter(asignado_a=integrante).select_related("sprint", "epica") if integrante else Tarea.objects.none()
-        integrantes = []
+            try:
+                pid = int(persona_id)
+                tareas = tareas.filter(Q(asignados__id=pid) | Q(asignado_a__id=pid)).distinct()
+            except ValueError:
+                pass
 
     cuadrantes = {
         "ui": tareas.filter(categoria="UI"),
@@ -448,7 +523,7 @@ def backlog_matriz(request):
         "integrantes": integrantes,
         "tiene_permisos_admin": tiene_permisos_admin,
         "puede_ver_todo": puede_ver_todo,
-        "persona_id": request.GET.get("persona"),
+        "persona_id": persona_id,
     })
 
 # ==============================
@@ -458,7 +533,7 @@ def backlog_matriz(request):
 @login_required
 def checklist_view(request, integrante_id):
     """Checklist de tareas pendientes de un integrante"""
-    integrante = get_object_or_404(Integrante, id=integrante_id)
+    integrante_obj = get_object_or_404(Integrante, id=integrante_id)
 
     try:
         usuario_integrante = request.user.integrante
@@ -467,17 +542,19 @@ def checklist_view(request, integrante_id):
         tiene_permisos_admin = False
         usuario_integrante = None
 
-    if not tiene_permisos_admin and integrante != usuario_integrante:
+    if not tiene_permisos_admin and integrante_obj != usuario_integrante:
         messages.error(request, "❌ No puedes ver el checklist de otro integrante.")
         return redirect("backlog_lista")
 
     tareas = (Tarea.objects
-              .filter(asignado_a=integrante, completada=False)
+              .filter(Q(asignados=integrante_obj) | Q(asignado_a=integrante_obj), completada=False)
               .select_related("sprint")
+              .prefetch_related("asignados__user")
+              .distinct()
               .order_by("sprint__inicio", "categoria"))
 
     return render(request, "backlog/checklist.html", {
-        "integrante": integrante,
+        "integrante": integrante_obj,
         "tareas": tareas,
     })
 
@@ -618,7 +695,7 @@ def daily_create_admin(request):
     else:
         form = DailyForm()
 
-    integrantes = Integrante.objects.all()
+    integrantes = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
     return render(request, "backlog/daily_create_admin.html", {
         "form": form,
         "integrantes": integrantes,
@@ -659,22 +736,32 @@ def eliminar_tarea(request, tarea_id):
 def kanban_board(request):
     """Vista Kanban con estados de workflow"""
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
+    tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
 
-    if puede_ver_todo:
-        tareas = Tarea.objects.all().select_related("asignado_a__user", "sprint", "epica")
-        integrantes = Integrante.objects.all()
-        epicas = Epica.objects.all()
-        persona_id = request.GET.get("persona")
-        epica_id = request.GET.get("epica")
-        if persona_id:
-            tareas = tareas.filter(asignado_a__id=persona_id)
-        if epica_id:
-            tareas = tareas.filter(epica__id=epica_id)
-    else:
-        tareas = Tarea.objects.filter(asignado_a=integrante).select_related("sprint", "epica") if integrante else Tarea.objects.none()
-        integrantes = []
-        epicas = Epica.objects.filter(tareas__asignado_a=integrante).distinct()
-        persona_id = None
+    persona_id = request.GET.get("persona") if puede_ver_todo else None
+    epica_id = request.GET.get("epica") if puede_ver_todo else None
+
+    if persona_id and puede_ver_todo:
+        try:
+            pid = int(persona_id)
+            tareas = tareas.filter(Q(asignados__id=pid) | Q(asignado_a__id=pid)).distinct()
+        except ValueError:
+            pass
+    if epica_id and puede_ver_todo:
+        try:
+            tareas = tareas.filter(epica__id=int(epica_id))
+        except ValueError:
+            pass
+
+    integrantes = (
+        Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
+        if puede_ver_todo else []
+    )
+    epicas = (
+        Epica.objects.all().order_by("titulo")
+        if puede_ver_todo else
+        Epica.objects.filter(Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante)).distinct()
+    )
 
     estados = {
         "nuevo": tareas.filter(estado="NUEVO"),
@@ -700,15 +787,10 @@ def cambiar_estado_tarea(request, tarea_id):
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
     tarea = get_object_or_404(Tarea, id=tarea_id)
+    integrante, es_admin, _, _ = _flags_usuario(request)
 
-    try:
-        usuario_integrante = request.user.integrante
-        es_admin = usuario_integrante.puede_crear_tareas()
-    except AttributeError:
-        return JsonResponse({"error": "No tienes perfil de integrante"}, status=403)
-
-    if not es_admin and tarea.asignado_a != usuario_integrante:
-        return JsonResponse({"error": "Solo puedes mover tus propias tareas"}, status=403)
+    if not es_admin and not _es_responsable(tarea, integrante):
+        return JsonResponse({"error": "Solo responsables o administradores pueden mover la tarea"}, status=403)
 
     try:
         data = json.loads(request.body)
@@ -748,15 +830,10 @@ def cambiar_categoria_tarea(request, tarea_id):
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
     tarea = get_object_or_404(Tarea, id=tarea_id)
+    integrante, es_admin, _, _ = _flags_usuario(request)
 
-    try:
-        usuario_integrante = request.user.integrante
-        es_admin = usuario_integrante.puede_crear_tareas()
-    except AttributeError:
-        return JsonResponse({"error": "No tienes perfil de integrante"}, status=403)
-
-    if not es_admin and tarea.asignado_a != usuario_integrante:
-        return JsonResponse({"error": "Solo puedes mover tus propias tareas"}, status=403)
+    if not es_admin and not _es_responsable(tarea, integrante):
+        return JsonResponse({"error": "Solo responsables o administradores pueden mover la tarea"}, status=403)
 
     try:
         data = json.loads(request.body)
@@ -783,8 +860,6 @@ def cambiar_categoria_tarea(request, tarea_id):
 # CRUD de Épicas
 # ==============================
 
-from .models import Epica, Proyecto
-
 @login_required
 def epica_list(request):
     """
@@ -799,7 +874,7 @@ def epica_list(request):
     if puede_ver_todo:
         epicas = (
             Epica.objects
-            .select_related("owner", "proyecto")      # 🔹 precarga relaciones
+            .select_related("owner", "proyecto")
             .prefetch_related("sprints")
             .order_by("-creada_en")
         )
@@ -807,7 +882,7 @@ def epica_list(request):
         if integrante:
             epicas = (
                 Epica.objects
-                .filter(tareas__asignado_a=integrante)
+                .filter(Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante))
                 .select_related("owner", "proyecto")
                 .prefetch_related("sprints")
                 .distinct()
@@ -816,7 +891,6 @@ def epica_list(request):
         else:
             epicas = Epica.objects.none()
 
-    # 🔹 Filtro por proyecto (si aplica)
     proyecto_id = request.GET.get("proyecto")
     if proyecto_id:
         try:
@@ -824,7 +898,6 @@ def epica_list(request):
         except ValueError:
             pass
 
-    # 🔹 Lista de proyectos activos para el filtro en el template
     proyectos = Proyecto.objects.filter(activo=True).order_by("codigo")
 
     context = {
@@ -896,10 +969,6 @@ def epica_delete(request, epica_id):
 # Detalle de Épica
 # ==============================
 
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
-from django.db.models import Count, Q
-
 @login_required
 def epica_detail(request, epica_id):
     """
@@ -914,36 +983,31 @@ def epica_detail(request, epica_id):
     """
     integrante, es_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    # Carga principal de la épica con relaciones
     epica = (
         Epica.objects
-        .select_related("owner", "proyecto")   # ← FK
-        .prefetch_related("sprints")           # ← M2M
+        .select_related("owner", "proyecto")
+        .prefetch_related("sprints")
         .get(pk=epica_id)
     )
 
-    # Permisos de acceso
     if not puede_ver_todo:
-        # Solo permite ver si el usuario tiene tareas en esta épica
-        tiene_tareas = epica.tareas.filter(asignado_a=integrante).exists() if integrante else False
+        tiene_tareas = epica.tareas.filter(Q(asignados=integrante) | Q(asignado_a=integrante)).exists() if integrante else False
         if not tiene_tareas:
             messages.error(request, "❌ No tienes permisos para ver esta épica.")
             return redirect("epica_list")
 
-    # Trae tareas con relaciones precargadas para eficiencia
     tareas_qs = (
         epica.tareas
-        .select_related("asignado_a__user", "sprint")  # personas y sprint
+        .select_related("asignado_a__user", "sprint")
+        .prefetch_related("asignados__user")
         .order_by("estado", "categoria", "titulo")
     )
 
-    # Métricas
     total_tareas = tareas_qs.count()
     completadas = tareas_qs.filter(completada=True).count()
     progreso_calculado = round((completadas / total_tareas) * 100.0, 2) if total_tareas else 0.0
-    avance_efectivo = epica.avance  # usa manual si existe, si no el calculado del modelo
+    avance_efectivo = epica.avance
 
-    # Buckets por estado (útil para tabs o columnas)
     estados = {
         "NUEVO": tareas_qs.filter(estado="NUEVO"),
         "APROBADO": tareas_qs.filter(estado="APROBADO"),
@@ -952,7 +1016,6 @@ def epica_detail(request, epica_id):
         "COMPLETADO": tareas_qs.filter(estado="COMPLETADO"),
     }
 
-    # Conteos por estado (para cabeceras o badges)
     conteos_por_estado = (
         tareas_qs.values("estado")
         .annotate(total=Count("id"))
@@ -962,13 +1025,13 @@ def epica_detail(request, epica_id):
 
     context = {
         "epica": epica,
-        "tareas": tareas_qs,                  
-        "estados": estados,                   
-        "conteos": conteos_map,               
+        "tareas": tareas_qs,
+        "estados": estados,
+        "conteos": conteos_map,
         "total_tareas": total_tareas,
         "tareas_completadas": completadas,
         "progreso_calculado": progreso_calculado,
-        "avance_efectivo": avance_efectivo,   
+        "avance_efectivo": avance_efectivo,
         "puede_ver_todo": puede_ver_todo,
         "es_admin": es_admin,
         "es_visualizador": es_visualizador,
@@ -982,7 +1045,7 @@ def proyecto_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "✅ Proyecto creado correctamente.")
-            return redirect("epica_create")  # o epica_edit si estabas editando
+            return redirect("epica_create")  # o a donde quieras redirigir
     else:
         form = ProyectoForm()
     return render(request, "backlog/proyecto_form.html", {"form": form})

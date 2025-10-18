@@ -200,7 +200,6 @@ class Epica(models.Model):
         if self.avance_manual is not None and not (0 <= self.avance_manual <= 100):
             raise ValidationError("El avance manual debe estar entre 0 y 100.")
 
-
 # ==============================
 # Tarea
 # ==============================
@@ -244,18 +243,31 @@ class Tarea(models.Model):
         help_text="Story points (1, 2, 3, 5, 8, 13, 21)"
     )
 
-    # FK a Épica (opcional)
+    # FK a Épica 
     epica = models.ForeignKey(
-        Epica, on_delete=models.SET_NULL, null=True, blank=True, related_name="tareas"
-    )
-
-    asignado_a = models.ForeignKey(
-        Integrante,
+        Epica,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="tareas"
+    )
+
+    #  Nuevo: varios responsables
+    asignados = models.ManyToManyField(
+        "Integrante",
+        blank=True,
         related_name="tareas_asignadas"
     )
+
+    #  (compatibilidad temporal)
+    asignado_a = models.ForeignKey(
+        "Integrante",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tareas_asignadas_legacy"
+    )
+
     sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE)
 
     completada = models.BooleanField(default=False)
@@ -274,8 +286,14 @@ class Tarea(models.Model):
     def esfuerzo_display(self):
         return self.esfuerzo_sp if self.esfuerzo_sp is not None else "-"
 
+    @property
+    def responsables_list(self):
+        """
+        Devuelve los nombres de todos los responsables asignados.
+        """
+        return ", ".join(str(i) for i in self.asignados.all()) or "—"
 
-# ==============================
+# ===============   ===============
 # Evidencia
 # ==============================
 class Evidencia(models.Model):

@@ -12,109 +12,45 @@
   {% endif %}
 </div>
 
-<div class="alert alert-warning d-flex align-items-center" role="alert">
-  <div>
-    <strong>⚠️ Advertencia:</strong> Estás editando la tarea <strong>"{{ tarea.titulo }}"</strong>.
-    Los cambios serán visibles para todo el equipo.
-  </div>
+<div class="alert alert-warning">
+  ⚠️ Estás editando la tarea <strong>"{{ tarea.titulo }}"</strong>.
+  Los cambios serán visibles para todo el equipo.
 </div>
 
-<div class="row">
-  <div class="col-lg-8">
-    <form method="post" class="card shadow-sm p-4">
-      {% csrf_token %}
+<form method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
+  {% csrf_token %}
+  <div class="row g-3">
+    <div class="col-md-6">{{ form.epica.label_tag }} {{ form.epica }}</div>
+    <div class="col-md-6">{{ form.sprint.label_tag }} {{ form.sprint }}</div>
 
-      <div class="row g-3">
-        <!-- Épica -->
-        <div class="col-md-6">
-          <label class="form-label">{{ form.epica.label }}</label>
-          {{ form.epica }}
-          {% if form.epica.errors %}<div class="text-danger small">{{ form.epica.errors }}</div>{% endif %}
-        </div>
+    <div class="col-md-12">{{ form.titulo.label_tag }} {{ form.titulo }}</div>
+    <div class="col-md-12">{{ form.descripcion.label_tag }} {{ form.descripcion }}</div>
+    <div class="col-md-12">
+      {{ form.criterios_aceptacion.label_tag }} {{ form.criterios_aceptacion }}
+      {% if form.criterios_aceptacion.help_text %}<small class="text-muted">{{ form.criterios_aceptacion.help_text }}</small>{% endif %}
+    </div>
 
-        <!-- Sprint -->
-        <div class="col-md-6">
-          <label class="form-label">{{ form.sprint.label }}</label>
-          {{ form.sprint }}
-          {% if form.sprint.errors %}<div class="text-danger small">{{ form.sprint.errors }}</div>{% endif %}
-        </div>
+    <div class="col-md-4">{{ form.categoria.label_tag }} {{ form.categoria }}</div>
+    <div class="col-md-4">{{ form.esfuerzo_sp.label_tag }} {{ form.esfuerzo_sp }}</div>
 
-        <!-- Título -->
-        <div class="col-md-12">
-          <label class="form-label">{{ form.titulo.label }}</label>
-          {{ form.titulo }}
-          {% if form.titulo.errors %}<div class="text-danger small">{{ form.titulo.errors }}</div>{% endif %}
-        </div>
-
-        <!-- Descripción -->
-        <div class="col-md-12">
-          <label class="form-label">{{ form.descripcion.label }}</label>
-          {{ form.descripcion }}
-          {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
-        </div>
-
-        <!-- Criterios de aceptación -->
-        <div class="col-md-12">
-          <label class="form-label">{{ form.criterios_aceptacion.label }}</label>
-          {{ form.criterios_aceptacion }}
-          {% if form.criterios_aceptacion.help_text %}
-            <div class="form-text">{{ form.criterios_aceptacion.help_text }}</div>
-          {% endif %}
-          {% if form.criterios_aceptacion.errors %}<div class="text-danger small">{{ form.criterios_aceptacion.errors }}</div>{% endif %}
-        </div>
-
-        <!-- Categoría (Matriz Eisenhower) -->
-        <div class="col-md-6">
-          <label class="form-label">{{ form.categoria.label }}</label>
-          {{ form.categoria }}
-          {% if form.categoria.errors %}<div class="text-danger small">{{ form.categoria.errors }}</div>{% endif %}
-        </div>
-
-        <!-- Asignado a -->
-        <div class="col-md-6">
-          <label class="form-label">{{ form.asignado_a.label }}</label>
-          {{ form.asignado_a }}
-          {% if form.asignado_a.errors %}<div class="text-danger small">{{ form.asignado_a.errors }}</div>{% endif %}
-        </div>
-      </div>
-
-      <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
-        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">❌ Cancelar</a>
-      </div>
-    </form>
-
-    <div class="mt-3 d-flex flex-wrap gap-2">
-      <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle Completo</a>
-      <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Volver al Backlog</a>
-      <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Ver Kanban</a>
+    <!-- 🔹 nuevos responsables -->
+    <div class="col-md-4">
+      {{ form.asignados.label_tag }}
+      {{ form.asignados }}
+      {% if form.asignados.help_text %}<small class="text-muted">{{ form.asignados.help_text }}</small>{% endif %}
     </div>
   </div>
 
-  <div class="col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-header">📋 Información Actual</div>
-      <div class="card-body">
-        <p class="mb-1"><strong>Título:</strong> {{ tarea.titulo }}</p>
-
-        <p class="mb-1">
-          <strong>Épica:</strong>
-          {% if tarea.epica %}
-            <a href="{% url 'epica_detail' tarea.epica.id %}">{{ tarea.epica.titulo }}</a>
-          {% else %}
-            <span class="text-muted">—</span>
-          {% endif %}
-        </p>
-
-        <p class="mb-1"><strong>Sprint:</strong> {{ tarea.sprint }}</p>
-        <p class="mb-1"><strong>Asignada a:</strong> {{ tarea.asignado_a|default:"—" }}</p>
-        <p class="mb-1"><strong>Categoría:</strong> {{ tarea.get_categoria_display }}</p>
-        <p class="mb-0">
-          <strong>Estado:</strong>
-          {% if tarea.completada %}✅ Completada{% else %}⏳ Abierta{% endif %}
-        </p>
-      </div>
-    </div>
+  <div class="mt-4 d-flex gap-2">
+    <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
+    <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">❌ Cancelar</a>
   </div>
+</form>
+
+<div class="mt-4 d-flex flex-wrap gap-2">
+  <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
+  <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Backlog</a>
+  <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Kanban</a>
 </div>
+
 {% endblock %}

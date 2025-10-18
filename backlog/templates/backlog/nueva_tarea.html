@@ -1,34 +1,102 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h2>➕ Nueva Tarea (Historia de Usuario)</h2>
-    
-    {% if request.user.is_authenticated %}
-    <div style="text-align: right;">
-        <a href="{% url 'home' %}" style="background:#6c757d; color:white; padding:8px 16px; margin-right:8px; text-decoration:none; border-radius:5px; font-weight:bold;">🏠 Home</a>
-        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" style="background:#dc3545; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">
-            🚪 Cerrar Sesión
-        </a>
-    </div>
-    {% endif %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+  <h2>➕ Nueva Tarea (Historia de Usuario)</h2>
+
+  {% if request.user.is_authenticated %}
+  <div style="text-align:right;">
+    <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+    <span style="margin:0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+    <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+  </div>
+  {% endif %}
 </div>
 
-<form method="post" style="background:#ffffff; border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:20px;">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:5px; font-weight:bold;">💾 Guardar</button>
+<form method="post" enctype="multipart/form-data"
+      style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:20px;">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <div class="row g-3">
+    <!-- Épica -->
+    <div class="col-md-6">
+      <label class="form-label">{{ form.epica.label }}</label>
+      {{ form.epica }}
+      {% if form.epica.errors %}<div class="text-danger small">{{ form.epica.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Sprint -->
+    <div class="col-md-6">
+      <label class="form-label">{{ form.sprint.label }}</label>
+      {{ form.sprint }}
+      {% if form.sprint.errors %}<div class="text-danger small">{{ form.sprint.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Título -->
+    <div class="col-md-12">
+      <label class="form-label">{{ form.titulo.label }}</label>
+      {{ form.titulo }}
+      {% if form.titulo.errors %}<div class="text-danger small">{{ form.titulo.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Descripción -->
+    <div class="col-md-12">
+      <label class="form-label">{{ form.descripcion.label }}</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Criterios de aceptación -->
+    <div class="col-md-12">
+      <label class="form-label">{{ form.criterios_aceptacion.label }}</label>
+      {{ form.criterios_aceptacion }}
+      {% if form.criterios_aceptacion.help_text %}
+        <div class="form-text">{{ form.criterios_aceptacion.help_text }}</div>
+      {% endif %}
+      {% if form.criterios_aceptacion.errors %}<div class="text-danger small">{{ form.criterios_aceptacion.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Categoría -->
+    <div class="col-md-6">
+      <label class="form-label">{{ form.categoria.label }}</label>
+      {{ form.categoria }}
+      {% if form.categoria.errors %}<div class="text-danger small">{{ form.categoria.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Esfuerzo -->
+    <div class="col-md-6">
+      <label class="form-label">{{ form.esfuerzo_sp.label }}</label>
+      {{ form.esfuerzo_sp }}
+      {% if form.esfuerzo_sp.errors %}<div class="text-danger small">{{ form.esfuerzo_sp.errors }}</div>{% endif %}
+    </div>
+
+    <!-- 🔹 Responsables múltiples -->
+    <div class="col-md-12">
+      <label class="form-label">{{ form.asignados.label }}</label>
+      {{ form.asignados }}
+      {% if form.asignados.help_text %}
+        <div class="form-text">{{ form.asignados.help_text }}</div>
+      {% endif %}
+      {% if form.asignados.errors %}<div class="text-danger small">{{ form.asignados.errors }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button type="submit" class="btn btn-success">💾 Guardar</button>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Cancelar</a>
+  </div>
 </form>
 
-<hr style="margin: 30px 0;">
+<hr class="my-4">
 
 <div>
-    <a href="{% url 'backlog_lista' %}" style="background:#007bff; color:white; padding:8px 16px; text-decoration:none; border-radius:5px; font-weight:bold;">📋 Ver en Lista</a>
-    <a href="{% url 'backlog_matriz' %}" style="background:#17a2b8; color:white; padding:8px 16px; margin-left:10px; text-decoration:none; border-radius:5px; font-weight:bold;">🔲 Ver en Matriz</a>
-    <a href="{% url 'kanban_board' %}" style="background:#28a745; color:white; padding:8px 16px; margin-left:10px; text-decoration:none; border-radius:5px; font-weight:bold;">🧩 Ver Kanban</a>
-    {% if tiene_permisos_admin %}
-        <a href="{% url 'epica_list' %}" style="background:#ffc107; color:#000; padding:8px 16px; margin-left:10px; text-decoration:none; border-radius:5px; font-weight:bold;">🧱 Ver Épicas</a>
-    {% endif %}
+  <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Ver Lista</a>
+  <a href="{% url 'backlog_matriz' %}" class="btn btn-info">🔲 Ver Matriz</a>
+  <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Ver Kanban</a>
+  {% if tiene_permisos_admin %}
+  <a href="{% url 'epica_list' %}" class="btn btn-warning text-dark">🧱 Ver Épicas</a>
+  {% endif %}
 </div>
+
 {% endblock %}
