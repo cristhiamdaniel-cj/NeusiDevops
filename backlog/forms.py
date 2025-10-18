@@ -41,11 +41,13 @@ class DailyForm(forms.ModelForm):
 # ==============================
 # Tarea
 # ==============================
+# backlog/forms.py
+from django import forms
+from .models import Tarea, Epica, Integrante
+
 class TareaForm(forms.ModelForm):
     # Combo de story points (opcional)
-    ESFUERZO_CHOICES = [(None, "— Selecciona —")] + [
-        (v, str(v)) for v in (1, 2, 3, 5, 8, 13, 21)
-    ]
+    ESFUERZO_CHOICES = [(None, "— Selecciona —")] + [(v, str(v)) for v in (1, 2, 3, 5, 8, 13, 21)]
 
     esfuerzo_sp = forms.TypedChoiceField(
         required=False,
@@ -57,12 +59,23 @@ class TareaForm(forms.ModelForm):
         help_text="Story points estimados (1, 2, 3, 5, 8, 13, 21). Opcional."
     )
 
+    # NUEVO: responsables múltiples
+    asignados = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=Integrante.objects.select_related("user").all().order_by("user__first_name","user__last_name"),
+        widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
+        label="Responsables (pueden ser varios)",
+        help_text="Tip: Ctrl/⌘ para seleccionar varios."
+    )
+
     class Meta:
         model = Tarea
         fields = [
             "epica", "titulo", "descripcion", "criterios_aceptacion",
-            "categoria", "asignado_a", "sprint",
+            "categoria", "sprint",
+            "asignados",
             "esfuerzo_sp",
+            # Omitimos el legacy 'asignado_a' del formulario
         ]
         labels = {
             "epica": "Épica (opcional)",
@@ -70,28 +83,14 @@ class TareaForm(forms.ModelForm):
             "descripcion": "Descripción",
             "criterios_aceptacion": "Criterios de aceptación",
             "categoria": "Categoría (Matriz Eisenhower)",
-            "asignado_a": "Responsable",
             "sprint": "Sprint asignado",
-        }
-        help_texts = {
-            "criterios_aceptacion": "Explica claramente las condiciones para dar por completada esta tarea.",
         }
         widgets = {
             "epica": forms.Select(attrs={"class": "form-select"}),
-            "titulo": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Escribe un título corto y claro"
-            }),
-            "descripcion": forms.Textarea(attrs={
-                "rows": 3, "class": "form-control",
-                "placeholder": "Describe los detalles de la tarea..."
-            }),
-            "criterios_aceptacion": forms.Textarea(attrs={
-                "rows": 4, "class": "form-control",
-                "placeholder": "Ejemplo: Se considera completada cuando..."
-            }),
+            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Escribe un título corto y claro"}),
+            "descripcion": forms.Textarea(attrs={"rows": 3, "class": "form-control", "placeholder": "Describe los detalles de la tarea..."}),
+            "criterios_aceptacion": forms.Textarea(attrs={"rows": 4, "class": "form-control", "placeholder": "Ejemplo: Se considera completada cuando..."}),
             "categoria": forms.Select(attrs={"class": "form-select"}),
-            "asignado_a": forms.Select(attrs={"class": "form-select"}),
             "sprint": forms.Select(attrs={"class": "form-select"}),
         }
 
@@ -101,6 +100,9 @@ class TareaForm(forms.ModelForm):
         self.fields["epica"].queryset = Epica.objects.select_related("proyecto").order_by(
             "proyecto__codigo", "titulo"
         )
+        # Si existe legacy y el M2M aún está vacío, precargar
+        if self.instance and self.instance.pk and not self.instance.asignados.exists() and self.instance.asignado_a_id:
+            self.initial.setdefault("asignados", [self.instance.asignado_a_id])
 
     def clean_esfuerzo_sp(self):
         v = self.cleaned_data.get("esfuerzo_sp")
@@ -108,10 +110,29 @@ class TareaForm(forms.ModelForm):
         if v in (None, ""):
             return None
         if v not in validos:
-            raise forms.ValidationError(
-                "Los story points deben ser uno de: 1, 2, 3, 5, 8, 13 o 21."
-            )
+            raise forms.ValidationError("Los story points deben ser uno de: 1, 2, 3, 5, 8, 13 o 21.")
         return v
+
+    def save(self, commit=True):
+        """
+        Guardamos normal y sincronizamos el legacy FK:
+        - Si hay 1 responsable exacto => lo colocamos en asignado_a.
+        - Si hay 0 o >1 => ponemos asignado_a = None para no inducir a error.
+        """
+        tarea = super().save(commit=False)
+        asignados_qs = self.cleaned_data.get("asignados")
+
+        if asignados_qs is not None:
+            if len(asignados_qs) == 1:
+                tarea.asignado_a = list(asignados_qs)[0]
+            else:
+                tarea.asignado_a = None
+
+        if commit:
+            tarea.save()
+            self.save_m2m()
+        return tarea
+
 
 
 # ==============================
