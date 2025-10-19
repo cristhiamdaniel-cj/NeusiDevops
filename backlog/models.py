@@ -10,14 +10,15 @@ from django.core.exceptions import ValidationError
 # ==============================
 def validar_story_points(value):
     """
-    Story points usuales en planning (serie Fibonacci corta).
-    Permite nulo/blank en el campo, pero si viene valor debe ser uno de estos.
+    Story points usuales (Fibonacci corta). Permite nulo.
     """
     if value is None:
         return
     validos = (1, 2, 3, 5, 8, 13, 21)
     if value not in validos:
-        raise ValidationError(f"Los story points deben ser uno de: {', '.join(map(str, validos))}.")
+        raise ValidationError(
+            f"Los story points deben ser uno de: {', '.join(map(str, validos))}."
+        )
 
 
 # ==============================
@@ -25,8 +26,7 @@ def validar_story_points(value):
 # ==============================
 class Integrante(models.Model):
     """
-    Relación 1 a 1 con User de Django.
-    Se usa para asignar roles y permisos personalizados.
+    Relación 1 a 1 con User de Django. Roles/permisos personalizados.
     """
     ROL_PERMISOS = {
         "Lider Bases de datos": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
@@ -40,18 +40,15 @@ class Integrante(models.Model):
     def __str__(self):
         return self.user.get_full_name() or self.user.username
 
-    # ==== Métodos de permisos ====
+    # ==== Permisos por rol ====
     def puede_crear_tareas(self):
-        permisos = self.ROL_PERMISOS.get(self.rol, [])
-        return "crear_tareas" in permisos
+        return "crear_tareas" in self.ROL_PERMISOS.get(self.rol, [])
 
     def puede_agregar_evidencias(self):
-        permisos = self.ROL_PERMISOS.get(self.rol, [])
-        return "agregar_evidencias" in permisos
+        return "agregar_evidencias" in self.ROL_PERMISOS.get(self.rol, [])
 
     def puede_editar_tareas(self):
-        permisos = self.ROL_PERMISOS.get(self.rol, [])
-        return "editar_tareas" in permisos
+        return "editar_tareas" in self.ROL_PERMISOS.get(self.rol, [])
 
     def es_visualizador(self):
         return self.rol == "Visualizador"
@@ -107,7 +104,7 @@ class Epica(models.Model):
         ("BAJA", "Baja"),
     ]
 
-    # Nuevo: código legible de la épica (opcional pero recomendable)
+    # Código legible (opcional)
     codigo = models.CharField(
         max_length=20,
         unique=True,
@@ -121,7 +118,7 @@ class Epica(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="ACTIVA")
     prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default="MEDIA")
 
-    # Nuevo: relación con Proyecto (normalizado)
+    # Proyecto
     proyecto = models.ForeignKey(
         Proyecto,
         on_delete=models.PROTECT,
@@ -131,25 +128,37 @@ class Epica(models.Model):
         help_text="Proyecto al que pertenece esta épica."
     )
 
-    # Nuevo: fechas macro de la épica
+    # Fechas macro
     fecha_inicio = models.DateField(null=True, blank=True)
     fecha_fin = models.DateField(null=True, blank=True)
 
-    # Nuevo: KPIs / criterios de éxito
+    # KPIs / criterios de éxito
     kpis = models.TextField(blank=True, help_text="Métricas clave esperadas para la épica")
 
-    # Nuevo: avance manual (0–100). Si no se define, se usa el cálculo por tareas.
+    # Avance manual (0–100). Si no se define, se calcula por tareas.
     avance_manual = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
         help_text="0–100. Si se deja vacío, se calcula por tareas."
     )
 
-    # Nuevo: URL de documentos (Drive/Notion/Repo)
+    # Documentación
     documentos_url = models.URLField(blank=True, help_text="Enlace a carpeta o documento maestro")
 
+    # Responsable único (legado)
     owner = models.ForeignKey(
-        Integrante, on_delete=models.SET_NULL, null=True, blank=True, related_name="epicas_propias"
+        "Integrante",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="epicas_propias"
+    )
+    # Varios responsables (nuevo)
+    owners = models.ManyToManyField(
+        "Integrante",
+        blank=True,
+        related_name="epicas_cocreadas",
+        help_text="Responsables/co-owners de la épica"
     )
 
     # Puede abarcar varios sprints
@@ -181,24 +190,19 @@ class Epica(models.Model):
 
     @property
     def avance(self) -> float:
-        """
-        Avance efectivo mostrado:
-        - Si hay 'avance_manual', úsalo.
-        - Si no, usa 'progreso_calculado' por tareas.
-        """
+        """Si hay 'avance_manual', úsalo; si no, usa cálculo por tareas."""
         return float(self.avance_manual) if self.avance_manual is not None else self.progreso_calculado
 
-    # Útil para mostrar en admin/listas
     def sprints_list(self):
         return ", ".join(str(s) for s in self.sprints.all())
     sprints_list.short_description = "Sprints"
 
-    # Validaciones de consistencia
     def clean(self):
         if self.fecha_inicio and self.fecha_fin and self.fecha_inicio > self.fecha_fin:
             raise ValidationError("La fecha de inicio no puede ser posterior a la fecha fin.")
         if self.avance_manual is not None and not (0 <= self.avance_manual <= 100):
             raise ValidationError("El avance manual debe estar entre 0 y 100.")
+
 
 # ==============================
 # Tarea
@@ -211,7 +215,6 @@ class Tarea(models.Model):
         ("NUNI", "No Urgente y No Importante"),
     ]
 
-    # Estados de workflow
     ESTADO_CHOICES = [
         ("NUEVO", "Nuevo"),
         ("APROBADO", "Aprobado"),
@@ -235,7 +238,7 @@ class Tarea(models.Model):
         help_text="Estado actual de la tarea en el workflow"
     )
 
-    # Story points / Puntuación de esfuerzo
+    # Story points
     esfuerzo_sp = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
@@ -243,7 +246,7 @@ class Tarea(models.Model):
         help_text="Story points (1, 2, 3, 5, 8, 13, 21)"
     )
 
-    # FK a Épica 
+    # Épica (1-N: una épica, muchas tareas)
     epica = models.ForeignKey(
         Epica,
         on_delete=models.SET_NULL,
@@ -252,14 +255,14 @@ class Tarea(models.Model):
         related_name="tareas"
     )
 
-    #  Nuevo: varios responsables
+    # Varios responsables (nuevo)
     asignados = models.ManyToManyField(
         "Integrante",
         blank=True,
         related_name="tareas_asignadas"
     )
 
-    #  (compatibilidad temporal)
+    # Responsable único (legado/compatibilidad)
     asignado_a = models.ForeignKey(
         "Integrante",
         on_delete=models.SET_NULL,
@@ -288,12 +291,12 @@ class Tarea(models.Model):
 
     @property
     def responsables_list(self):
-        """
-        Devuelve los nombres de todos los responsables asignados.
-        """
-        return ", ".join(str(i) for i in self.asignados.all()) or "—"
+        """Nombres de todos los responsables M2M (o '—' si no hay)."""
+        nombres = [str(i) for i in self.asignados.all()]
+        return ", ".join(nombres) if nombres else "—"
 
-# ===============   ===============
+
+# ==============================
 # Evidencia
 # ==============================
 class Evidencia(models.Model):
@@ -323,7 +326,7 @@ class Daily(models.Model):
     que_hara_hoy = models.TextField()
     impedimentos = models.TextField(blank=True, null=True)
 
-    # Campo para marcar registros por fuera de la ventana 5–9 AM
+    # Marca si el registro fue fuera de ventana 5–9 AM
     fuera_horario = models.BooleanField(default=False)
 
     def __str__(self):

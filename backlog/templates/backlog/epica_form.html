@@ -1,26 +1,43 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'backlog/epicas-form.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'backlog/epicas-form.css' %}?v=4">
 {% endblock %}
 
 {% block content %}
-<h4 class="mb-3">{% if epica %}✏️ Editar Épica{% else %}➕ Nueva Épica{% endif %}</h4>
+<h4 class="mb-3">
+  {% if epica %}
+    ✏️ Editar Épica
+  {% else %}
+    ➕ Nueva Épica
+  {% endif %}
+</h4>
 
 <form method="post" novalidate>
   {% csrf_token %}
 
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger mb-3">
+      {% for e in form.non_field_errors %}
+        {{ e }}<br>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <div class="card shadow-sm">
     <div class="card-body">
 
-      <!-- Campo Proyecto con botón -->
+      <!-- Proyecto con botón para crear uno nuevo -->
       <div class="mb-3">
         <label for="{{ form.proyecto.id_for_label }}" class="form-label">
           {{ form.proyecto.label }}
         </label>
         <div class="input-group">
           {{ form.proyecto }}
-          <a href="{% url 'proyecto_create' %}" class="btn btn-outline-success" title="Crear nuevo proyecto">
+          <a href="{% url 'proyecto_create' %}"
+             class="btn btn-outline-success"
+             title="Crear nuevo proyecto">
             ➕
           </a>
         </div>
@@ -32,15 +49,19 @@
         {% endfor %}
       </div>
 
-      <!-- Renderiza el resto del formulario excepto 'proyecto' -->
+      <!-- Campos restantes -->
       {% for field in form %}
         {% if field.name != "proyecto" %}
           <div class="mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            <label for="{{ field.id_for_label }}" class="form-label">
+              {{ field.label }}
+            </label>
             {{ field }}
+
             {% if field.help_text %}
               <div class="form-text">{{ field.help_text }}</div>
             {% endif %}
+
             {% for error in field.errors %}
               <div class="text-danger small">{{ error }}</div>
             {% endfor %}
@@ -56,4 +77,5 @@
     <a class="btn btn-outline-secondary" href="{% url 'epica_list' %}">Cancelar</a>
   </div>
 </form>
+
 {% endblock %}

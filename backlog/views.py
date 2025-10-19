@@ -150,13 +150,6 @@ def nueva_tarea(request):
         form = TareaForm()
     return render(request, "backlog/nueva_tarea.html", {"form": form})
 
-
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from backlog.models import Tarea
-from backlog.forms import EvidenciaForm
-
-
 @login_required
 def detalle_tarea(request, tarea_id):
     """Vista detallada de una tarea con evidencias y permisos según rol"""
@@ -865,26 +858,30 @@ def epica_list(request):
     """
     Lista todas las épicas visibles para el usuario actual.
     - Scrum Master / PO y Visualizador: ven todas las épicas.
-    - Miembros normales: solo las épicas donde tengan tareas asignadas.
+    - Miembros normales: épicas donde tengan tareas asignadas O sean owners/co-owners.
     - Permite filtrar por proyecto (FK normalizado).
     """
     integrante, admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    # Base de épicas
     if puede_ver_todo:
         epicas = (
             Epica.objects
             .select_related("owner", "proyecto")
-            .prefetch_related("sprints")
+            .prefetch_related("owners__user", "sprints")
             .order_by("-creada_en")
         )
     else:
         if integrante:
             epicas = (
                 Epica.objects
-                .filter(Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante))
+                .filter(
+                    Q(tareas__asignados=integrante) |
+                    Q(tareas__asignado_a=integrante) |
+                    Q(owner=integrante) |
+                    Q(owners=integrante)
+                )
                 .select_related("owner", "proyecto")
-                .prefetch_related("sprints")
+                .prefetch_related("owners__user", "sprints")
                 .distinct()
                 .order_by("-creada_en")
             )
@@ -920,7 +917,7 @@ def epica_create(request):
         if form.is_valid():
             epica = form.save(commit=False)
             epica.save()
-            form.save_m2m()  # M2M sprints
+            form.save_m2m()  # M2M sprints + owners
             messages.success(request, "✅ Épica creada correctamente.")
             return redirect("epica_detail", epica_id=epica.id)
     else:
@@ -941,7 +938,7 @@ def epica_edit(request, epica_id):
         if form.is_valid():
             epica = form.save(commit=False)
             epica.save()
-            form.save_m2m()  # M2M sprints
+            form.save_m2m()  # M2M sprints + owners
             messages.success(request, "✏️ Épica actualizada correctamente.")
             return redirect("epica_detail", epica_id=epica.id)
     else:
@@ -973,26 +970,34 @@ def epica_delete(request, epica_id):
 def epica_detail(request, epica_id):
     """
     Muestra el detalle de una épica:
-    - Datos de la épica (incluye proyecto, owner, sprints)
+    - Datos de la épica (incluye proyecto, owner, sprints, owners)
     - Tareas asociadas (precargadas)
     - Métricas: total, completadas, progreso calculado y avance efectivo (manual o calculado)
     - Buckets por estado para una UI tipo tablero
     Permisos:
     - Admin (Scrum/PO) y Visualizador: pueden ver cualquier épica.
-    - Miembro normal: solo si tiene tareas dentro de esta épica.
+    - Miembro normal: si tiene tareas en la épica o es owner/co-owner.
     """
     integrante, es_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
     epica = (
         Epica.objects
         .select_related("owner", "proyecto")
-        .prefetch_related("sprints")
+        .prefetch_related("owners__user", "sprints")
         .get(pk=epica_id)
     )
 
     if not puede_ver_todo:
-        tiene_tareas = epica.tareas.filter(Q(asignados=integrante) | Q(asignado_a=integrante)).exists() if integrante else False
-        if not tiene_tareas:
+        es_owner = bool(
+            integrante and (
+                epica.owner_id == integrante.id or epica.owners.filter(id=integrante.id).exists()
+            )
+        )
+        tiene_tareas = epica.tareas.filter(
+            Q(asignados=integrante) | Q(asignado_a=integrante)
+        ).exists() if integrante else False
+
+        if not (tiene_tareas or es_owner):
             messages.error(request, "❌ No tienes permisos para ver esta épica.")
             return redirect("epica_list")
 
@@ -1045,7 +1050,7 @@ def proyecto_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "✅ Proyecto creado correctamente.")
-            return redirect("epica_create")  # o a donde quieras redirigir
+            return redirect("epica_create")
     else:
         form = ProyectoForm()
     return render(request, "backlog/proyecto_form.html", {"form": form})
