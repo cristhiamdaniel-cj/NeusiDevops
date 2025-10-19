@@ -203,14 +203,25 @@ class ProyectoForm(forms.ModelForm):
             raise forms.ValidationError("El código del proyecto es obligatorio.")
         return v
 
+# ==============================
+# Épica - Form
+# ==============================
+from django import forms
+from .models import Epica, Proyecto, Sprint, Integrante
 
-# ==============================
-# Épica (actualizada con Proyecto y campos nuevos)
-# ==============================
+
 class EpicaForm(forms.ModelForm):
+    # 🔹 Campo explícito para varios responsables (M2M)
+    owners = forms.ModelMultipleChoiceField(
+        queryset=Integrante.objects.select_related("user").all(),
+        required=True,  # se requiere al menos uno
+        widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
+        label="Responsables del producto",
+        help_text="Selecciona uno o varios integrantes encargados de esta épica."
+    )
+
     class Meta:
         model = Epica
-        # Incluye los campos nuevos que ya usas en vistas/templates:
         fields = [
             "codigo",
             "proyecto",
@@ -218,12 +229,12 @@ class EpicaForm(forms.ModelForm):
             "descripcion",
             "estado",
             "prioridad",
-            "owner",
+            "owners",          # ✅ campo principal de responsables
             "sprints",
             "fecha_inicio",
             "fecha_fin",
             "kpis",
-            "avance_manual",   # porcentaje opcional (0-100)
+            "avance_manual",
             "documentos_url",
         ]
         labels = {
@@ -233,45 +244,81 @@ class EpicaForm(forms.ModelForm):
             "descripcion": "Descripción",
             "estado": "Estado",
             "prioridad": "Prioridad",
-            "owner": "Owner (opcional)",
+            "owners": "Responsables del producto",
             "sprints": "Sprints relacionados",
-            "fecha_inicio": "Fecha inicio",
-            "fecha_fin": "Fecha fin",
+            "fecha_inicio": "Fecha de inicio",
+            "fecha_fin": "Fecha de fin",
             "kpis": "KPIs o Criterios de éxito",
             "avance_manual": "Avance manual (%)",
             "documentos_url": "Documentos asociados (URL)",
         }
         help_texts = {
-            "avance_manual": "Si lo defines, se mostrará como avance principal. Déjalo vacío para usar progreso por tareas.",
+            "avance_manual": "Si lo defines, se mostrará como avance principal. "
+                             "Déjalo vacío para usar el progreso automático por tareas.",
         }
         widgets = {
-            "codigo": forms.TextInput(attrs={"class": "form-control", "placeholder": "NEUSI-001"}),
+            "codigo": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "NEUSI-001"
+            }),
             "proyecto": forms.Select(attrs={"class": "form-select"}),
-            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre de la épica"}),
-            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "titulo": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nombre de la épica"
+            }),
+            "descripcion": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Descripción general de la épica"
+            }),
             "estado": forms.Select(attrs={"class": "form-select"}),
             "prioridad": forms.Select(attrs={"class": "form-select"}),
-            "owner": forms.Select(attrs={"class": "form-select"}),
+            "owners": forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
             "sprints": forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
             "fecha_inicio": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "fecha_fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "kpis": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Métricas clave, criterios de éxito…"}),
-            "avance_manual": forms.NumberInput(attrs={"class": "form-control", "min": 0, "max": 100}),
-            "documentos_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://..."}),
+            "kpis": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Métricas clave, criterios de éxito…"
+            }),
+            "avance_manual": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 0,
+                "max": 100
+            }),
+            "documentos_url": forms.URLInput(attrs={
+                "class": "form-control",
+                "placeholder": "https://..."
+            }),
         }
 
+    # ==============================
+    # Inicialización
+    # ==============================
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Solo proyectos activos en el selector, ordenados por código
-        self.fields["proyecto"].queryset = Proyecto.objects.filter(activo=True).order_by("codigo")
-        # Ordena sprints por fecha de inicio
-        self.fields["sprints"].queryset = Sprint.objects.all().order_by("inicio")
 
+        if "proyecto" in self.fields:
+            self.fields["proyecto"].queryset = Proyecto.objects.filter(activo=True).order_by("codigo")
+        if "sprints" in self.fields:
+            self.fields["sprints"].queryset = Sprint.objects.all().order_by("inicio")
+        if "owners" in self.fields:
+            self.fields["owners"].queryset = (
+                Integrante.objects.select_related("user")
+                .order_by("user__first_name", "user__last_name")
+            )
+
+        # Inicializar owners M2M si la épica ya existe
+        if self.instance and self.instance.pk and "owners" in self.fields:
+            self.fields["owners"].initial = self.instance.owners.values_list("pk", flat=True)
+
+    # ==============================
+    # Validaciones
+    # ==============================
     def clean_codigo(self):
         v = (self.cleaned_data.get("codigo") or "").strip().upper()
-        # Permitir vacío si decides autogenerarlo en señales/admin; si no, exige:
-        # if not v: raise forms.ValidationError("El código es obligatorio.")
-        return v
+        return v or None
 
     def clean_avance_manual(self):
         v = self.cleaned_data.get("avance_manual")
@@ -284,3 +331,19 @@ class EpicaForm(forms.ModelForm):
         if not (0 <= v <= 100):
             raise forms.ValidationError("El avance manual debe estar entre 0 y 100.")
         return v
+
+    # ==============================
+    # Guardado personalizado
+    # ==============================
+    def save(self, commit=True):
+        epica = super().save(commit=False)
+        if commit:
+            epica.save()
+        self.save_m2m()
+
+        # 🔹 Sincroniza automáticamente el owner único con owners múltiples
+        seleccion = list(self.cleaned_data.get("owners") or [])
+        epica.owner = seleccion[0] if len(seleccion) == 1 else None
+        if commit:
+            epica.save(update_fields=["owner"])
+        return epica

@@ -3,10 +3,15 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'backlog/epicas-detail.css' %}?v=6">
 <style>
-  /* Evita poner % en el template: la anchura se calcula con CSS info Jorge*/
+  /* Evita poner % en el template: la anchura se calcula con CSS */
   .progress .pb {
     height: 22px;
     width: calc(var(--w, 0) * 1%);
+  }
+  .chip {
+    display:inline-block; padding:2px 8px; margin:2px 4px;
+    border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff;
+    color:#0d47a1; font-weight:600; font-size:.85rem;
   }
 </style>
 {% endblock %}
@@ -60,10 +65,27 @@
 </div>
 {% endif %}
 
-<!-- Owner y Sprints -->
+<!-- Owners y Sprints -->
 <div class="row mb-3">
   <div class="col-md-6">
-    <p class="mb-1"><strong>👤 Owner:</strong> {{ epica.owner|default:"—" }}</p>
+    <p class="mb-1">
+      <strong>👤 Responsables:</strong>
+      {% with lista=epica.owners.all %}
+        {% if lista %}
+          {% for o in lista %}
+            <span class="chip">
+              {{ o.user.first_name|default:o.user.username }} {{ o.user.last_name }}
+            </span>
+          {% endfor %}
+        {% elif epica.owner %}
+          <span class="chip">
+            {{ epica.owner.user.first_name|default:epica.owner.user.username }} {{ epica.owner.user.last_name }}
+          </span>
+        {% else %}
+          <span class="text-muted">—</span>
+        {% endif %}
+      {% endwith %}
+    </p>
   </div>
   <div class="col-md-6">
     <p class="mb-1">
@@ -77,7 +99,7 @@
   </div>
 </div>
 
-<!-- Avance (sin % en el template) -->
+<!-- Avance (sin % escrito en style) -->
 <div class="mb-3">
   <strong>📊 Avance:</strong>
   {% with p=epica.avance|default_if_none:0 %}
@@ -108,7 +130,7 @@
           <th style="width: 35%;">Título</th>
           <th style="width: 12%;">Estado</th>
           <th style="width: 15%;">Categoría</th>
-          <th style="width: 18%;">Asignado</th>
+          <th style="width: 18%;">Responsables</th>
           <th style="width: 20%;">Sprint</th>
         </tr>
       </thead>
@@ -135,7 +157,23 @@
               {% endif %}
             </td>
             <td>{{ t.get_categoria_display }}</td>
-            <td>{{ t.asignado_a|default:"—" }}</td>
+            <td>
+              {% with rs=t.asignados.all %}
+                {% if rs %}
+                  {% for r in rs %}
+                    <span class="chip">
+                      {{ r.user.first_name|default:r.user.username }} {{ r.user.last_name }}
+                    </span>
+                  {% endfor %}
+                {% elif t.asignado_a %}
+                  <span class="chip">
+                    {{ t.asignado_a.user.first_name|default:t.asignado_a.user.username }} {{ t.asignado_a.user.last_name }}
+                  </span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              {% endwith %}
+            </td>
             <td>{{ t.sprint|default:"—" }}</td>
           </tr>
         {% empty %}
