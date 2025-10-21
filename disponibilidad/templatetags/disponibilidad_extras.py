@@ -1,10 +1,13 @@
+# disponibilidad/templatetags/disponibilidad_extras.py
 from django import template
+from datetime import timedelta
 
 register = template.Library()
 
 @register.filter
-def dict_lookup(dictionary, key):
-    """Permite acceder a un diccionario con una clave variable en templates"""
-    if dictionary is None:
-        return None
-    return dictionary.get(key)
+def add_days(d, n):
+    """Suma n días a una fecha (d + n)."""
+    try:
+        return d + timedelta(days=int(n))
+    except Exception:
+        return d

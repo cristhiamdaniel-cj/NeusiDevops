@@ -1,58 +1,89 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
-import datetime
+from datetime import timedelta, date
+
+def lunes_de(fecha: date) -> date:
+    return fecha - timedelta(days=fecha.weekday())
 
 class DisponibilidadSemanal(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='disponibilidades')
-    semana_inicio = models.DateField(help_text="Fecha de inicio de la semana (lunes)")
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
-    actualizado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    class Meta:
-        unique_together = ['usuario', 'semana_inicio']
-        ordering = ['-semana_inicio']
-        verbose_name = "Disponibilidad Semanal"
-        verbose_name_plural = "Disponibilidades Semanales"
-    
-    def __str__(self):
-        return f"{self.usuario.username} - Semana del {self.semana_inicio}"
-    
-    @classmethod
-    def obtener_semana_actual(cls):
-        today = timezone.now().date()
-        days_since_monday = today.weekday()
-        return today - datetime.timedelta(days=days_since_monday)
-    
-    @classmethod
-    def puede_editar_usuario(cls, user):
-        if user.is_staff or user.is_superuser:
-            return True, "Admin puede editar cualquier d??a"
-        return True, "Modo testing - puede editar"  # Para desarrollo
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="semanas_disponibilidad")
+    semana_inicio = models.DateField(help_text="Lunes de la semana")
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
 
-class HorarioDisponibilidad(models.Model):
-    DIAS_SEMANA = [
-        (0, 'Lunes'), (1, 'Martes'), (2, 'Mi??rcoles'), (3, 'Jueves'),
-        (4, 'Viernes'), (5, 'S??bado'), (6, 'Domingo'),
-    ]
-    
-    ESTADOS_DISPONIBILIDAD = [
-        ('disponible', 'Disponible'),
-        ('ocupado', 'Ocupado'), 
-        ('parcial', 'Parcialmente Disponible'),
-    ]
-    
-    disponibilidad_semanal = models.ForeignKey(DisponibilidadSemanal, on_delete=models.CASCADE, related_name='horarios')
-    dia_semana = models.IntegerField(choices=DIAS_SEMANA, validators=[MinValueValidator(0), MaxValueValidator(6)])
-    hora = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(23)])
-    estado = models.CharField(max_length=20, choices=ESTADOS_DISPONIBILIDAD, default='ocupado')
-    notas = models.CharField(max_length=200, blank=True)
-    
     class Meta:
-        unique_together = ['disponibilidad_semanal', 'dia_semana', 'hora']
-        ordering = ['dia_semana', 'hora']
-    
+        unique_together = ("usuario", "semana_inicio")
+        ordering = ("-semana_inicio",)
+
     def __str__(self):
-        return f"{self.get_dia_semana_display()} {self.hora}:00"
+        return f"{self.usuario.get_full_name() or self.usuario.username} - {self.semana_inicio}"
+
+    @staticmethod
+    def actual_lunes():
+        return lunes_de(timezone.localdate())
+
+    @property
+    def semana_fin(self):
+        return self.semana_inicio + timedelta(days=6)
+
+    def ensure_dias(self):
+        existentes = {d.dia_semana for d in self.dias.all()}
+        faltantes = [i for i in range(7) if i not in existentes]
+        for i in faltantes:
+            DisponibilidadDia.objects.create(disponibilidad=self, dia_semana=i, tipo=DisponibilidadDia.Tipo.NO)
+
+class DisponibilidadDia(models.Model):
+    class Dia(models.IntegerChoices):
+        LUNES = 0, "Lunes"
+        MARTES = 1, "Martes"
+        MIERCOLES = 2, "Miércoles"
+        JUEVES = 3, "Jueves"
+        VIERNES = 4, "Viernes"
+        SABADO = 5, "Sábado"
+        DOMINGO = 6, "Domingo"
+
+    class Tipo(models.TextChoices):
+        SI = "D", "Disponible todo el día"
+        NO = "N", "No disponible"
+        RANGO = "R", "Rango de disponibilidad"
+
+    disponibilidad = models.ForeignKey(DisponibilidadSemanal, on_delete=models.CASCADE, related_name="dias")
+    dia_semana = models.IntegerField(choices=Dia.choices)
+    tipo = models.CharField(max_length=1, choices=Tipo.choices, default=Tipo.NO)
+    hora_inicio = models.TimeField(null=True, blank=True)
+    hora_fin = models.TimeField(null=True, blank=True)
+    notas = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        unique_together = ("disponibilidad", "dia_semana")
+        ordering = ("dia_semana",)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.tipo == self.Tipo.RANGO:
+            if self.hora_inicio is None or self.hora_fin is None:
+                raise ValidationError("Debe indicar hora de inicio y fin para 'Rango'.")
+        else:
+            self.hora_inicio = None
+            self.hora_fin = None
+
+    @property
+    def display_corto(self):
+        if self.tipo == self.Tipo.SI:
+            return "Disponible"
+        if self.tipo == self.Tipo.NO:
+            return "No"
+        if self.hora_inicio and self.hora_fin:
+            return f"{self.hora_inicio.strftime('%H:%M')}–{self.hora_fin.strftime('%H:%M')}"
+        return "Rango"
+
+    @property
+    def display_largo(self):
+        if self.tipo == self.Tipo.SI:
+            return "Disponible todo el día"
+        if self.tipo == self.Tipo.NO:
+            return "No disponible"
+        if self.hora_inicio and self.hora_fin:
+            return f"Disponible de {self.hora_inicio.strftime('%H:%M')} a {self.hora_fin.strftime('%H:%M')}"
+        return "Rango (sin horas)"

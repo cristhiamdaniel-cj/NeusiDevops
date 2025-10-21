@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load disponibilidad_filters %}
+
+{% block title %}Disponibilidad del equipo (mensual){% endblock %}
+
+{% block content %}
+<style>
+  .wrap{max-width:1200px;margin:0 auto}
+  .hdr{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .ttl{font-size:1.3rem;font-weight:700}
+  .legend .dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 6px 0 14px;vertical-align:middle}
+  .dot-free{background:#d4edda;border:1px solid #b7dfb9}
+  .dot-busy{background:#ececec;border:1px solid #d7d7d7}
+  .dot-partial{background:#fff3cd;border:1px solid #ffe28c}
+  .grid{display:grid;grid-template-columns:180px repeat(7,1fr);gap:8px}
+  .box{min-height:56px;border:1px solid #e6e6e6;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .cell{min-height:36px;border:1px solid #e6e6e6;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+  .free{background:#dff3e2}.busy{background:#f0f0f0}.partial{background:#fff3cd}
+  .name{display:flex;align-items:center;gap:8px;font-weight:700}
+</style>
+
+<div class="wrap">
+  <div class="hdr">
+    <div class="ttl">👥 Disponibilidad del equipo — {{ dias.0|date:"F Y" }}</div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'disponibilidad:mes_personal' %}" class="btn btn-outline-primary">Mi mes</a>
+      <a href="{% url 'disponibilidad:mi_disponibilidad' %}" class="btn btn-outline-secondary">Vista semanal</a>
+      <a href="{% url 'home' %}" class="btn btn-outline-dark">Volver</a>
+    </div>
+  </div>
+
+  <form class="row g-2 mb-3">
+    <div class="col-auto">
+      <select class="form-select" name="usuario">
+        <option value="">— Todos —</option>
+        {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if usuario_filtrado == u.id|stringformat:"s" %}selected{% endif %}>
+            {{ u.first_name }} {{ u.last_name }} ({{ u.username }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary">Filtrar</button>
+      <a class="btn btn-light" href="{% url 'disponibilidad:mes_equipo' %}">Limpiar</a>
+    </div>
+  </form>
+
+  <div class="legend mb-2">
+    <strong>Leyenda:</strong>
+    <span class="dot dot-free"></span>Disponible
+    <span class="dot dot-partial"></span>Parcial
+    <span class="dot dot-busy"></span>No disponible / Sin definir
+  </div>
+
+  <!-- cabecera días -->
+  <div class="grid mb-1">
+    <div class="box">Usuario</div>
+    <div class="box">Lun</div><div class="box">Mar</div><div class="box">Mié</div>
+    <div class="box">Jue</div><div class="box">Vie</div><div class="box">Sáb</div><div class="box">Dom</div>
+  </div>
+
+  {% for uid, data in equipo.items %}
+    {% with first_iso=dias.0|date:"N" %}
+    <div class="grid mb-2">
+      <div class="cell name">
+        <span>👤</span>
+        <div>
+          {{ data.usuario.first_name }} {{ data.usuario.last_name }}
+          <div class="text-muted" style="font-size:.85rem">@{{ data.usuario.username }}</div>
+        </div>
+      </div>
+
+      {% for d in dias %}
+        {% with key=d|date:"Y-m-d" info=data.resumen|lookup:key %}
+          <div class="cell {% if forloop.first %}start{% endif %} 
+               {% if info %}{% if info.status == 'full_bloqueado' %}busy{% elif info.status == 'parcial' %}partial{% else %}free{% endif %}{% else %}busy{% endif %}"
+               {% if forloop.first %}style="grid-column-start: {{ first_iso }}"{% endif %}>
+            {{ d|date:"j" }}
+          </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+    {% endwith %}
+  {% empty %}
+    <div class="alert alert-warning">No hay usuarios para mostrar.</div>
+  {% endfor %}
+</div>
+{% endblock %}

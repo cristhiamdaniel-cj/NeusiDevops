@@ -1,157 +1,135 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
+from django.shortcuts import render, redirect
+from django.http import HttpResponseForbidden
 from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.models import User
-import json
+from django.utils import timezone
+from django.urls import reverse
 
-from .models import DisponibilidadSemanal, HorarioDisponibilidad
+from .models import DisponibilidadSemanal, DisponibilidadDia
 
+# ⬅️ AJUSTA este import a dónde tengas Integrante
+from backlog.models import Integrante  # cambia la ruta si tu modelo está en otro app
+
+# ===== Helpers de permisos basados en tu modelo Integrante =====
+def _get_integrante(user):
+    return getattr(user, "integrante", None)
+
+def _es_admin(user):
+    integ = _get_integrante(user)
+    return bool((integ and integ.es_admin()) or getattr(user, "is_superuser", False))
+
+def _es_visualizador(user):
+    integ = _get_integrante(user)
+    return bool(integ and integ.es_visualizador())
+
+# ===== Navegación de semanas =====
+def _get_semana_inicio(request):
+    param = request.GET.get("semana")
+    if param:
+        try:
+            fecha = datetime.strptime(param, "%Y-%m-%d").date()
+            return fecha - timedelta(days=fecha.weekday())
+        except ValueError:
+            pass
+    return DisponibilidadSemanal.actual_lunes()
+
+def _prev_next(semana_inicio):
+    return semana_inicio - timedelta(days=7), semana_inicio + timedelta(days=7)
+
+# ===== Mi disponibilidad (usuario) =====
 @login_required
 def mi_disponibilidad(request):
-    """Vista principal para que el usuario vea y edite su disponibilidad"""
-    semana_actual = DisponibilidadSemanal.obtener_semana_actual()
-    puede_editar, mensaje_edicion = DisponibilidadSemanal.puede_editar_usuario(request.user)
-    
-    # Obtener o crear la disponibilidad semanal
-    disponibilidad, created = DisponibilidadSemanal.objects.get_or_create(
+    semana_inicio = _get_semana_inicio(request)
+    semana, _ = DisponibilidadSemanal.objects.get_or_create(
         usuario=request.user,
-        semana_inicio=semana_actual,
-        defaults={'actualizado_por': request.user}
+        semana_inicio=semana_inicio
     )
-    
-    # Crear matriz de horarios (7 d??as x 24 horas)
-    horarios_matriz = {}
-    for dia in range(7):
-        horarios_matriz[dia] = {}
-        for hora in range(24):
-            try:
-                horario = HorarioDisponibilidad.objects.get(
-                    disponibilidad_semanal=disponibilidad,
-                    dia_semana=dia,
-                    hora=hora
-                )
-            except HorarioDisponibilidad.DoesNotExist:
-                horario = None
-            horarios_matriz[dia][hora] = horario
-    
+    semana.ensure_dias()
+
+    if request.method == "POST":
+        cambios = 0
+        for i in range(7):
+            estado = request.POST.get(f"estado_{i}")
+            if estado not in ("D", "N", "R"):
+                continue
+            dia = semana.dias.get(dia_semana=i)
+            dia.tipo = estado
+            if estado == "R":
+                ini = request.POST.get(f"ini_{i}")
+                fin = request.POST.get(f"fin_{i}")
+                if not ini or not fin:
+                    messages.error(request, f"Debes poner horas para {dia.get_dia_semana_display()} (rango).")
+                    continue
+                try:
+                    h_ini = datetime.strptime(ini, "%H:%M").time()
+                    h_fin = datetime.strptime(fin, "%H:%M").time()
+                except ValueError:
+                    messages.error(request, f"Horas inválidas en {dia.get_dia_semana_display()}.")
+                    continue
+                if h_ini >= h_fin:
+                    messages.error(request, f"Hora inicio ≥ fin en {dia.get_dia_semana_display()}.")
+                    continue
+                dia.hora_inicio = h_ini
+                dia.hora_fin = h_fin
+            else:
+                dia.hora_inicio = None
+                dia.hora_fin = None
+            dia.save()
+            cambios += 1
+
+        if cambios:
+            messages.success(request, "✅ Disponibilidad semanal actualizada.")
+        return redirect(f"{request.path}?semana={semana_inicio.isoformat()}")
+
+    prev_w, next_w = _prev_next(semana_inicio)
+
     context = {
-        'disponibilidad': disponibilidad,
-        'horarios_matriz': horarios_matriz,
-        'puede_editar': puede_editar,
-        'mensaje_edicion': mensaje_edicion,
-        'dias_semana': HorarioDisponibilidad.DIAS_SEMANA,
-        'horas': range(24),
-        'estados': HorarioDisponibilidad.ESTADOS_DISPONIBILIDAD,
+        "semana": semana,
+        "prev_w": prev_w,
+        "next_w": next_w,
+        "hoy": timezone.localdate(),
+        # botones superiores
+        "home_url": "/",
+        "equipo_url": reverse("disponibilidad:equipo_disponibilidad") + f"?semana={semana_inicio.isoformat()}",
+        "puede_ver_equipo": _es_admin(request.user) or _es_visualizador(request.user),
     }
-    
-    return render(request, 'disponibilidad/mi_disponibilidad.html', context)
+    return render(request, "disponibilidad/mi_disponibilidad.html", context)
 
-@login_required
-@require_POST
-def actualizar_horario(request):
-    """Ajax endpoint para actualizar un horario espec??fico"""
-    try:
-        data = json.loads(request.body)
-        dia_semana = int(data['dia_semana'])
-        hora = int(data['hora'])
-        nuevo_estado = data['estado']
-        
-        semana_actual = DisponibilidadSemanal.obtener_semana_actual()
-        puede_editar, mensaje = DisponibilidadSemanal.puede_editar_usuario(request.user)
-        
-        if not puede_editar:
-            return JsonResponse({
-                'success': False,
-                'error': mensaje
-            })
-        
-        # Obtener o crear disponibilidad semanal
-        disponibilidad, _ = DisponibilidadSemanal.objects.get_or_create(
-            usuario=request.user,
-            semana_inicio=semana_actual,
-            defaults={'actualizado_por': request.user}
-        )
-        
-        # Actualizar u crear horario
-        horario, created = HorarioDisponibilidad.objects.update_or_create(
-            disponibilidad_semanal=disponibilidad,
-            dia_semana=dia_semana,
-            hora=hora,
-            defaults={
-                'estado': nuevo_estado,
-                'notas': ''
-            }
-        )
-        
-        return JsonResponse({
-            'success': True,
-            'mensaje': 'Horario actualizado correctamente'
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        })
-
+# ===== Equipo (admin/visualizador) =====
 @login_required
 def ver_disponibilidad_equipo(request):
-    """Vista para ver la disponibilidad de todo el equipo"""
-    semana_actual = DisponibilidadSemanal.obtener_semana_actual()
-    
-    # Obtener TODOS los usuarios del sistema
-    todos_usuarios = User.objects.all().order_by('first_name', 'last_name')
-    
-    # Filtrar por usuario si se solicita
-    usuario_filtrado = request.GET.get('usuario')
-    if usuario_filtrado:
+    if not (_es_admin(request.user) or _es_visualizador(request.user)):
+        return HttpResponseForbidden("Solo administradores/visualizadores.")
+
+    semana_inicio = _get_semana_inicio(request)
+    grupo_id = request.GET.get("grupo")
+
+    usuarios = User.objects.all().order_by("first_name", "last_name")
+    if grupo_id:
         try:
-            todos_usuarios = todos_usuarios.filter(id=usuario_filtrado)
-        except (ValueError, User.DoesNotExist):
-            pass
-    
-    # Organizar datos por usuario
-    equipo_disponibilidad = {}
-    for usuario in todos_usuarios:
-        # Intentar obtener la disponibilidad de este usuario
-        try:
-            disp = DisponibilidadSemanal.objects.get(
-                usuario=usuario,
-                semana_inicio=semana_actual
-            )
-        except DisponibilidadSemanal.DoesNotExist:
-            disp = None
-        
-        usuario_data = {
-            'usuario': usuario,
-            'disponibilidad': disp,
-            'horarios': {}
-        }
-        
-        # Crear matriz de horarios para este usuario
-        for dia in range(7):
-            usuario_data['horarios'][dia] = {}
-            for hora in range(24):
-                if disp:
-                    try:
-                        horario = disp.horarios.get(dia_semana=dia, hora=hora)
-                        usuario_data['horarios'][dia][hora] = horario
-                    except HorarioDisponibilidad.DoesNotExist:
-                        usuario_data['horarios'][dia][hora] = None
-                else:
-                    usuario_data['horarios'][dia][hora] = None
-        
-        equipo_disponibilidad[usuario.id] = usuario_data
-    
+            g = Group.objects.get(pk=int(grupo_id))
+            usuarios = usuarios.filter(groups=g)
+        except (ValueError, Group.DoesNotExist):
+            messages.error(request, "Grupo inválido.")
+
+    # En lugar de pasar un dict y usar get_item, preparamos filas {user, sem}
+    rows = []
+    for u in usuarios:
+        sem, _ = DisponibilidadSemanal.objects.get_or_create(usuario=u, semana_inicio=semana_inicio)
+        sem.ensure_dias()
+        rows.append({"user": u, "sem": sem})
+
+    prev_w, next_w = _prev_next(semana_inicio)
+
     context = {
-        'equipo_disponibilidad': equipo_disponibilidad,
-        'semana_actual': semana_actual,
-        'dias_semana': HorarioDisponibilidad.DIAS_SEMANA,
-        'horas': range(24),
-        'todos_usuarios': User.objects.all().order_by('first_name', 'last_name'),
-        'usuario_filtrado': usuario_filtrado,
+        "rows": rows,                              # 👈 ahora el template recorre rows
+        "semana_inicio": semana_inicio,
+        "prev_w": prev_w, "next_w": next_w,
+        "grupos": Group.objects.all().order_by("name"),
+        "grupo_sel": grupo_id,
+        "home_url": "/",
+        "mi_url": reverse("disponibilidad:mi_disponibilidad") + f"?semana={semana_inicio.isoformat()}",
     }
-    
-    return render(request, 'disponibilidad/equipo_disponibilidad.html', context)
+    return render(request, "disponibilidad/equipo_disponibilidad.html", context)

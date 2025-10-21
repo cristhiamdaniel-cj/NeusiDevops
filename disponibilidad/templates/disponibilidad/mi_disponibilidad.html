@@ -1,299 +1,344 @@
-{% extends 'base.html' %}
-{% load disponibilidad_filters %}
-
-{% block title %}Mi Disponibilidad - NeusiDevops{% endblock %}
+{% extends "base.html" %}
+{% load disponibilidad_extras %}
+{% block title %}Mi Disponibilidad (Semana){% endblock %}
 
 {% block content %}
-<style>
-.disponibilidad-container {
-    max-width: 100%;
-    overflow-x: auto;
-    margin: 20px 0;
-}
+<div class="container py-4">
 
-.grid-disponibilidad {
-    display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
-    gap: 2px;
-    min-width: 800px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 10px;
-}
-
-.header-dia {
-    background: #343a40;
-    color: white;
-    text-align: center;
-    padding: 10px 5px;
-    font-weight: bold;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.hora-label {
-    background: #6c757d;
-    color: white;
-    text-align: center;
-    padding: 8px 4px;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.celda-horario {
-    min-height: 35px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    user-select: none;
-}
-
-.celda-horario:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.estado-disponible {
-    background: linear-gradient(135deg, #d4edda, #c3e6cb);
-    color: #155724;
-}
-
-.estado-vacio {
-    background: linear-gradient(135deg, #e9ecef, #dee2e6);
-    color: #6c757d;
-    border: 1px dashed #adb5bd;
-}
-
-.herramientas {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.modo-seleccion {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.btn-modo {
-    padding: 12px 25px;
-    border: 2px solid;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.2s;
-    text-align: center;
-    min-width: 140px;
-}
-
-.btn-modo.activo {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.modo-disponible {
-    background: #d4edda;
-    border-color: #28a745;
-    color: #155724;
-}
-
-.modo-borrar {
-    background: #e9ecef;
-    border-color: #6c757d;
-    color: #495057;
-}
-</style>
-
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Disponibilidad Semanal</h2>
-                <div>
-                    <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" class="btn btn-info">
-                        Ver Equipo
-                    </a>
-                    <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">
-                        Volver al Inicio
-                    </a>
-                </div>
-            </div>
-
-            <div class="alert alert-info">
-                <strong>Estado:</strong> {{ mensaje_edicion }}
-                <br><small><strong>Instrucciones:</strong> Selecciona un modo abajo y haz clic en los horarios para marcar tu disponibilidad</small>
-            </div>
-
-            <!-- Herramientas de selecci??n -->
-            <div class="herramientas">
-                <h4>Herramientas de Edici??n</h4>
-                <div class="modo-seleccion">
-                    <div class="btn-modo modo-disponible" data-estado="disponible">
-                        Disponible
-                    </div>
-                    <div class="btn-modo modo-borrar" data-estado="vacio">
-                        Limpiar
-                    </div>
-                </div>
-                <div style="margin-top: 15px;">
-                    <button class="btn btn-outline-primary btn-sm" onclick="llenarHorarioOficina()">
-                        Horario oficina (8-17h)
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="limpiarTodo()">
-                        Limpiar todo
-                    </button>
-                </div>
-            </div>
-
-            <!-- Grid principal -->
-            <div class="disponibilidad-container">
-                <div class="grid-disponibilidad">
-                    <!-- Header vac??o -->
-                    <div></div>
-                    
-                    <!-- Headers de d??as -->
-                    {% for dia_num, dia_nombre in dias_semana %}
-                    <div class="header-dia">{{ dia_nombre }}</div>
-                    {% endfor %}
-
-                    <!-- Filas de horarios -->
-                    {% for hora in horas %}
-                    <div class="hora-label">{{ hora|stringformat:"02d" }}:00</div>
-                    {% for dia_num, dia_nombre in dias_semana %}
-                    {% with horarios_matriz|lookup:dia_num|lookup:hora as horario %}
-                    <div class="celda-horario {% if horario and horario.estado == 'disponible' %}estado-disponible{% else %}estado-vacio{% endif %}"
-                         data-dia="{{ dia_num }}" 
-                         data-hora="{{ hora }}"
-                         title="{{ dia_nombre }} {{ hora }}:00">
-                        {% if horario and horario.estado == 'disponible' %}
-                            S??
-                        {% else %}
-                            -
-                        {% endif %}
-                    </div>
-                    {% endwith %}
-                    {% endfor %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <p><strong>Leyenda:</strong>
-                <span class="badge bg-success">Verde = Disponible</span>
-                <span class="badge bg-secondary">Gris = No disponible</span>
-                </p>
-            </div>
-        </div>
+  <!-- Barra con regresar y ver equipo -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex gap-2">
+      <a class="btn btn-light border" href="{{ home_url }}">↩ Volver</a>
+      {% if puede_ver_equipo %}
+        <a class="btn btn-outline-primary" href="{{ equipo_url }}">👥 Ver equipo</a>
+      {% endif %}
     </div>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary" href="?semana={{ prev_w|date:'Y-m-d' }}">← Semana anterior</a>
+      <span class="btn btn-light disabled">
+        {{ semana.semana_inicio|date:"d M" }} — {{ semana.semana_fin|date:"d M Y" }}
+      </span>
+      <a class="btn btn-outline-secondary" href="?semana={{ next_w|date:'Y-m-d' }}">Semana siguiente →</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" class="card" id="form-semana">
+    {% csrf_token %}
+
+    <style>
+      .week-grid { display:grid; grid-template-columns: repeat(7, minmax(140px,1fr)); gap:12px; }
+      @media (max-width: 1200px){ .week-grid{ grid-template-columns: repeat(3,1fr);} }
+      @media (max-width: 768px){ .week-grid{ grid-template-columns: repeat(2,1fr);} }
+      @media (max-width: 576px){ .week-grid{ grid-template-columns: 1fr;} }
+
+      .mini-week { display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; }
+      .mini-day { border:1px solid #e5e7eb; border-radius:10px; padding:8px; min-height:72px; display:flex; flex-direction:column; gap:6px;}
+      .mini-day h6{ font-size:12px; margin:0; color:#64748b; display:flex; justify-content:space-between; }
+      .pill { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700; }
+      .pill-green{ background:#dcfce7; color:#166534; }
+      .pill-gray{ background:#e5e7eb; color:#334155; }
+      .pill-blue{ background:#dbeafe; color:#1e3a8a; }
+
+      .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+      .chip { border:1px solid #d1d5db; background:#f8fafc; padding:4px 8px; border-radius:999px; font-size:12px; cursor:pointer; }
+      .chip:hover { background:#eef2ff; border-color:#c7d2fe; }
+
+      .time-input { font-variant-numeric: tabular-nums; }
+      .is-invalid { border-color:#dc3545 !important; }
+      .invalid-hint { color:#dc3545; font-size:12px; display:none; }
+      .invalid-hint.show { display:block; }
+    </style>
+
+    <!-- datalist global para sugerencias -->
+    <datalist id="horas_sugeridas">
+      {% for h in "00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23"|cut:"," %}
+        <option value="{{ h }}:00"></option>
+        <option value="{{ h }}:15"></option>
+        <option value="{{ h }}:30"></option>
+        <option value="{{ h }}:45"></option>
+      {% endfor %}
+    </datalist>
+
+    <div class="card-body">
+      <!-- 7 columnas de edición -->
+      <div class="week-grid">
+        {% for d in semana.dias.all %}
+          <div class="border rounded p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>
+                {{ d.get_dia_semana_display }}
+                <small class="text-muted">({{ semana.semana_inicio|add_days:d.dia_semana|date:"Y-m-d" }})</small>
+              </strong>
+              <span class="badge {% if d.tipo == 'D' %}text-bg-success{% elif d.tipo == 'N' %}text-bg-secondary{% else %}text-bg-info{% endif %}" id="badge_{{ d.dia_semana }}">
+                <span id="badge_txt_{{ d.dia_semana }}">
+                  {% if d.tipo == "D" %}Disponible{% elif d.tipo == "N" %}No{% else %}
+                    {% if d.hora_inicio and d.hora_fin %}
+                      {{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}
+                    {% else %}Rango{% endif %}
+                  {% endif %}
+                </span>
+              </span>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Estado</label>
+              <select class="form-select estado-select" name="estado_{{ d.dia_semana }}" data-dia="{{ d.dia_semana }}">
+                <option value="D" {% if d.tipo == "D" %}selected{% endif %}>Disponible todo el día</option>
+                <option value="N" {% if d.tipo == "N" %}selected{% endif %}>No disponible</option>
+                <option value="R" {% if d.tipo == "R" %}selected{% endif %}>Rango (horas)</option>
+              </select>
+            </div>
+
+            <!-- Campos de tiempo TEXT con autocompletar -->
+            <div class="rango-wrap" id="rango_{{ d.dia_semana }}" {% if d.tipo != "R" %}style="display:none"{% endif %}>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label">Inicio</label>
+                  <input
+                    type="text"
+                    class="form-control time-input"
+                    name="ini_{{ d.dia_semana }}"
+                    id="ini_{{ d.dia_semana }}"
+                    value="{{ d.hora_inicio|time:'H:i'|default_if_none:'' }}"
+                    placeholder="hh:mm"
+                    list="horas_sugeridas"
+                    inputmode="numeric"
+                    autocomplete="off">
+                  <div class="invalid-hint" id="hint_ini_{{ d.dia_semana }}">Formato válido: 07:00</div>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Fin</label>
+                  <input
+                    type="text"
+                    class="form-control time-input"
+                    name="fin_{{ d.dia_semana }}"
+                    id="fin_{{ d.dia_semana }}"
+                    value="{{ d.hora_fin|time:'H:i'|default_if_none:'' }}"
+                    placeholder="hh:mm"
+                    list="horas_sugeridas"
+                    inputmode="numeric"
+                    autocomplete="off">
+                  <div class="invalid-hint" id="hint_fin_{{ d.dia_semana }}">Formato válido: 16:30</div>
+                </div>
+              </div>
+
+              <!-- Atajos rápidos -->
+              <div class="chips" data-dia="{{ d.dia_semana }}">
+                <span class="chip" data-range="07:00-16:00">07–16</span>
+                <span class="chip" data-range="08:00-17:00">08–17</span>
+                <span class="chip" data-range="09:00-18:00">09–18</span>
+                <span class="chip" data-range="19:00-22:00">19–22</span>
+                <span class="chip" data-clear="1">Limpiar</span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card-footer d-flex justify-content-end gap-2">
+      <a class="btn btn-outline-secondary" href="?semana={{ semana.semana_inicio|date:'Y-m-d' }}">Deshacer</a>
+      <button class="btn btn-primary">💾 Guardar semana</button>
+    </div>
+  </form>
+
+  <!-- Mini-calendario semanal visual -->
+  <div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>📅 Resumen visual de la semana</span>
+      <div class="d-flex gap-2">
+        <span class="pill pill-green">Disponible</span>
+        <span class="pill pill-gray">No disponible</span>
+        <span class="pill pill-blue">Rango</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="mini-week">
+        {% for d in semana.dias.all %}
+          <div class="mini-day">
+            <h6>
+              <span>{{ d.get_dia_semana_display|slice:":3" }}</span>
+              <span>{{ semana.semana_inicio|add_days:d.dia_semana|date:"d/M" }}</span>
+            </h6>
+            {% if d.tipo == "D" %}
+              <span class="pill pill-green">Disponible</span>
+            {% elif d.tipo == "N" %}
+              <span class="pill pill-gray">No disponible</span>
+            {% else %}
+              {% if d.hora_inicio and d.hora_fin %}
+                <span class="pill pill-blue">{{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}</span>
+              {% else %}
+                <span class="pill pill-blue">Rango</span>
+              {% endif %}
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
 </div>
 
-{% csrf_token %}
 <script>
-let modoActual = 'disponible';
+function setBadge(dia, estado, iniVal, finVal) {
+  const badge = document.getElementById('badge_' + dia);
+  const txt = document.getElementById('badge_txt_' + dia);
+  if (!badge || !txt) return;
+  badge.classList.remove('text-bg-success', 'text-bg-secondary', 'text-bg-info');
 
-document.addEventListener('DOMContentLoaded', function() {
-    inicializarHerramientas();
-    inicializarCeldas();
+  if (estado === 'D') { badge.classList.add('text-bg-success'); txt.textContent = 'Disponible'; }
+  else if (estado === 'N') { badge.classList.add('text-bg-secondary'); txt.textContent = 'No'; }
+  else { badge.classList.add('text-bg-info'); txt.textContent = (iniVal && finVal) ? (iniVal + '–' + finVal) : 'Rango'; }
+}
+
+// Normaliza entradas: "7", "730", "7:3", "07:3" -> "07:30" / "07:03"
+function normalizeTime(v) {
+  if (!v) return "";
+  v = v.trim();
+  // si viene con colon
+  if (v.includes(":")) {
+    const [h, m] = v.split(":");
+    const hh = Math.min(23, Math.max(0, parseInt(h || "0", 10)));
+    const mm = Math.min(59, Math.max(0, parseInt(m || "0", 10)));
+    return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+  }
+  // sin colon (p.ej. 7, 730, 0730)
+  if (/^\d{1,4}$/.test(v)) {
+    if (v.length <= 2) {
+      const hh = Math.min(23, Math.max(0, parseInt(v, 10)));
+      return String(hh).padStart(2, "0") + ":00";
+    } else {
+      const hh = Math.min(23, Math.max(0, parseInt(v.slice(0, -2), 10)));
+      const mm = Math.min(59, Math.max(0, parseInt(v.slice(-2), 10)));
+      return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+    }
+  }
+  return v; // deja pasar para que el validador marque error
+}
+
+function isValidHHMM(v) {
+  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(v);
+}
+
+document.querySelectorAll('.estado-select').forEach(sel => {
+  const dia = sel.dataset.dia;
+  const wrap = document.getElementById('rango_' + dia);
+  const ini = document.getElementById('ini_' + dia);
+  const fin = document.getElementById('fin_' + dia);
+  const hintIni = document.getElementById('hint_ini_' + dia);
+  const hintFin = document.getElementById('hint_fin_' + dia);
+
+  const updateBadge = () => setBadge(dia, sel.value, ini ? ini.value : '', fin ? fin.value : '');
+
+  // init
+  updateBadge();
+
+  sel.addEventListener('change', () => {
+    if (sel.value === 'R') wrap.style.display = '';
+    else {
+      wrap.style.display = 'none';
+      if (ini) ini.value = '';
+      if (fin) fin.value = '';
+      if (ini) ini.classList.remove('is-invalid');
+      if (fin) fin.classList.remove('is-invalid');
+      if (hintIni) hintIni.classList.remove('show');
+      if (hintFin) hintFin.classList.remove('show');
+    }
+    updateBadge();
+  });
+
+  [ini, fin].forEach(inp => {
+    if (!inp) return;
+    inp.addEventListener('input', () => {
+      // no forzamos formato mientras escribe; solo actualizamos badge
+      updateBadge();
+    });
+    inp.addEventListener('blur', () => {
+      inp.value = normalizeTime(inp.value);
+      const ok = !inp.value || isValidHHMM(inp.value);
+      inp.classList.toggle('is-invalid', !ok);
+      const hint = (inp === ini) ? hintIni : hintFin;
+      if (hint) hint.classList.toggle('show', !ok);
+      updateBadge();
+    });
+    inp.addEventListener('change', () => {
+      inp.value = normalizeTime(inp.value);
+      updateBadge();
+    });
+  });
+
+  // Atajos (chips)
+  const chipsWrap = wrap.querySelector('.chips');
+  if (chipsWrap) {
+    chipsWrap.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (chip.dataset.clear) {
+          if (ini) ini.value = '';
+          if (fin) fin.value = '';
+        } else if (chip.dataset.range) {
+          const [a,b] = chip.dataset.range.split('-');
+          if (ini) ini.value = a;
+          if (fin) fin.value = b;
+        }
+        if (sel.value !== 'R') {
+          sel.value = 'R';
+          wrap.style.display = '';
+        }
+        if (ini) { ini.classList.remove('is-invalid'); if (hintIni) hintIni.classList.remove('show'); }
+        if (fin) { fin.classList.remove('is-invalid'); if (hintFin) hintFin.classList.remove('show'); }
+        updateBadge();
+      });
+    });
+  }
 });
 
-function inicializarHerramientas() {
-    document.querySelector('.btn-modo[data-estado="disponible"]').classList.add('activo');
-    
-    document.querySelectorAll('.btn-modo').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.btn-modo').forEach(b => b.classList.remove('activo'));
-            this.classList.add('activo');
-            modoActual = this.dataset.estado;
-        });
-    });
-}
+// Validación al enviar: si hay días en "Rango", exigir hh:mm válidos y ini < fin
+document.getElementById('form-semana').addEventListener('submit', function (e) {
+  let firstError = null;
+  document.querySelectorAll('.estado-select').forEach(sel => {
+    const dia = sel.dataset.dia;
+    if (sel.value !== 'R') return;
+    const ini = document.getElementById('ini_' + dia);
+    const fin = document.getElementById('fin_' + dia);
+    const hintIni = document.getElementById('hint_ini_' + dia);
+    const hintFin = document.getElementById('hint_fin_' + dia);
 
-function inicializarCeldas() {
-    const celdas = document.querySelectorAll('.celda-horario');
-    
-    celdas.forEach(celda => {
-        celda.addEventListener('click', function() {
-            if (!{{ puede_editar|yesno:"true,false" }}) {
-                alert('{{ mensaje_edicion }}');
-                return;
-            }
-            cambiarEstadoCelda(this, modoActual);
-        });
-    });
-}
+    if (ini) ini.value = normalizeTime(ini.value);
+    if (fin) fin.value = normalizeTime(fin.value);
 
-function cambiarEstadoCelda(celda, nuevoEstado) {
-    const dia = parseInt(celda.dataset.dia);
-    const hora = parseInt(celda.dataset.hora);
-    
-    actualizarCeldaVisual(celda, nuevoEstado);
-    
-    fetch('{% url "disponibilidad:actualizar_horario" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify({
-            dia_semana: dia,
-            hora: hora,
-            estado: nuevoEstado === 'vacio' ? 'ocupado' : nuevoEstado
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            console.error('Error:', data.error);
-            alert('Error al actualizar: ' + data.error);
-        }
-    });
-}
+    const okIni = ini && isValidHHMM(ini.value);
+    const okFin = fin && isValidHHMM(fin.value);
 
-function actualizarCeldaVisual(celda, estado) {
-    celda.classList.remove('estado-disponible', 'estado-vacio');
-    
-    if (estado === 'vacio') {
-        celda.classList.add('estado-vacio');
-        celda.textContent = '-';
-    } else {
-        celda.classList.add('estado-disponible');
-        celda.textContent = 'S??';
+    if (!okIni) { ini.classList.add('is-invalid'); if (hintIni) hintIni.classList.add('show'); firstError = firstError || ini; }
+    if (!okFin) { fin.classList.add('is-invalid'); if (hintFin) hintFin.classList.add('show'); firstError = firstError || fin; }
+
+    if (okIni && okFin) {
+      // compara tiempos
+      const [hi, mi] = ini.value.split(':').map(Number);
+      const [hf, mf] = fin.value.split(':').map(Number);
+      const si = hi*60 + mi, sf = hf*60 + mf;
+      if (si >= sf) {
+        fin.classList.add('is-invalid');
+        if (hintFin) { hintFin.textContent = 'Fin debe ser mayor que inicio'; hintFin.classList.add('show'); }
+        firstError = firstError || fin;
+      } else {
+        fin.classList.remove('is-invalid');
+        if (hintFin) { hintFin.textContent = 'Formato válido: 16:30'; hintFin.classList.remove('show'); }
+      }
     }
-}
+  });
 
-function llenarHorarioOficina() {
-    if (!confirm('??Marcar horario de oficina (8:00 - 17:00, Lunes a Viernes) como disponible?')) return;
-    
-    for (let dia = 0; dia < 5; dia++) {
-        for (let hora = 8; hora < 17; hora++) {
-            const celda = document.querySelector(`.celda-horario[data-dia="${dia}"][data-hora="${hora}"]`);
-            if (celda) {
-                cambiarEstadoCelda(celda, 'disponible');
-            }
-        }
-    }
-}
-
-function limpiarTodo() {
-    if (!confirm('??Est??s seguro de que quieres limpiar toda tu disponibilidad?')) return;
-    
-    document.querySelectorAll('.celda-horario').forEach(celda => {
-        cambiarEstadoCelda(celda, 'vacio');
-    });
-}
+  if (firstError) {
+    e.preventDefault();
+    firstError.scrollIntoView({behavior:'smooth', block:'center'});
+    firstError.focus();
+  }
+});
 </script>
 {% endblock %}

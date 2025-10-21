@@ -1,148 +1,79 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load disponibilidad_extras %}
-
-{% block title %}Disponibilidad del Equipo - NeusiDevops{% endblock %}
+{% block title %}Disponibilidad del Equipo (Semana){% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h2>👥 Disponibilidad del Equipo</h2>
-            
-            <div class="mb-3">
-                <a href="{% url 'disponibilidad:mi_disponibilidad' %}" class="btn btn-primary">
-                    📅 Mi Disponibilidad
-                </a>
-                <a href="{% url 'home' %}" class="btn btn-secondary">
-                    🏠 Volver al Inicio
-                </a>
-            </div>
+<div class="container py-4">
 
-            <div class="alert alert-info">
-                <strong>Semana actual:</strong> {{ semana_actual|date:"d/m/Y" }}
-            </div>
-
-            <!-- Filtro por usuario -->
-            <div class="card mb-3">
-                <div class="card-body">
-                    <form method="get" class="row g-3 align-items-end">
-                        <div class="col-auto">
-                            <label for="usuario" class="form-label">Filtrar por usuario:</label>
-                            <select name="usuario" id="usuario" class="form-select">
-                                <option value="">-- Todos los usuarios --</option>
-                                {% for user in todos_usuarios %}
-                                    <option value="{{ user.id }}" {% if usuario_filtrado == user.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ user.first_name }} {{ user.last_name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Filtrar</button>
-                            <a href="{% url 'disponibilidad:equipo_disponibilidad' %}" class="btn btn-secondary">Limpiar</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            {% if equipo_disponibilidad %}
-                {% for user_id, data in equipo_disponibilidad.items %}
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">
-                            👤 {{ data.usuario.first_name }} {{ data.usuario.last_name }} 
-                            <small class="text-white-50">({{ data.usuario.username }})</small>
-                            {% if not data.disponibilidad %}
-                                <span class="badge bg-warning text-dark ms-2">Sin disponibilidad configurada</span>
-                            {% endif %}
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        {% if data.disponibilidad %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-sm">
-                                <thead>
-                                    <tr class="table-secondary">
-                                        <th style="width: 80px;">Hora</th>
-                                        {% for dia_num, dia_nombre in dias_semana %}
-                                            <th class="text-center">{{ dia_nombre }}</th>
-                                        {% endfor %}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for hora in horas %}
-                                    <tr>
-                                        <td class="text-center fw-bold">{{ hora }}:00</td>
-                                        {% for dia_num, dia_nombre in dias_semana %}
-                                            {% with horario=data.horarios|dict_lookup:dia_num|dict_lookup:hora %}
-                                            <td class="text-center p-1" 
-                                                style="
-                                                    {% if horario %}
-                                                        {% if horario.estado == 'disponible' %}
-                                                            background-color: #d4edda;
-                                                        {% elif horario.estado == 'ocupado' %}
-                                                            background-color: #f8d7da;
-                                                        {% elif horario.estado == 'tentativo' %}
-                                                            background-color: #fff3cd;
-                                                        {% endif %}
-                                                    {% else %}
-                                                        background-color: #f8f9fa;
-                                                    {% endif %}
-                                                ">
-                                                {% if horario %}
-                                                    {% if horario.estado == 'disponible' %}
-                                                        ✅
-                                                    {% elif horario.estado == 'ocupado' %}
-                                                        ❌
-                                                    {% elif horario.estado == 'tentativo' %}
-                                                        ⚠️
-                                                    {% endif %}
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                            {% endwith %}
-                                        {% endfor %}
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                <strong>Leyenda:</strong>
-                                <span class="badge" style="background-color: #d4edda; color: #000;">✅ Disponible</span>
-                                <span class="badge" style="background-color: #f8d7da; color: #000;">❌ Ocupado</span>
-                                <span class="badge" style="background-color: #fff3cd; color: #000;">⚠️ Tentativo</span>
-                                <span class="badge" style="background-color: #f8f9fa; color: #000;">- Sin definir</span>
-                            </small>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-warning mb-0">
-                            Este usuario aún no ha configurado su disponibilidad para esta semana.
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="alert alert-warning">
-                    <h4>⚠️ No hay usuarios en el sistema</h4>
-                </div>
-            {% endif %}
-        </div>
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex gap-2">
+      <a class="btn btn-light border" href="{{ home_url }}">↩ Volver</a>
+      <a class="btn btn-outline-primary" href="{{ mi_url }}">🙋‍♂️ Mi disponibilidad</a>
     </div>
-</div>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary" href="?semana={{ prev_w|date:'Y-m-d' }}{% if grupo_sel %}&grupo={{ grupo_sel }}{% endif %}">← Semana anterior</a>
+      <span class="btn btn-light disabled">
+        {{ semana_inicio|date:"d M" }} — {{ semana_inicio|add_days:6|date:"d M Y" }}
+      </span>
+      <a class="btn btn-outline-secondary" href="?semana={{ next_w|date:'Y-m-d' }}{% if grupo_sel %}&grupo={{ grupo_sel }}{% endif %}">Semana siguiente →</a>
+    </div>
+  </div>
 
-<style>
-    .table-bordered td, .table-bordered th {
-        border: 1px solid #dee2e6;
-        vertical-align: middle;
-    }
-    .table-sm td {
-        padding: 0.25rem;
-        font-size: 0.875rem;
-    }
-</style>
+  <form class="row g-2 mb-3">
+    <input type="hidden" name="semana" value="{{ semana_inicio|date:'Y-m-d' }}">
+    <div class="col-12 col-md-6">
+      <label class="form-label">Grupo</label>
+      <select class="form-select" name="grupo" onchange="this.form.submit()">
+        <option value="">— Todos —</option>
+        {% for g in grupos %}
+          <option value="{{ g.id }}" {% if grupo_sel|default:''|stringformat:'s' == g.id|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-6 d-flex align-items-end">
+      <button class="btn btn-outline-primary">Filtrar</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Usuario</th>
+          {% for i in "0123456" %}
+            <th class="text-center">
+              {{ semana_inicio|add_days:forloop.counter0|date:"D" }}<br>
+              <small class="text-muted">{{ semana_inicio|add_days:forloop.counter0|date:"Y-m-d" }}</small>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>
+              <strong>{{ row.user.get_full_name|default:row.user.username }}</strong><br>
+              <small class="text-muted">{{ row.user.email }}</small>
+            </td>
+            {% for d in row.sem.dias.all %}
+              <td class="text-center">
+                <span class="badge {% if d.tipo == 'D' %}text-bg-success{% elif d.tipo == 'N' %}text-bg-secondary{% else %}text-bg-info{% endif %}"
+                      title="{{ d.display_largo }}">
+                  {% if d.tipo == "D" %}Disp.{% elif d.tipo == "N" %}No{% else %}
+                    {% if d.hora_inicio and d.hora_fin %}
+                      {{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}
+                    {% else %}Rango{% endif %}
+                  {% endif %}
+                </span>
+              </td>
+            {% endfor %}
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="text-center text-muted">Sin usuarios para este filtro.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
 {% endblock %}

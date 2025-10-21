@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load disponibilidad_filters %}
+
+{% block title %}Mi disponibilidad (mensual){% endblock %}
+
+{% block content %}
+<style>
+  .cal {max-width:1100px;margin:0 auto}
+  .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .ttl{font-size:1.4rem;font-weight:700}
+  .legend{font-size:.9rem;color:#555}
+  .legend .dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 6px 0 14px;vertical-align:middle}
+  .dot-free{background:#d4edda;border:1px solid #b7dfb9}
+  .dot-busy{background:#ececec;border:1px solid #d7d7d7}
+  .dot-partial{background:#fff3cd;border:1px solid #ffe28c}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+  .dow{text-align:center;font-weight:700;color:#444;padding:8px 0}
+  .day{background:#fff;border:1px solid #e6e6e6;border-radius:10px;min-height:120px;display:flex;flex-direction:column;padding:10px;position:relative;transition:.15s transform ease,.15s box-shadow ease}
+  .day:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+  .num{font-weight:700;color:#222}
+  .pill{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.75rem;font-weight:700;margin-top:6px}
+  .pill-free{background:#d4edda;color:#155724}
+  .pill-busy{background:#ececec;color:#495057}
+  .pill-partial{background:#fff3cd;color:#7e6400}
+  .past{opacity:.55;filter:grayscale(10%);pointer-events:none}
+  .act{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .act .btn{padding:4px 8px;font-size:.76rem}
+</style>
+
+<div class="cal" id="calRoot"
+     data-year="{{ year }}" data-month="{{ month }}"
+     data-url-set-dia="{% url 'disponibilidad:api_set_dia' %}"
+     data-url-set-rango="{% url 'disponibilidad:api_set_rango' %}">
+  <div class="hdr">
+    <div class="ttl">📅 Mi disponibilidad — <span id="mesLabel">{{ dias.0|date:"F Y" }}</span></div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'disponibilidad:mi_disponibilidad' %}">Vista semanal</a>
+      <a class="btn btn-outline-info" href="{% url 'disponibilidad:mes_equipo' %}">Ver equipo</a>
+      <a class="btn btn-outline-dark" href="{% url 'home' %}">Volver</a>
+    </div>
+    <div class="d-flex gap-1">
+      <button class="btn btn-light" id="btnPrev">◀</button>
+      <button class="btn btn-light" id="btnToday">Hoy</button>
+      <button class="btn btn-light" id="btnNext">▶</button>
+    </div>
+  </div>
+
+  <div class="legend mb-3">
+    <strong>Cómo se usa:</strong> haz clic en un día y elige una acción.
+    <span class="dot dot-free"></span>Disponible,
+    <span class="dot dot-busy"></span>No disponible,
+    <span class="dot dot-partial"></span>Parcial (horas). Los días pasados no se pueden editar.
+  </div>
+
+  <!-- cabeceras -->
+  <div class="grid mb-2">
+    <div class="dow">Lunes</div><div class="dow">Martes</div><div class="dow">Miércoles</div>
+    <div class="dow">Jueves</div><div class="dow">Viernes</div><div class="dow">Sábado</div><div class="dow">Domingo</div>
+  </div>
+
+  <!-- días: usamos grid-column-start para alinear el primero -->
+  {% with first_iso=dias.0|date:"N" %}
+  <div class="grid">
+    {% for d in dias %}
+      {% with key=d|date:"Y-m-d" %}
+      {% with info=resumen|lookup:key %}
+      <div class="day {% if d < hoy %}past{% endif %}"
+           data-fecha="{{ key }}"
+           {% if forloop.first %}style="grid-column-start: {{ first_iso }}"{% endif %}>
+        <div class="num">{{ d|date:"j" }}</div>
+
+        {% if info %}
+          {% if info.status == 'full_bloqueado' %}
+            <span class="pill pill-busy">No disponible</span>
+          {% elif info.status == 'parcial' %}
+            <span class="pill pill-partial">Parcial</span>
+          {% else %}
+            <span class="pill pill-free">Disponible</span>
+          {% endif %}
+        {% else %}
+          <span class="pill pill-busy">No disponible</span>
+        {% endif %}
+
+        <div class="act">
+          <button class="btn btn-success btn-sm act-dia" data-estado="disponible">Disponible</button>
+          <button class="btn btn-secondary btn-sm act-dia" data-estado="ocupado">No disponible</button>
+          <button class="btn btn-warning btn-sm act-rango">Rango horario</button>
+        </div>
+      </div>
+      {% endwith %}
+      {% endwith %}
+    {% endfor %}
+  </div>
+  {% endwith %}
+</div>
+
+<!-- Modal rango -->
+<div class="modal fade" id="modalRango" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Rango horario</h5>
+      <button class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="mb-2"><strong id="modalFechaLabel"></strong></div>
+      <div class="row g-2">
+        <div class="col-6">
+          <label class="form-label">Desde</label>
+          <input type="number" min="0" max="23" class="form-control" id="horaInicio" value="8">
+          <small class="text-muted">0–23 (24h)</small>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Hasta</label>
+          <input type="number" min="1" max="24" class="form-control" id="horaFin" value="17">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Estado a aplicar</label>
+          <select id="estadoRango" class="form-select">
+            <option value="parcial">Parcial</option>
+            <option value="disponible">Disponible</option>
+            <option value="ocupado">No disponible</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-2 text-muted" style="font-size:.9rem">
+        Se marcará el estado seleccionado entre esas horas. El resto del día no se modifica.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarRango">Guardar</button>
+    </div>
+  </div></div>
+</div>
+
+{% csrf_token %}
+<script>
+(function(){
+  const root = document.getElementById('calRoot');
+  const YEAR = parseInt(root.dataset.year, 10);
+  const MONTH = parseInt(root.dataset.month, 10);
+  const URL_SET_DIA   = root.dataset.urlSetDia;
+  const URL_SET_RANGO = root.dataset.urlSetRango;
+  const CSRF = (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
+
+  const go = (y,m)=>{ const u=new URL(location.href); u.searchParams.set('y',y); u.searchParams.set('m',m); location.href=u; };
+  document.getElementById('btnPrev').onclick=()=>{let y=YEAR,m=MONTH-1; if(m<1){m=12;y--} go(y,m)};
+  document.getElementById('btnNext').onclick=()=>{let y=YEAR,m=MONTH+1; if(m>12){m=1;y++} go(y,m)};
+  document.getElementById('btnToday').onclick=()=>{const n=new Date(); go(n.getFullYear(), n.getMonth()+1)};
+
+  document.querySelectorAll('.act-dia').forEach(b=>{
+    b.addEventListener('click', async function(){
+      const fecha = this.closest('.day').dataset.fecha;
+      const estado = this.dataset.estado;
+      try{
+        const r = await fetch(URL_SET_DIA,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({fecha, estado})});
+        const j = await r.json(); if(!j.success) throw new Error(j.error||'Error');
+        location.reload();
+      }catch(e){ alert(e.message); }
+    });
+  });
+
+  const modal = new bootstrap.Modal(document.getElementById('modalRango'),{backdrop:'static'});
+  let fechaTarget=null;
+  document.querySelectorAll('.act-rango').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const fecha = btn.closest('.day').dataset.fecha;
+      fechaTarget=fecha;
+      document.getElementById('modalFechaLabel').innerText = new Date(fecha+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+      modal.show();
+    });
+  });
+  document.getElementById('btnGuardarRango').addEventListener('click', async ()=>{
+    const h1=parseInt(document.getElementById('horaInicio').value,10);
+    const h2=parseInt(document.getElementById('horaFin').value,10);
+    const estado=document.getElementById('estadoRango').value;
+    if(!(0<=h1 && h1<24 && 1<=h2 && h2<=24 && h1<h2)){ alert('Rango inválido'); return; }
+    try{
+      const r = await fetch(root.dataset.urlSetRango,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({fecha:fechaTarget,hora_inicio:h1,hora_fin:h2,estado})});
+      const j=await r.json(); if(!j.success) throw new Error(j.error||'Error');
+      modal.hide(); location.reload();
+    }catch(e){ alert(e.message); }
+  });
+})();
+</script>
+{% endblock %}
