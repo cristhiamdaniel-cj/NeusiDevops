@@ -6,18 +6,23 @@
   <style>
     body { font-family: Arial, sans-serif; background:#f1f3f6; padding:20px; }
     .btn { padding:8px 16px; margin:5px; border:none; border-radius:5px;
-           text-decoration:none; color:white; font-weight:bold; display:inline-block; }
+           text-decoration:none; color:white; font-weight:bold; display:inline-block; cursor:pointer; }
     .btn-primary { background:#007bff; }
     .btn-secondary { background:#6c757d; }
     .btn-danger { background:#dc3545; }
     .btn-success { background:#28a745; }
     .btn-warning { background:#ffc107; color:#000; }
+    .btn-light { background:#e9ecef; color:#000; }
     .card { border:1px solid #ddd; padding:20px; margin:15px 0; border-radius:8px; background:#fff; }
     .badge { padding:4px 8px; border-radius:4px; color:white; font-size:0.9em; }
-    .badge-ui { background:#dc3545; } .badge-nui { background:#28a745; }
-    .badge-uni { background:#ffc107; color:#000; } .badge-nuni { background:#6c757d; }
+    .badge-ui { background:#dc3545; }
+    .badge-nui { background:#28a745; }
+    .badge-uni { background:#ffc107; color:#000; }
+    .badge-nuni { background:#6c757d; }
     .badge-epica { background:#0d6efd; }
     .evidencia { border-left:3px solid #007bff; padding:10px 15px; margin:10px 0; background:#f8f9fa; border-radius:5px; }
+    .evidencia header { display:flex; justify-content:space-between; align-items:center; }
+    .muted { color:#666; }
   </style>
 </head>
 <body>
@@ -47,12 +52,22 @@
     {% endif %}
 
     <p><strong>Categoría:</strong>
-      <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
+      <span class="badge
+        {% if tarea.categoria == 'UI' %}badge-ui
+        {% elif tarea.categoria == 'NUI' %}badge-nui
+        {% elif tarea.categoria == 'UNI' %}badge-uni
+        {% else %}badge-nuni{% endif %}">
         {{ tarea.get_categoria_display }}
       </span>
     </p>
 
-    <p><strong>Sprint:</strong> {{ tarea.sprint.inicio }} – {{ tarea.sprint.fin }}</p>
+    <p><strong>Sprint:</strong>
+      {% if tarea.sprint %}
+        {{ tarea.sprint.inicio|date:"M d, Y" }} – {{ tarea.sprint.fin|date:"M d, Y" }}
+      {% else %}
+        <span class="muted">—</span>
+      {% endif %}
+    </p>
 
     <!-- 🔹 Lista de responsables -->
     <p><strong>Responsables:</strong>
@@ -63,7 +78,7 @@
       {% elif tarea.asignado_a %}
         {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}
       {% else %}
-        <span class="text-muted">—</span>
+        <span class="muted">—</span>
       {% endif %}
     </p>
 
@@ -97,31 +112,65 @@
     </div>
   </div>
 
-  <!-- Evidencias -->
+  <!-- =======================
+       📎 Evidencias
+       ======================= -->
   <div class="card">
     <h3>📎 Evidencias</h3>
 
-    {% if not tarea.completada and request.user.integrante.puede_agregar_evidencias %}
-      <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data"
-            style="background:#e9ecef; padding:15px; border-radius:5px; margin-bottom:20px;">
-        {% csrf_token %}
-        <div>{{ form.comentario.label_tag }} {{ form.comentario }}</div>
-        <div>{{ form.archivo.label_tag }} {{ form.archivo }}</div>
-        <button type="submit" class="btn btn-success mt-2">📎 Agregar Evidencia</button>
-      </form>
+    
+    {% if not tarea.completada %}
+      {% if tiene_permisos_admin or puede_editar or request.user.integrante.puede_agregar_evidencias %}
+        <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data"
+              style="background:#e9ecef; padding:15px; border-radius:5px; margin-bottom:20px;">
+          {% csrf_token %}
+          <div style="margin-bottom:8px;">
+            {{ form.comentario.label_tag }}<br>
+            {{ form.comentario }}
+          </div>
+          <div style="margin-bottom:8px;">
+            {{ form.archivo.label_tag }}<br>
+            {{ form.archivo }}
+          </div>
+          <button type="submit" class="btn btn-success mt-2">📎 Agregar Evidencia</button>
+        </form>
+      {% else %}
+        <p class="muted" style="margin-bottom:10px;">
+          No tienes permisos para agregar evidencias en esta tarea.
+        </p>
+      {% endif %}
+    {% else %}
+      <p class="muted" style="margin-bottom:10px;">
+        La tarea está completada; no se pueden agregar nuevas evidencias.
+      </p>
     {% endif %}
 
     {% for evidencia in evidencias %}
       <div class="evidencia">
-        <p><strong>👤 {{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</strong> ·
-           📅 {{ evidencia.creado_en|date:"d/m/Y H:i" }}</p>
-        {% if evidencia.comentario %}<p>{{ evidencia.comentario|linebreaks }}</p>{% endif %}
+        <header>
+          <p><strong>👤 {{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</strong> ·
+             📅 {{ evidencia.creado_en|date:"d/m/Y H:i" }}</p>
+
+          {% if tiene_permisos_admin or evidencia.creado_por_id == request.user.id or puede_editar or request.user.integrante.puede_agregar_evidencias %}
+            <div>
+              <a href="{% url 'editar_evidencia' tarea.id evidencia.id %}" class="btn btn-light">✏️ Editar</a>
+              <form method="post" action="{% url 'eliminar_evidencia' tarea.id evidencia.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">🗑️ Eliminar</button>
+              </form>
+            </div>
+          {% endif %}
+        </header>
+
+        {% if evidencia.comentario %}
+          <p style="margin-top:8px;">{{ evidencia.comentario|linebreaks }}</p>
+        {% endif %}
         {% if evidencia.archivo %}
           <p><a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-primary">📥 Descargar Archivo</a></p>
         {% endif %}
       </div>
     {% empty %}
-      <p style="color:#666;font-style:italic;">No hay evidencias registradas.</p>
+      <p class="muted" style="font-style:italic;">No hay evidencias registradas.</p>
     {% endfor %}
   </div>
 

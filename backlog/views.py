@@ -1,4 +1,4 @@
-# views.py
+# backlog/views.py
 from functools import wraps
 from datetime import time, datetime, timedelta
 import json
@@ -28,23 +28,29 @@ def en_ventana_daily(hora):
     """True si la hora local está entre 5:00 y 9:00 AM (inclusive)."""
     return DAILY_INICIO <= hora <= DAILY_FIN
 
-def _es_admin(request):
-    integrante = getattr(request.user, "integrante", None)
-    return bool(integrante and integrante.puede_crear_tareas())
-
 def _flags_usuario(request):
     """
     Devuelve:
-      - integrante: Integrante|None
-      - puede_admin: bool (Scrum/PO)
-      - es_visualizador: bool
-      - puede_ver_todo: bool (Scrum/PO o Visualizador)
+      - integrante: Integrante|None (auto-creado si falta)
+      - puede_admin: bool (roles admin)
+      - es_visualizador: bool (roles visualización global)
+      - puede_ver_todo: bool (admin o visualizador)
     """
     integrante = getattr(request.user, "integrante", None)
-    puede_admin = bool(integrante and integrante.puede_crear_tareas())
-    es_visualizador = bool(integrante and getattr(integrante, "es_visualizador", lambda: False)())
+    if request.user.is_authenticated and integrante is None:
+        integrante, _ = Integrante.objects.get_or_create(
+            user=request.user,
+            defaults={'rol': Integrante.ROL_MIEMBRO}
+        )
+
+    puede_admin = bool(integrante and integrante.es_admin())
+    es_visualizador = bool(integrante and integrante.es_visualizador())
     puede_ver_todo = bool(puede_admin or es_visualizador)
     return integrante, puede_admin, es_visualizador, puede_ver_todo
+
+def _es_admin(request):
+    integrante = getattr(request.user, "integrante", None)
+    return bool(integrante and integrante.es_admin())
 
 def _es_responsable(tarea: Tarea, integrante: Integrante) -> bool:
     """
@@ -60,7 +66,7 @@ def _es_responsable(tarea: Tarea, integrante: Integrante) -> bool:
 def _queryset_visible_tareas(integrante: Integrante, puede_ver_todo: bool):
     """
     Construye el queryset base de tareas según permisos:
-    - Admin/Visualizador ven todo.
+    - Admin/Visualizador: ven todo.
     - Usuario normal: solo tareas que le corresponden (M2M o FK).
     """
     base = (
@@ -92,6 +98,8 @@ def requiere_permiso_crear_tareas(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
+# Nota: mantenemos este decorador pero NO lo usamos en evidencias;
+# los checks se hacen dentro de cada vista para permitir responsable/admin/permisos.
 def requiere_permiso_evidencias(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -112,16 +120,16 @@ def requiere_permiso_evidencias(view_func):
 
 @login_required
 def editar_tarea(request, tarea_id):
-    """Editar una tarea existente (solo admin)"""
+    """Editar una tarea existente (admin o responsable o rol con puede_editar_tareas)."""
     tarea = get_object_or_404(Tarea, id=tarea_id)
+    integrante, es_admin, _, _ = _flags_usuario(request)
 
-    try:
-        if not request.user.integrante.puede_crear_tareas():
-            messages.error(request, "❌ No tienes permisos para editar tareas.")
-            return redirect("backlog_lista")
-    except AttributeError:
-        messages.error(request, "❌ No tienes un perfil de integrante asociado.")
-        return redirect("home")
+    es_responsable = _es_responsable(tarea, integrante)
+    puede_editar_rol = bool(integrante and integrante.puede_editar_tareas())
+
+    if not (es_admin or es_responsable or puede_editar_rol):
+        messages.error(request, "❌ No tienes permisos para editar tareas.")
+        return redirect("backlog_lista")
 
     if request.method == "POST":
         form = TareaForm(request.POST, request.FILES, instance=tarea)
@@ -129,6 +137,8 @@ def editar_tarea(request, tarea_id):
             tarea_actualizada = form.save()
             messages.success(request, f"✅ Tarea '{tarea_actualizada.titulo}' actualizada correctamente.")
             return redirect("detalle_tarea", tarea_id=tarea.id)
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = TareaForm(instance=tarea)
 
@@ -161,39 +171,36 @@ def detalle_tarea(request, tarea_id):
     evidencias = tarea.evidencias.all().order_by("-creado_en")
     form = EvidenciaForm()
 
-    # Obtener el integrante asociado al usuario
-    integrante = getattr(request.user, "integrante", None)
-
-    # === Permisos por rol y asignación ===
-    tiene_permisos_admin = bool(integrante and integrante.puede_crear_tareas())
-    permite_editar_rol = bool(integrante and integrante.puede_editar_tareas())
+    integrante, es_admin, _, _ = _flags_usuario(request)
 
     # Es responsable si está en la lista M2M o es el asignado principal
-    es_responsable = bool(
-        integrante and (
-            tarea.asignados.filter(id=integrante.id).exists() or tarea.asignado_a_id == integrante.id
-        )
-    )
+    es_responsable = _es_responsable(tarea, integrante)
 
     # Definir permisos efectivos
-    puede_editar = bool(tiene_permisos_admin or permite_editar_rol or es_responsable)
-    puede_cerrar = bool(tiene_permisos_admin or es_responsable)
+    puede_editar = bool(es_admin or es_responsable or (integrante and integrante.puede_editar_tareas()))
+    puede_cerrar = bool(es_admin or es_responsable)
 
-    # Renderizar plantilla
     return render(request, "backlog/detalle_tarea.html", {
         "tarea": tarea,
         "evidencias": evidencias,
         "form": form,
-        "tiene_permisos_admin": tiene_permisos_admin,
+        "tiene_permisos_admin": es_admin,
         "puede_editar": puede_editar,
         "puede_cerrar": puede_cerrar,
     })
 
+# -------- Evidencias (sin decorador restrictivo) --------
+
 @login_required
-@requiere_permiso_evidencias
 def agregar_evidencia(request, tarea_id):
-    """Agregar evidencia a una tarea"""
+    """Agregar evidencia a una tarea (admin, responsable o rol con permiso)."""
     tarea = get_object_or_404(Tarea, id=tarea_id)
+    integrante, es_admin, _, _ = _flags_usuario(request)
+
+    if not (es_admin or _es_responsable(tarea, integrante) or (integrante and integrante.puede_agregar_evidencias())):
+        messages.error(request, "❌ No tienes permisos para agregar evidencias a esta tarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
     if request.method == "POST":
         form = EvidenciaForm(request.POST, request.FILES)
         if form.is_valid():
@@ -207,20 +214,55 @@ def agregar_evidencia(request, tarea_id):
     return redirect("detalle_tarea", tarea_id=tarea.id)
 
 @login_required
-@requiere_permiso_evidencias
 def editar_evidencia(request, tarea_id, evidencia_id):
+    """Editar evidencia (admin, responsable o rol con permiso)."""
     tarea = get_object_or_404(Tarea, id=tarea_id)
     evidencia = get_object_or_404(Evidencia, id=evidencia_id, tarea=tarea)
+    integrante, es_admin, _, _ = _flags_usuario(request)
+
+    if not (es_admin or _es_responsable(tarea, integrante) or (integrante and integrante.puede_agregar_evidencias())):
+        messages.error(request, "❌ No tienes permisos para editar esta evidencia.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
     if request.method == "POST":
         form = EvidenciaForm(request.POST, request.FILES, instance=evidencia)
         if form.is_valid():
             form.save()
             messages.success(request, "✏️ Evidencia editada correctamente.")
             return redirect("detalle_tarea", tarea_id=tarea.id)
-    else:
-        form = EvidenciaForm(instance=evidencia)
+        messages.error(request, "⚠️ Revisa los campos del formulario.")
+
     return render(request, "backlog/editar_evidencia.html", {
-        "form": form, "evidencia": evidencia, "tarea": tarea,
+        "form": EvidenciaForm(instance=evidencia),
+        "evidencia": evidencia,
+        "tarea": tarea,
+    })
+
+@login_required
+def eliminar_evidencia(request, tarea_id, evidencia_id):
+    """Eliminar evidencia (admin, creador, o responsable de la tarea)."""
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+    evidencia = get_object_or_404(Evidencia, id=evidencia_id, tarea=tarea)
+    integrante, es_admin, _, _ = _flags_usuario(request)
+
+    puede = (
+        es_admin
+        or (evidencia.creado_por_id == request.user.id)
+        or _es_responsable(tarea, integrante)
+        or (integrante and integrante.puede_agregar_evidencias())
+    )
+    if not puede:
+        messages.error(request, "❌ No tienes permisos para eliminar esta evidencia.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        evidencia.delete()
+        messages.success(request, "🗑️ Evidencia eliminada correctamente.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    return render(request, "backlog/confirmar_eliminar_evidencia.html", {
+        "tarea": tarea,
+        "evidencia": evidencia,
     })
 
 @login_required
@@ -292,11 +334,7 @@ def logout_view(request):
 
 @login_required
 def home(request):
-    integrante = getattr(request.user, "integrante", None)
-    tiene_permisos_admin = bool(integrante and integrante.puede_crear_tareas())
-    es_visualizador = bool(integrante and getattr(integrante, "es_visualizador", lambda: False)())
-    puede_ver_todo = bool(tiene_permisos_admin or es_visualizador)
-
+    integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
     return render(request, "backlog/home.html", {
         "tiene_permisos_admin": tiene_permisos_admin,
         "puede_ver_todo": puede_ver_todo,
@@ -379,7 +417,7 @@ def daily_personal(request):
     if not integrante:
         integrante, _ = Integrante.objects.get_or_create(
             user=request.user,
-            defaults={'rol': 'Miembro'}
+            defaults={'rol': Integrante.ROL_MIEMBRO}
         )
         messages.info(request, "Se creó tu perfil de integrante automáticamente.")
     return daily_view(request, integrante.id)
@@ -505,10 +543,10 @@ def backlog_matriz(request):
                 pass
 
     cuadrantes = {
-        "ui": tareas.filter(categoria="UI"),
-        "nui": tareas.filter(categoria="NUI"),
-        "uni": tareas.filter(categoria="UNI"),
-        "nuni": tareas.filter(categoria="NUNI"),
+        "ui":   tareas.filter(categoria__iexact="UI"),
+        "nui":  tareas.filter(categoria__iexact="NUI"),
+        "uni":  tareas.filter(categoria__iexact="UNI"),
+        "nuni": tareas.filter(categoria__iexact="NUNI"),
     }
 
     return render(request, "backlog/backlog_matriz.html", {
@@ -530,7 +568,7 @@ def checklist_view(request, integrante_id):
 
     try:
         usuario_integrante = request.user.integrante
-        tiene_permisos_admin = usuario_integrante.puede_crear_tareas()
+        tiene_permisos_admin = usuario_integrante.es_admin()
     except AttributeError:
         tiene_permisos_admin = False
         usuario_integrante = None
@@ -551,32 +589,16 @@ def checklist_view(request, integrante_id):
         "tareas": tareas,
     })
 
-@login_required
-@requiere_permiso_evidencias
-def eliminar_evidencia(request, tarea_id, evidencia_id):
-    tarea = get_object_or_404(Tarea, id=tarea_id)
-    evidencia = get_object_or_404(Evidencia, id=evidencia_id, tarea=tarea)
-
-    if evidencia.creado_por != request.user and not request.user.integrante.puede_crear_tareas():
-        messages.error(request, "❌ No tienes permisos para eliminar esta evidencia.")
-        return redirect("detalle_tarea", tarea_id=tarea.id)
-
-    if request.method == "POST":
-        evidencia.delete()
-        messages.success(request, "🗑️ Evidencia eliminada correctamente.")
-        return redirect("detalle_tarea", tarea_id=tarea.id)
-
-    return render(request, "backlog/confirmar_eliminar_evidencia.html", {
-        "tarea": tarea,
-        "evidencia": evidencia,
-    })
+# ==============================
+# Daily: eliminar
+# ==============================
 
 @login_required
 def eliminar_daily(request, daily_id):
     daily = get_object_or_404(Daily, id=daily_id)
 
     try:
-        if not request.user.integrante.puede_crear_tareas():
+        if not request.user.integrante.es_admin():
             messages.error(request, "❌ No tienes permisos para eliminar dailies.")
             return redirect("daily_resumen")
     except AttributeError:
@@ -597,7 +619,7 @@ def eliminar_daily(request, daily_id):
 @login_required
 def sprint_list(request):
     try:
-        tiene_permisos_admin = request.user.integrante.puede_crear_tareas()
+        tiene_permisos_admin = request.user.integrante.es_admin()
     except AttributeError:
         tiene_permisos_admin = False
 
@@ -609,7 +631,7 @@ def sprint_list(request):
 
 @login_required
 def sprint_create(request):
-    if not request.user.integrante.puede_crear_tareas():
+    if not request.user.integrante.es_admin():
         messages.error(request, "❌ No tienes permisos para crear sprints.")
         return redirect("sprint_list")
 
@@ -619,6 +641,8 @@ def sprint_create(request):
             form.save()
             messages.success(request, "✅ Sprint creado correctamente.")
             return redirect("sprint_list")
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = SprintForm()
 
@@ -628,7 +652,7 @@ def sprint_create(request):
 def sprint_edit(request, sprint_id):
     sprint = get_object_or_404(Sprint, id=sprint_id)
 
-    if not request.user.integrante.puede_crear_tareas():
+    if not request.user.integrante.es_admin():
         messages.error(request, "❌ No tienes permisos para editar sprints.")
         return redirect("sprint_list")
 
@@ -638,6 +662,8 @@ def sprint_edit(request, sprint_id):
             form.save()
             messages.success(request, "✏️ Sprint actualizado correctamente.")
             return redirect("sprint_list")
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = SprintForm(instance=sprint)
     return render(request, "backlog/sprint_form.html", {"form": form})
@@ -646,7 +672,7 @@ def sprint_edit(request, sprint_id):
 def sprint_delete(request, sprint_id):
     sprint = get_object_or_404(Sprint, id=sprint_id)
 
-    if not request.user.integrante.puede_crear_tareas():
+    if not request.user.integrante.es_admin():
         messages.error(request, "❌ No tienes permisos para eliminar sprints.")
         return redirect("sprint_list")
 
@@ -665,7 +691,7 @@ def sprint_delete(request, sprint_id):
 def daily_create_admin(request):
     """Permite a un administrador registrar un Daily para cualquier integrante"""
     try:
-        if not request.user.integrante.puede_crear_tareas():
+        if not request.user.integrante.es_admin():
             messages.error(request, "❌ No tienes permisos para crear dailys de otros integrantes.")
             return redirect("daily_resumen")
     except AttributeError:
@@ -704,7 +730,7 @@ def eliminar_tarea(request, tarea_id):
     tarea = get_object_or_404(Tarea, id=tarea_id)
 
     try:
-        if not request.user.integrante.puede_crear_tareas():
+        if not request.user.integrante.es_admin():
             messages.error(request, "❌ No tienes permisos para eliminar tareas.")
             return redirect("backlog_lista")
     except AttributeError:
@@ -757,11 +783,11 @@ def kanban_board(request):
     )
 
     estados = {
-        "nuevo": tareas.filter(estado="NUEVO"),
-        "aprobado": tareas.filter(estado="APROBADO"),
-        "en_progreso": tareas.filter(estado="EN_PROGRESO"),
-        "completado": tareas.filter(estado="COMPLETADO"),
-        "bloqueado": tareas.filter(estado="BLOQUEADO"),
+        "nuevo":        tareas.filter(estado__iexact="NUEVO"),
+        "aprobado":     tareas.filter(estado__iexact="APROBADO"),
+        "en_progreso":  tareas.filter(estado__iexact="EN_PROGRESO"),
+        "completado":   tareas.filter(estado__iexact="COMPLETADO"),
+        "bloqueado":    tareas.filter(estado__iexact="BLOQUEADO"),
     }
 
     return render(request, "backlog/kanban_board.html", {
@@ -857,7 +883,7 @@ def cambiar_categoria_tarea(request, tarea_id):
 def epica_list(request):
     """
     Lista todas las épicas visibles para el usuario actual.
-    - Scrum Master / PO y Visualizador: ven todas las épicas.
+    - Admin y Visualizador: ven todas las épicas.
     - Miembros normales: épicas donde tengan tareas asignadas O sean owners/co-owners.
     - Permite filtrar por proyecto (FK normalizado).
     """
@@ -915,11 +941,11 @@ def epica_create(request):
     if request.method == "POST":
         form = EpicaForm(request.POST)
         if form.is_valid():
-            epica = form.save(commit=False)
-            epica.save()
-            form.save_m2m()  # M2M sprints + owners
+            epica = form.save()  # incluye M2M y owner
             messages.success(request, "✅ Épica creada correctamente.")
             return redirect("epica_detail", epica_id=epica.id)
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = EpicaForm()
 
@@ -936,11 +962,11 @@ def epica_edit(request, epica_id):
     if request.method == "POST":
         form = EpicaForm(request.POST, instance=epica)
         if form.is_valid():
-            epica = form.save(commit=False)
-            epica.save()
-            form.save_m2m()  # M2M sprints + owners
+            epica = form.save()
             messages.success(request, "✏️ Épica actualizada correctamente.")
             return redirect("epica_detail", epica_id=epica.id)
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = EpicaForm(instance=epica)
 
@@ -957,7 +983,7 @@ def epica_delete(request, epica_id):
     if request.method == "POST":
         titulo = epica.titulo
         epica.delete()
-        messages.success(request, f"🗑️ Épica '{titulo}' eliminada.")
+        messages.success(request, f"🗑️ Épica '{titulo}' eliminada correctamente.")
         return redirect("epica_list")
 
     return render(request, "backlog/epica_confirm_delete.html", {"epica": epica})
@@ -970,13 +996,10 @@ def epica_delete(request, epica_id):
 def epica_detail(request, epica_id):
     """
     Muestra el detalle de una épica:
-    - Datos de la épica (incluye proyecto, owner, sprints, owners)
-    - Tareas asociadas (precargadas)
-    - Métricas: total, completadas, progreso calculado y avance efectivo (manual o calculado)
-    - Buckets por estado para una UI tipo tablero
-    Permisos:
-    - Admin (Scrum/PO) y Visualizador: pueden ver cualquier épica.
-    - Miembro normal: si tiene tareas en la épica o es owner/co-owner.
+    - Datos de la épica (proyecto, owners, sprints, KPIs)
+    - Tareas asociadas
+    - Avance calculado o manual
+    - Validación de permisos
     """
     integrante, es_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
@@ -987,6 +1010,7 @@ def epica_detail(request, epica_id):
         .get(pk=epica_id)
     )
 
+    # Permisos: si no es admin ni visualizador, validar si participa
     if not puede_ver_todo:
         es_owner = bool(
             integrante and (
@@ -1001,6 +1025,7 @@ def epica_detail(request, epica_id):
             messages.error(request, "❌ No tienes permisos para ver esta épica.")
             return redirect("epica_list")
 
+    # ===== Tareas asociadas =====
     tareas_qs = (
         epica.tareas
         .select_related("asignado_a__user", "sprint")
@@ -1014,11 +1039,11 @@ def epica_detail(request, epica_id):
     avance_efectivo = epica.avance
 
     estados = {
-        "NUEVO": tareas_qs.filter(estado="NUEVO"),
-        "APROBADO": tareas_qs.filter(estado="APROBADO"),
-        "EN_PROGRESO": tareas_qs.filter(estado="EN_PROGRESO"),
-        "BLOQUEADO": tareas_qs.filter(estado="BLOQUEADO"),
-        "COMPLETADO": tareas_qs.filter(estado="COMPLETADO"),
+        "NUEVO": tareas_qs.filter(estado__iexact="NUEVO"),
+        "APROBADO": tareas_qs.filter(estado__iexact="APROBADO"),
+        "EN_PROGRESO": tareas_qs.filter(estado__iexact="EN_PROGRESO"),
+        "BLOQUEADO": tareas_qs.filter(estado__iexact="BLOQUEADO"),
+        "COMPLETADO": tareas_qs.filter(estado__iexact="COMPLETADO"),
     }
 
     conteos_por_estado = (
@@ -1043,14 +1068,24 @@ def epica_detail(request, epica_id):
     }
     return render(request, "backlog/epica_detail.html", context)
 
+# ==============================
+# Crear Proyecto (desde botón ➕)
+# ==============================
 @login_required
 def proyecto_create(request):
+    if not _es_admin(request):
+        messages.error(request, "❌ No tienes permisos para crear proyectos.")
+        return redirect("epica_list")
+
     if request.method == "POST":
         form = ProyectoForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "✅ Proyecto creado correctamente.")
             return redirect("epica_create")
+        else:
+            messages.error(request, "⚠️ Revisa los campos del formulario.")
     else:
         form = ProyectoForm()
+
     return render(request, "backlog/proyecto_form.html", {"form": form})

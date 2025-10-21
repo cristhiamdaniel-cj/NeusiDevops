@@ -27,17 +27,30 @@
     <div class="col-md-12">{{ form.descripcion.label_tag }} {{ form.descripcion }}</div>
     <div class="col-md-12">
       {{ form.criterios_aceptacion.label_tag }} {{ form.criterios_aceptacion }}
-      {% if form.criterios_aceptacion.help_text %}<small class="text-muted">{{ form.criterios_aceptacion.help_text }}</small>{% endif %}
+      {% if form.criterios_aceptacion.help_text %}
+        <small class="text-muted">{{ form.criterios_aceptacion.help_text }}</small>
+      {% endif %}
     </div>
 
     <div class="col-md-4">{{ form.categoria.label_tag }} {{ form.categoria }}</div>
+
+    <!-- 🔹 NUEVO: Estado (Kanban) -->
+    <div class="col-md-4">
+      {{ form.estado.label_tag }} {{ form.estado }}
+      {% if form.estado.help_text %}
+        <small class="text-muted">{{ form.estado.help_text }}</small>
+      {% endif %}
+    </div>
+
     <div class="col-md-4">{{ form.esfuerzo_sp.label_tag }} {{ form.esfuerzo_sp }}</div>
 
-    <!-- 🔹 nuevos responsables -->
-    <div class="col-md-4">
+    <!-- 🔹 Responsables múltiples -->
+    <div class="col-md-12">
       {{ form.asignados.label_tag }}
       {{ form.asignados }}
-      {% if form.asignados.help_text %}<small class="text-muted">{{ form.asignados.help_text }}</small>{% endif %}
+      {% if form.asignados.help_text %}
+        <small class="text-muted">{{ form.asignados.help_text }}</small>
+      {% endif %}
     </div>
   </div>
 
@@ -52,5 +65,4 @@
   <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Backlog</a>
   <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Kanban</a>
 </div>
-
 {% endblock %}

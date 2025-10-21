@@ -64,6 +64,14 @@
       {% if form.categoria.errors %}<div class="text-danger small">{{ form.categoria.errors }}</div>{% endif %}
     </div>
 
+    <!-- 👇 NUEVO: Estado (para Kanban) -->
+    <div class="col-md-6">
+      <label class="form-label">{{ form.estado.label }}</label>
+      {{ form.estado }}
+      {% if form.estado.help_text %}<div class="form-text">{{ form.estado.help_text }}</div>{% endif %}
+      {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors }}</div>{% endif %}
+    </div>
+
     <!-- Esfuerzo -->
     <div class="col-md-6">
       <label class="form-label">{{ form.esfuerzo_sp.label }}</label>
@@ -71,7 +79,7 @@
       {% if form.esfuerzo_sp.errors %}<div class="text-danger small">{{ form.esfuerzo_sp.errors }}</div>{% endif %}
     </div>
 
-    <!-- 🔹 Responsables múltiples -->
+    <!-- Responsables múltiples -->
     <div class="col-md-12">
       <label class="form-label">{{ form.asignados.label }}</label>
       {{ form.asignados }}

@@ -26,32 +26,91 @@ def validar_story_points(value):
 # ==============================
 class Integrante(models.Model):
     """
-    Relación 1 a 1 con User de Django. Roles/permisos personalizados.
+    Perfil 1:1 con User. Los permisos se derivan del campo 'rol'.
     """
+    # === Roles canónicos usados en la app ===
+    ROL_SM_PO = "Scrum Master / PO"
+    ROL_ARQ_DIR = "Arquitecto de Software y Director General"
+    ROL_VISUALIZADOR = "Visualizador"
+    ROL_PO_COOFISAM = "Product Owner Coofisam360"
+
+    # (Opcionales) otros roles existentes en tu base actual
+    ROL_DBA = "Administrador de Bases de Datos (DBA)"
+    ROL_LIDER_COMERCIAL = "Líder Comercial"
+    ROL_BI = "Especialista en Visualización y BI"
+    ROL_DEV_FE = "Desarrollador Frontend"
+    ROL_DEV_BE = "Desarrollador Backend"
+    ROL_MKT = "Coordinadora de Marketing y Comunicación"
+    ROL_GH = "Coordinadora de Gestión Humana y Administrativa"
+    ROL_CONTABLE = "Contadora General"
+    ROL_MIEMBRO = "Miembro"  # fallback
+
+    ROL_CHOICES = [
+        (ROL_SM_PO, ROL_SM_PO),
+        (ROL_ARQ_DIR, ROL_ARQ_DIR),
+        (ROL_VISUALIZADOR, ROL_VISUALIZADOR),
+        (ROL_PO_COOFISAM, ROL_PO_COOFISAM),
+        # — Opcionales/actuales en tu BD —
+        (ROL_DBA, ROL_DBA),
+        (ROL_LIDER_COMERCIAL, ROL_LIDER_COMERCIAL),
+        (ROL_BI, ROL_BI),
+        (ROL_DEV_FE, ROL_DEV_FE),
+        (ROL_DEV_BE, ROL_DEV_BE),
+        (ROL_MKT, ROL_MKT),
+        (ROL_GH, ROL_GH),
+        (ROL_CONTABLE, ROL_CONTABLE),
+        (ROL_MIEMBRO, ROL_MIEMBRO),
+    ]
+
+    # Matriz de permisos por rol (explícita)
     ROL_PERMISOS = {
-        "Lider Bases de datos": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
-        "Scrum Master / PO": ["crear_tareas", "agregar_evidencias", "editar_tareas"],
-        "Visualizador": [],
+        # Admins (full)
+        ROL_SM_PO: {"crear_tareas", "agregar_evidencias", "editar_tareas"},
+        ROL_ARQ_DIR: {"crear_tareas", "agregar_evidencias", "editar_tareas"},
+        ROL_GH: {"crear_tareas", "agregar_evidencias", "editar_tareas"},
+
+        # Visualizadores (solo lectura)
+        ROL_VISUALIZADOR: set(),
+        ROL_PO_COOFISAM: set(),
+
+        # Resto de roles → sin permisos de admin (ven solo lo propio por lógica de views)
+        ROL_DBA: set(),
+        ROL_LIDER_COMERCIAL: set(),
+        ROL_BI: set(),
+        ROL_DEV_FE: set(),
+        ROL_DEV_BE: set(),
+        ROL_MKT: set(),
+        # (¡Ojo! No repetir ROL_GH aquí)
+        ROL_CONTABLE: set(),
+        ROL_MIEMBRO: set(),
     }
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    rol = models.CharField(max_length=100, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="integrante")
+    rol = models.CharField(max_length=100, choices=ROL_CHOICES, default=ROL_MIEMBRO, blank=False)
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
 
-    # ==== Permisos por rol ====
-    def puede_crear_tareas(self):
-        return "crear_tareas" in self.ROL_PERMISOS.get(self.rol, [])
+    # ===== Helpers de rol =====
+    def _perms(self):
+        return self.ROL_PERMISOS.get(self.rol, set())
 
-    def puede_agregar_evidencias(self):
-        return "agregar_evidencias" in self.ROL_PERMISOS.get(self.rol, [])
+    def es_visualizador(self) -> bool:
+        return self.rol in {self.ROL_VISUALIZADOR, self.ROL_PO_COOFISAM}
 
-    def puede_editar_tareas(self):
-        return "editar_tareas" in self.ROL_PERMISOS.get(self.rol, [])
+    def es_admin(self) -> bool:
+        # Admin operativo: Scrum/PO, Arq/Director, Gestión Humana, o superuser
+        return self.rol in {self.ROL_SM_PO, self.ROL_ARQ_DIR, self.ROL_GH} or getattr(self.user, "is_superuser", False)
 
-    def es_visualizador(self):
-        return self.rol == "Visualizador"
+    # ===== Permisos consultados por las views =====
+    def puede_crear_tareas(self) -> bool:
+        return "crear_tareas" in self._perms() or self.es_admin()
+
+    def puede_agregar_evidencias(self) -> bool:
+        return "agregar_evidencias" in self._perms() or self.es_admin()
+
+    def puede_editar_tareas(self) -> bool:
+        return "editar_tareas" in self._perms() or self.es_admin()
 
 
 # ==============================
@@ -120,7 +179,7 @@ class Epica(models.Model):
 
     # Proyecto
     proyecto = models.ForeignKey(
-        Proyecto,
+        "Proyecto",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -162,7 +221,7 @@ class Epica(models.Model):
     )
 
     # Puede abarcar varios sprints
-    sprints = models.ManyToManyField(Sprint, blank=True, related_name="epicas")
+    sprints = models.ManyToManyField("Sprint", blank=True, related_name="epicas")
 
     creada_en = models.DateTimeField(auto_now_add=True)
     actualizada_en = models.DateTimeField(auto_now=True)
@@ -248,7 +307,7 @@ class Tarea(models.Model):
 
     # Épica (1-N: una épica, muchas tareas)
     epica = models.ForeignKey(
-        Epica,
+        "Epica",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -271,7 +330,7 @@ class Tarea(models.Model):
         related_name="tareas_asignadas_legacy"
     )
 
-    sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE)
+    sprint = models.ForeignKey("Sprint", on_delete=models.CASCADE)
 
     completada = models.BooleanField(default=False)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
@@ -300,7 +359,7 @@ class Tarea(models.Model):
 # Evidencia
 # ==============================
 class Evidencia(models.Model):
-    tarea = models.ForeignKey(Tarea, on_delete=models.CASCADE, related_name="evidencias")
+    tarea = models.ForeignKey("Tarea", on_delete=models.CASCADE, related_name="evidencias")
     comentario = models.TextField(blank=True, null=True)
     archivo = models.FileField(upload_to="evidencias/", blank=True, null=True)
 

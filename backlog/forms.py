@@ -42,8 +42,12 @@ class DailyForm(forms.ModelForm):
 # Tarea
 # ==============================
 # backlog/forms.py
+# ==============================
+# backlog/forms.py
+# ==============================
 from django import forms
 from .models import Tarea, Epica, Integrante
+
 
 class TareaForm(forms.ModelForm):
     # Combo de story points (opcional)
@@ -59,10 +63,19 @@ class TareaForm(forms.ModelForm):
         help_text="Story points estimados (1, 2, 3, 5, 8, 13, 21). Opcional."
     )
 
-    # NUEVO: responsables múltiples
+    # NUEVO: selector de estado (para Kanban)
+    estado = forms.ChoiceField(
+        choices=Tarea.ESTADO_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Estado (Kanban)",
+        help_text="Selecciona el estado actual de la tarea.",
+        required=True,
+    )
+
+    # Responsables múltiples
     asignados = forms.ModelMultipleChoiceField(
         required=False,
-        queryset=Integrante.objects.select_related("user").all().order_by("user__first_name","user__last_name"),
+        queryset=Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name"),
         widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
         label="Responsables (pueden ser varios)",
         help_text="Tip: Ctrl/⌘ para seleccionar varios."
@@ -72,10 +85,8 @@ class TareaForm(forms.ModelForm):
         model = Tarea
         fields = [
             "epica", "titulo", "descripcion", "criterios_aceptacion",
-            "categoria", "sprint",
-            "asignados",
-            "esfuerzo_sp",
-            # Omitimos el legacy 'asignado_a' del formulario
+            "categoria", "estado", "sprint",
+            "asignados", "esfuerzo_sp",
         ]
         labels = {
             "epica": "Épica (opcional)",
@@ -83,6 +94,7 @@ class TareaForm(forms.ModelForm):
             "descripcion": "Descripción",
             "criterios_aceptacion": "Criterios de aceptación",
             "categoria": "Categoría (Matriz Eisenhower)",
+            "estado": "Estado (Kanban)",
             "sprint": "Sprint asignado",
         }
         widgets = {
@@ -96,11 +108,11 @@ class TareaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Ordena épicas por proyecto y título para mejor UX
+        # Ordena épicas por proyecto y título
         self.fields["epica"].queryset = Epica.objects.select_related("proyecto").order_by(
             "proyecto__codigo", "titulo"
         )
-        # Si existe legacy y el M2M aún está vacío, precargar
+        # Precarga responsable único en M2M si aplica
         if self.instance and self.instance.pk and not self.instance.asignados.exists() and self.instance.asignado_a_id:
             self.initial.setdefault("asignados", [self.instance.asignado_a_id])
 
@@ -113,11 +125,19 @@ class TareaForm(forms.ModelForm):
             raise forms.ValidationError("Los story points deben ser uno de: 1, 2, 3, 5, 8, 13 o 21.")
         return v
 
+    def clean_estado(self):
+        """
+        Valida que el estado sea uno permitido del modelo.
+        """
+        est = self.cleaned_data.get("estado")
+        validos = {c[0] for c in Tarea.ESTADO_CHOICES}
+        if est not in validos:
+            raise forms.ValidationError("Estado no válido.")
+        return est
+
     def save(self, commit=True):
         """
-        Guardamos normal y sincronizamos el legacy FK:
-        - Si hay 1 responsable exacto => lo colocamos en asignado_a.
-        - Si hay 0 o >1 => ponemos asignado_a = None para no inducir a error.
+        Guarda la tarea y sincroniza el responsable único si aplica.
         """
         tarea = super().save(commit=False)
         asignados_qs = self.cleaned_data.get("asignados")
@@ -132,7 +152,6 @@ class TareaForm(forms.ModelForm):
             tarea.save()
             self.save_m2m()
         return tarea
-
 
 
 # ==============================
