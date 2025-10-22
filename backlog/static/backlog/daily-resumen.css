@@ -18,22 +18,37 @@
   --teal:#17a2b8;
 }
 
-/* Base + fondo marca */
+/* Reseteo suave */
+*,
+*::before,
+*::after{ box-sizing:border-box; }
+
+/* Base + fondo “niebla lila” (mismo de las otras vistas) */
 html, body{ height:100%; margin:0; }
 body{
   font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   color: var(--ink);
   padding: 20px;
   background:
-    radial-gradient(1200px 700px at 10% -10%, rgba(255,122,122,.18), transparent 60%),
-    radial-gradient(900px 600px at 92% 8%, rgba(109,40,217,.26), transparent 60%),
-    linear-gradient(135deg,#43236a 0%, #3b0764 30%, #6d28d9 100%);
+    radial-gradient(1200px 600px at 10% -10%, #ead6ff 0%, transparent 60%),
+    radial-gradient(1200px 600px at 110% 10%, #e6dbff 0%, transparent 60%),
+    #f4efff;
   background-attachment: fixed;
 }
 
-/* Encabezado */
+/* Sutilezas de profundidad (no invasivas) */
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 500px at 80% 85%, rgba(124,58,237,.06), transparent 60%),
+    radial-gradient(700px 400px at 20% 90%, rgba(99,102,241,.05), transparent 60%);
+}
+body > *{ position:relative; z-index:1; }
+
+/* Encabezado (tu contenedor inline) */
 body > div[style*="justify-content: space-between"]{
-  background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.82));
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.86));
   border: 1px solid rgba(16,24,40,.08);
   border-radius: var(--radius);
   box-shadow: 0 20px 44px rgba(16,24,40,.12);
@@ -47,7 +62,7 @@ h2{
   letter-spacing: .2px;
 }
 
-/* Botones */
+/* Botones (respetando tus clases) */
 .btn{
   display:inline-flex; align-items:center; gap:8px;
   padding: 10px 14px !important;
@@ -59,7 +74,6 @@ h2{
   box-shadow: 0 10px 22px rgba(16,24,40,.12);
   transition: transform .06s ease, filter .2s ease, box-shadow .2s ease;
   cursor: pointer;
-  position: relative; z-index: 2; pointer-events:auto;
 }
 .btn:hover{ filter:brightness(1.06); box-shadow:0 16px 34px rgba(16,24,40,.16); }
 .btn:active{ transform: translateY(1px); }
@@ -82,7 +96,7 @@ h2{
 table{
   width:100%;
   border-collapse: collapse;
-  background: rgba(255,255,255,.94);
+  background: rgba(255,255,255,.96);
   border: 1px solid rgba(16,24,40,.08);
   border-radius: 14px;
   overflow:hidden;
@@ -95,7 +109,7 @@ th, td{
   vertical-align: top;
 }
 th{
-  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92));
   font-weight:900;
 }
 tr:hover td{ background: rgba(109,40,217,.04); }
@@ -111,6 +125,11 @@ tr.fuera-horario td{
 .card[style*="#fff3cd"]{
   background:#fff7df !important;
   border-color:#ffe8a3 !important;
+}
+
+/* Accesibilidad: menos movimiento si el usuario lo pide */
+@media (prefers-reduced-motion: reduce){
+  .btn{ transition:none; }
 }
 
 /* Responsivo */

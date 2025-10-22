@@ -1,0 +1,221 @@
+/* ===============================
+   Fondo lila tipo “niebla”
+   =============================== */
+html, body { background: transparent !important; }
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #ead6ff, transparent 60%),
+    radial-gradient(1200px 600px at 110% 10%, #e6dbff, transparent 60%),
+    #f4efff;
+}
+/* Contenido por encima del fondo */
+body > *{ position:relative; z-index:2; }
+
+/* ===============================
+   Encabezado (compat con inline)
+   =============================== */
+.page-bar,
+div[style*="justify-content: space-between"][style*="align-items: center"]{
+  position: relative;
+  display: block;
+  max-width: 1100px;
+  margin: 0 auto 24px;
+  padding: 0 16px;
+}
+.page-bar h2,
+div[style*="justify-content: space-between"][style*="align-items: center"] > h2{
+  margin: 24px 0 10px;
+  text-align: center;
+  font-weight: 800;
+  color: #5b21b6;
+}
+.page-bar .top-actions,
+div[style*="justify-content: space-between"][style*="align-items: center"] > div{
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.page-bar .top-actions a,
+div[style*="justify-content: space-between"][style*="align-items: center"] > div a{
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  color: #111 !important;
+  text-decoration: none;
+}
+.page-bar .top-actions a[href*="home"]{ background:#6c757d; color:#fff !important; }
+.page-bar .top-actions a[href*="logout"]{ background:#dc3545; color:#fff !important; }
+
+/* ===============================
+   Card del formulario
+   =============================== */
+form[method="post"]{
+  max-width: 1100px;
+  margin: 0 auto 24px;
+  background: #fff;
+  border: 1px solid #e6e8ee;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(32,44,80,.08);
+  /* acolchado lateral extra para que no “toque” bordes */
+  padding: 28px clamp(22px, 4vw, 38px);
+  box-sizing: border-box;
+}
+
+/* ===============================
+   Grid del formulario (2 columnas)
+   =============================== */
+form[method="post"] p{
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 20px;              /* separación etiqueta <-> campo */
+  margin: 0 0 14px 0;
+}
+
+/* Etiquetas */
+form[method="post"] p > label{
+  font-weight: 700;
+  color: #1f2937;
+  justify-self: start;
+  margin: 0;
+}
+
+/* Controles en columna 2 al 100% (con ancho máximo elegante) */
+form[method="post"] p > :is(input, select, textarea){
+  grid-column: 2 / -1;
+  width: 100%;
+  max-width: clamp(520px, 72vw, 820px);
+  box-sizing: border-box;
+}
+
+/* Ayudas/errores alineadas con el campo */
+form[method="post"] p > :is(.helptext, small, span, ul.errorlist){
+  grid-column: 2 / -1;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: .92rem;
+  max-width: clamp(520px, 72vw, 820px);
+}
+form[method="post"] p > ul.errorlist{
+  color:#b91c1c;
+  background:#fef2f2;
+  border:1px solid #fecaca;
+  padding:6px 10px;
+  border-radius:8px;
+}
+
+/* Campos: altos, cómodos y con focus bonito */
+form[method="post"] :is(input, select){
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  outline: none;
+  font-size: 16px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02) inset;
+}
+form[method="post"] textarea{
+  min-height: 132px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  outline: none;
+  font-size: 16px;
+  resize: vertical;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02) inset;
+}
+form[method="post"] :is(input, select, textarea):focus{
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167,139,250,.25);
+}
+
+/* Botón Guardar */
+form[method="post"] button[type="submit"]{
+  grid-column: 2 / -1;
+  justify-self: start;
+  background: #22c55e;
+  color: #111 !important;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+form[method="post"] button[type="submit"]:hover{ background:#16a34a; }
+
+/* ===============================
+   Separador + enlaces inferiores
+   =============================== */
+hr{
+  max-width: 1100px;
+  margin: 28px auto;
+  border: none;
+  height: 1px;
+  background: #e6e8ee;
+}
+hr + div{
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+hr + div a{
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  color: #111 !important;
+  text-decoration: none;
+  background: #7c3aed;
+}
+hr + div a:nth-child(1){ background:#3b82f6; } /* Lista */
+hr + div a:nth-child(2){ background:#06b6d4; } /* Matriz */
+hr + div a:nth-child(3){ background:#22c55e; } /* Kanban */
+hr + div a:nth-child(4){ background:#f59e0b; color:#111 !important; } /* Épicas */
+
+/* ===============================
+   Responsive
+   =============================== */
+@media (max-width: 992px){
+  .page-bar .top-actions,
+  div[style*="justify-content: space-between"][style*="align-items: center"] > div{
+    position: static;
+    transform: none;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .page-bar,
+  div[style*="justify-content: space-between"][style*="align-items: center"]{
+    text-align: center;
+  }
+
+  /* El formulario pasa a 1 columna */
+  form[method="post"] p{
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  form[method="post"] p > label{ margin-bottom: 6px; }
+
+  /* Controles/ayudas ocupan todo el ancho */
+  form[method="post"] p > :is(input, select, textarea, .helptext, small, span){
+    max-width: 100%;
+  }
+
+  form[method="post"] button[type="submit"]{ grid-column: 1 / -1; }
+}
+
+@media (max-width: 576px){
+  form[method="post"]{ padding: 22px 18px; }
+}
