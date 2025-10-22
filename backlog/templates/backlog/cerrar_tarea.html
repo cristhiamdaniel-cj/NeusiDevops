@@ -1,55 +1,16 @@
 {% load static %}
+
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/tarea_close.css' %}?v=1">
+
+{% endblock %}
+
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Cerrar Tarea - NEUSI Task Manager</title>
-    <style>
-        .btn {
-            padding: 8px 16px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-danger { background-color: #dc3545; }
-        .btn-secondary { background-color: #6c757d; }
-        .card {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 8px;
-            background: #f8f9fa;
-        }
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-        }
-        .required {
-            color: red;
-            font-weight: bold;
-        }
-        .form-group {
-            margin: 15px 0;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-    </style>
 </head>
 <body>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">

@@ -1,6 +1,12 @@
 {% extends "base.html" %}
-{% block content %}
 
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'backlog/tareas_form.css' %}?v=1">
+{% endblock %}
+
+{% block content %}
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
   <h2>➕ Nueva Tarea (Historia de Usuario)</h2>
 

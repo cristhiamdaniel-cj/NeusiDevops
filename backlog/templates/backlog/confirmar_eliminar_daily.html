@@ -3,6 +3,7 @@
 <html>
 <head>
     <title>❌ Confirmar eliminación de Daily</title>
+     <link rel="stylesheet" href="{% static 'backlog/confirm-delete.css' %}?v=1">
     <style>
         body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
         .card { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
@@ -15,8 +16,7 @@
     <div class="card">
         <h2>⚠️ Confirmar eliminación</h2>
         <p>¿Seguro que deseas eliminar el Daily del integrante 
-           <strong>{{ daily.integrante.user.first_name }} {{ daily.integrante.user.last_name }}</strong> 
-           registrado el <strong>{{ daily.fecha }}</strong>?</p>
+           <strong>{{ daily.integrante.user.first_name }} {{ daily.integrante.user.last_name }}</strong> registrado el <strong>{{ daily.fecha }}</strong>?</p>
 
         <form method="post">
             {% csrf_token %}

@@ -3,27 +3,8 @@
 <html>
 <head>
   <title>Detalle Tarea - NEUSI Task Manager</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f1f3f6; padding:20px; }
-    .btn { padding:8px 16px; margin:5px; border:none; border-radius:5px;
-           text-decoration:none; color:white; font-weight:bold; display:inline-block; cursor:pointer; }
-    .btn-primary { background:#007bff; }
-    .btn-secondary { background:#6c757d; }
-    .btn-danger { background:#dc3545; }
-    .btn-success { background:#28a745; }
-    .btn-warning { background:#ffc107; color:#000; }
-    .btn-light { background:#e9ecef; color:#000; }
-    .card { border:1px solid #ddd; padding:20px; margin:15px 0; border-radius:8px; background:#fff; }
-    .badge { padding:4px 8px; border-radius:4px; color:white; font-size:0.9em; }
-    .badge-ui { background:#dc3545; }
-    .badge-nui { background:#28a745; }
-    .badge-uni { background:#ffc107; color:#000; }
-    .badge-nuni { background:#6c757d; }
-    .badge-epica { background:#0d6efd; }
-    .evidencia { border-left:3px solid #007bff; padding:10px 15px; margin:10px 0; background:#f8f9fa; border-radius:5px; }
-    .evidencia header { display:flex; justify-content:space-between; align-items:center; }
-    .muted { color:#666; }
-  </style>
+  <!-- Unificación: se usa la hoja de estilos externa de Juan -->
+  <link rel="stylesheet" href="{% static 'backlog/tarea_detail.css' %}?v=1">
 </head>
 <body>
 
@@ -39,7 +20,7 @@
   </div>
 
   {% for message in messages %}
-    <div class="card" style="background:#d4edda; border:1px solid #c3e6cb;">{{ message }}</div>
+    <div class="card card-msg">{{ message }}</div>
   {% endfor %}
 
   <div class="card">
@@ -69,7 +50,6 @@
       {% endif %}
     </p>
 
-    <!-- 🔹 Lista de responsables -->
     <p><strong>Responsables:</strong>
       {% if tarea.asignados.all %}
         {% for r in tarea.asignados.all %}
@@ -87,12 +67,12 @@
 
     {% if tarea.descripcion %}
       <h4>📝 Descripción</h4>
-      <p style="background:#f8f9fa; padding:10px; border-radius:5px;">{{ tarea.descripcion|linebreaks }}</p>
+      <p class="soft-block">{{ tarea.descripcion|linebreaks }}</p>
     {% endif %}
 
     {% if tarea.criterios_aceptacion %}
       <h4>✅ Criterios de Aceptación</h4>
-      <p style="background:#f8f9fa; padding:10px; border-radius:5px;">{{ tarea.criterios_aceptacion|linebreaks }}</p>
+      <p class="soft-block">{{ tarea.criterios_aceptacion|linebreaks }}</p>
     {% endif %}
 
     {% if tarea.informe_cierre %}
@@ -100,8 +80,7 @@
       <a href="{{ tarea.informe_cierre.url }}" target="_blank" class="btn btn-primary">📥 Descargar Informe</a>
     {% endif %}
 
-    <!-- Botones -->
-    <div style="margin-top:20px;">
+    <div class="actions">
       {% if puede_editar %}
         <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-success">✏️ Editar Tarea</a>
       {% endif %}
@@ -118,20 +97,12 @@
   <div class="card">
     <h3>📎 Evidencias</h3>
 
-    
     {% if not tarea.completada %}
       {% if tiene_permisos_admin or puede_editar or request.user.integrante.puede_agregar_evidencias %}
-        <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data"
-              style="background:#e9ecef; padding:15px; border-radius:5px; margin-bottom:20px;">
+        <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data" class="evidencia-form">
           {% csrf_token %}
-          <div style="margin-bottom:8px;">
-            {{ form.comentario.label_tag }}<br>
-            {{ form.comentario }}
-          </div>
-          <div style="margin-bottom:8px;">
-            {{ form.archivo.label_tag }}<br>
-            {{ form.archivo }}
-          </div>
+          <div>{{ form.comentario.label_tag }} {{ form.comentario }}</div>
+          <div>{{ form.archivo.label_tag }} {{ form.archivo }}</div>
           <button type="submit" class="btn btn-success mt-2">📎 Agregar Evidencia</button>
         </form>
       {% else %}
@@ -176,3 +147,4 @@
 
 </body>
 </html>
+

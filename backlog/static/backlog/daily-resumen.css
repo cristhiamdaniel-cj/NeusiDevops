@@ -2,8 +2,8 @@
 
 /* Paleta */
 :root{
-  --brand-deep:#3B0764;
-  --brand-purple:#6D28D9;
+  --brand-deep:#3B0764;   /* morado profundo */
+  --brand-purple:#6D28D9; /* morado principal */
   --brand-coral:#FF7A7A;
 
   --ink:#0f1320;
@@ -23,7 +23,7 @@
 *::before,
 *::after{ box-sizing:border-box; }
 
-/* Base + fondo “niebla lila” (mismo de las otras vistas) */
+/* Base + fondo “niebla lila” */
 html, body{ height:100%; margin:0; }
 body{
   font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
@@ -35,8 +35,7 @@ body{
     #f4efff;
   background-attachment: fixed;
 }
-
-/* Sutilezas de profundidad (no invasivas) */
+/* Sutilezas de profundidad */
 body::before{
   content:"";
   position:fixed; inset:0; pointer-events:none; z-index:0;
@@ -92,32 +91,38 @@ h2{
   padding: 16px !important;
 }
 
-/* Tabla */
+/* =====================  Tabla  ===================== */
 table{
   width:100%;
   border-collapse: collapse;
-  background: rgba(255,255,255,.96);
+  table-layout: fixed; /* columnas más consistentes */
+  background: rgba(6, 4, 85, 0.96);
   border: 1px solid rgba(16,24,40,.08);
   border-radius: 14px;
-  overflow:hidden;
+  overflow: hidden;
   box-shadow: 0 16px 40px rgba(16,24,40,.12);
 }
 th, td{
-  padding: 12px 14px;
+  padding: 12px 14px;                  /* ← corregido (antes había un carácter inválido) */
   border-bottom: 1px solid rgba(16,24,40,.06);
   color:#0f1320;
   vertical-align: top;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;              /* evita desbordes con textos largos */
 }
 th{
-  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92));
-  font-weight:900;
+  background: linear-gradient(180deg, rgba(125, 98, 223, 0.98), rgba(255, 255, 255, 0.92));
+  font-weight: 900;
 }
-tr:hover td{ background: rgba(109,40,217,.04); }
+tr:hover td{ background: rgba(97, 31, 204, 0.04); }
 
 /* Fila fuera de horario */
 tr.fuera-horario td{
-  background:#ffe9ee !important;
+  background:#f0e3f5 !important;
 }
+
+/* Estados */
 .estado-ok{ color: var(--green); font-weight:800; }
 .estado-fuera{ color: #d62f52; font-weight:800; }
 
