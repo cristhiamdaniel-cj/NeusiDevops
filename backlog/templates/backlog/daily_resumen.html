@@ -3,7 +3,7 @@
 <html>
 <head>
     <title>📝 Resumen de Dailies - NEUSI Task Manager</title>
-    <link rel="stylesheet" href="{% static 'backlog/daily-resumen.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'backlog/daily-resumen.css' %}?v=4">
 </head>
 <body>
 
@@ -88,10 +88,10 @@
     {% for d in registros %}
     <tr class="{% if d.fuera_horario %}fuera-horario{% endif %}">
         <td><strong>{{ d.integrante.user.first_name }}</strong></td>
-        <td>{{ d.fecha }}</td>
-        <td>{{ d.que_hizo_ayer }}</td>
-        <td>{{ d.que_hara_hoy }}</td>
-        <td>{{ d.impedimentos|default:"-" }}</td>
+        <td><strong>{{ d.fecha }}</td></strong>
+        <td><strong>{{ d.que_hizo_ayer }}</td></strong>
+        <td><strong>{{ d.que_hara_hoy }}</td></strong>
+        <td><strong>{{ d.impedimentos|default:"-" }}</td></strong>
         <td>
             {% if d.fuera_horario %}
                 <span class="estado-fuera">⚠ Fuera de horario</span>
@@ -100,16 +100,15 @@
             {% endif %}
         </td>
         {% if tiene_permisos_admin %}
-        <td>
+        
             <form method="post" action="{% url 'eliminar_daily' d.id %}" style="display:inline;">
                 {% csrf_token %}
-                <button type="submit" 
-                        onclick="return confirm('⚠ ¿Seguro que deseas eliminar este Daily?')" 
-                        class="btn btn-danger btn-sm">
-                    🗑 Eliminar
-                </button>
+                <td>
+                    <a href="{% url 'eliminar_daily' d.id %}" class="btn btn-danger btn-sm">🗑 Eliminar</a>
+                </td>
+                
             </form>
-        </td>
+        
         {% endif %}
     </tr>
     {% empty %}

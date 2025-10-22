@@ -41,6 +41,7 @@
             {% if tiene_permisos_admin %}
               <td class="text-end">
                 <a href="{% url 'sprint_edit' s.id %}" class="btn btn-sm btn-outline-secondary">✏️</a>
+             <!--<a href="{% url 'sprint_delete' s.id %}" class="btn btn-delete">🗑️</a> -->   
                 
               </td>
             {% endif %}

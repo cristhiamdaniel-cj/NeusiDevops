@@ -1,0 +1,91 @@
+/* ===================== NEUSI · Confirmar Eliminación ===================== */
+
+/* Paleta de marca */
+:root{
+  --neusi-deep:#3B0764;   /* morado profundo */
+  --neusi:#6D28D9;        /* morado principal */
+  --coral:#FF7A7A;        /* coral del logo */
+  --ink:#0f1320;
+}
+
+/* Fondo suave (mismo estilo que venimos usando) */
+html, body{ height:100%; margin:0; }
+body{
+  background:
+    radial-gradient(1200px 700px at 8% -10%, rgba(255,122,122,.10), transparent 60%),
+    radial-gradient(900px 600px at 100% 15%, rgba(109,40,217,.12), transparent 60%),
+    linear-gradient(135deg, #faf9ff 0%, #f5f3ff 45%, #f2f0ff 100%) !important;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Título */
+h1{
+  font-weight: 900;
+  color: var(--neusi-deep);
+  letter-spacing:.2px;
+  margin-bottom: 12px;
+}
+
+/* Alerta de confirmación (crítica) */
+.alert-danger{
+  background:
+    radial-gradient(700px 420px at 0% 0%, rgba(255,122,122,.10), transparent 60%),
+    linear-gradient(180deg,#fff1f3 0%, #ffe8eb 100%) !important;
+  border: 1px solid #ffc2cc !important;
+  color: #7a1423 !important;
+  padding: 16px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 14px 32px rgba(16,24,40,.14);
+}
+
+/* Caja con datos de la tarea (tu div gris) */
+body > div[style*="background: #f8f9fa"]{
+  background: linear-gradient(180deg,#ffffff 0%, #fbfaff 100%) !important;
+  border: 1px solid rgba(60,64,87,.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 40px rgba(16,24,40,.12);
+}
+
+/* Badges de categoría (respetando tus clases) */
+.badge{ padding:4px 8px; border-radius:999px; font-weight:700; }
+.badge-ui{ background:#dc3545; }
+.badge-nui{ background:#28a745; }
+.badge-uni{ background:#ffc107; color:#000; }
+.badge-nuni{ background:#6c757d; }
+
+/* Botones */
+.btn{
+  padding: 10px 16px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  text-decoration: none !important;
+  color: #fff !important;
+  transition: filter .15s ease, transform .06s ease, box-shadow .2s ease;
+  box-shadow: 0 10px 22px rgba(16,24,40,.12);
+}
+.btn:hover{ filter: brightness(1.05); }
+.btn:active{ transform: translateY(1px); }
+
+.btn-secondary{
+  background: #6c757d !important;
+  box-shadow: 0 12px 24px rgba(17,24,39,.14);
+}
+.btn-danger{
+  background: #dc3545 !important;
+  box-shadow: 0 12px 26px rgba(220,53,69,.24);
+}
+
+/* Tipografía en los h4 dentro del panel de tarea */
+body > div[style*="background: #f8f9fa"] h4{
+  font-weight: 800;
+  color: #1b2233;
+}
+
+/* Pequeños ajustes responsivos */
+@media (max-width: 720px){
+  body{ padding: 16px !important; }
+  h1{ font-size: 1.35rem; }
+}

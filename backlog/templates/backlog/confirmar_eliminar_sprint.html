@@ -3,7 +3,9 @@
 <html>
 <head>
     <title>❌ Confirmar eliminación de Sprint</title>
-    <style>
+    <link rel="stylesheet" href="{% static 'backlog/confirm-delete.css' %}?v=1">
+
+   <style>
         body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
         .card { background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
         .btn { padding: 8px 16px; margin: 5px; border-radius: 5px; text-decoration: none; font-weight: bold; }
@@ -25,6 +27,5 @@
             <a href="{% url 'sprint_list' %}" class="btn btn-secondary">↩️ Cancelar</a>
         </form>
     </div>
-
 </body>
 </html>
