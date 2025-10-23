@@ -88,7 +88,7 @@ class Integrante(models.Model):
     rol = models.CharField(max_length=100, choices=ROL_CHOICES, default=ROL_MIEMBRO, blank=False)
 
     class Meta:
-        managed = True
+        managed = False
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
@@ -132,7 +132,7 @@ class Proyecto(models.Model):
 
     class Meta:
         ordering = ["codigo"]
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"{self.codigo} — {self.nombre}"
@@ -147,7 +147,7 @@ class Sprint(models.Model):
     fin = models.DateField()
 
     class Meta:
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"{self.nombre} ({self.inicio} - {self.fin})"
@@ -234,7 +234,7 @@ class Epica(models.Model):
 
     class Meta:
         ordering = ["-creada_en"]
-        managed = True
+        managed = False
 
     def __str__(self):
         pref = f"{self.codigo} - " if self.codigo else ""
@@ -349,7 +349,7 @@ class Tarea(models.Model):
     )
 
     class Meta:
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"{self.titulo} ({self.get_categoria_display()})"
@@ -381,7 +381,7 @@ class Evidencia(models.Model):
     actualizado_en = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"Evidencia de {self.tarea.titulo} ({self.creado_por})"
@@ -402,7 +402,7 @@ class Daily(models.Model):
     fuera_horario = models.BooleanField(default=False)
 
     class Meta:
-        managed = True
+        managed = False
 
     def __str__(self):
         return f"Daily {self.integrante} - {self.fecha}"

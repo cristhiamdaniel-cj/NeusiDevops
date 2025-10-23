@@ -62,7 +62,7 @@ class DisponibilidadDia(models.Model):
     class Meta:
         unique_together = ("disponibilidad", "dia_semana")
         ordering = ("dia_semana",)
-        managed = True
+        managed = False
 
     def clean(self):
         from django.core.exceptions import ValidationError
