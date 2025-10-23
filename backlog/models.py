@@ -1,4 +1,3 @@
-# backlog/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -88,6 +87,9 @@ class Integrante(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="integrante")
     rol = models.CharField(max_length=100, choices=ROL_CHOICES, default=ROL_MIEMBRO, blank=False)
 
+    class Meta:
+        managed = True
+
     def __str__(self):
         return self.user.get_full_name() or self.user.username
 
@@ -130,6 +132,7 @@ class Proyecto(models.Model):
 
     class Meta:
         ordering = ["codigo"]
+        managed = True
 
     def __str__(self):
         return f"{self.codigo} — {self.nombre}"
@@ -142,6 +145,9 @@ class Sprint(models.Model):
     nombre = models.CharField(max_length=50, default="Sprint")
     inicio = models.DateField()
     fin = models.DateField()
+
+    class Meta:
+        managed = True
 
     def __str__(self):
         return f"{self.nombre} ({self.inicio} - {self.fin})"
@@ -228,6 +234,7 @@ class Epica(models.Model):
 
     class Meta:
         ordering = ["-creada_en"]
+        managed = True
 
     def __str__(self):
         pref = f"{self.codigo} - " if self.codigo else ""
@@ -341,6 +348,9 @@ class Tarea(models.Model):
         help_text="Archivo requerido para cerrar la tarea"
     )
 
+    class Meta:
+        managed = True
+
     def __str__(self):
         return f"{self.titulo} ({self.get_categoria_display()})"
 
@@ -370,6 +380,9 @@ class Evidencia(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     actualizado_en = models.DateTimeField(auto_now=True, null=True, blank=True)
 
+    class Meta:
+        managed = True
+
     def __str__(self):
         return f"Evidencia de {self.tarea.titulo} ({self.creado_por})"
 
@@ -380,13 +393,16 @@ class Evidencia(models.Model):
 class Daily(models.Model):
     integrante = models.ForeignKey("Integrante", on_delete=models.CASCADE)
     fecha = models.DateField(default=timezone.now)
-    hora = models.TimeField(default=timezone.now)
+    hora = models.TimeField(default=timezone.now)  # callable OK
     que_hizo_ayer = models.TextField()
     que_hara_hoy = models.TextField()
     impedimentos = models.TextField(blank=True, null=True)
 
     # Marca si el registro fue fuera de ventana 5–9 AM
     fuera_horario = models.BooleanField(default=False)
+
+    class Meta:
+        managed = True
 
     def __str__(self):
         return f"Daily {self.integrante} - {self.fecha}"

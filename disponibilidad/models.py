@@ -3,8 +3,10 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta, date
 
+
 def lunes_de(fecha: date) -> date:
     return fecha - timedelta(days=fecha.weekday())
+
 
 class DisponibilidadSemanal(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="semanas_disponibilidad")
@@ -15,6 +17,7 @@ class DisponibilidadSemanal(models.Model):
     class Meta:
         unique_together = ("usuario", "semana_inicio")
         ordering = ("-semana_inicio",)
+        managed = True
 
     def __str__(self):
         return f"{self.usuario.get_full_name() or self.usuario.username} - {self.semana_inicio}"
@@ -32,6 +35,7 @@ class DisponibilidadSemanal(models.Model):
         faltantes = [i for i in range(7) if i not in existentes]
         for i in faltantes:
             DisponibilidadDia.objects.create(disponibilidad=self, dia_semana=i, tipo=DisponibilidadDia.Tipo.NO)
+
 
 class DisponibilidadDia(models.Model):
     class Dia(models.IntegerChoices):
@@ -58,6 +62,7 @@ class DisponibilidadDia(models.Model):
     class Meta:
         unique_together = ("disponibilidad", "dia_semana")
         ordering = ("dia_semana",)
+        managed = True
 
     def clean(self):
         from django.core.exceptions import ValidationError
