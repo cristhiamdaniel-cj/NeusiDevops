@@ -70,3 +70,6 @@ __pycache__/
 .env
 .env
 .env.local
+data.json
+data.json
+Backup_DB/
