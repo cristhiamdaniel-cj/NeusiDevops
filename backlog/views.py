@@ -1,4 +1,3 @@
-# backlog/views.py
 from functools import wraps
 from datetime import time, datetime, timedelta
 import json
@@ -11,6 +10,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils.timezone import localtime, now
 from django.db.models import Q, Count
+from django.core.paginator import Paginator
 
 from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica, Proyecto
 from .forms import (
@@ -33,7 +33,7 @@ def _flags_usuario(request):
     Devuelve:
       - integrante: Integrante|None (auto-creado si falta)
       - puede_admin: bool (roles admin)
-      - es_visualizador: bool (roles visualización global)
+      - es_visualizador: bool (roles visualización global por proyecto)
       - puede_ver_todo: bool (admin o visualizador)
     """
     integrante = getattr(request.user, "integrante", None)
@@ -47,6 +47,46 @@ def _flags_usuario(request):
     es_visualizador = bool(integrante and integrante.es_visualizador())
     puede_ver_todo = bool(puede_admin or es_visualizador)
     return integrante, puede_admin, es_visualizador, puede_ver_todo
+
+# ==============================
+# Scope por proyectos (Visualizador / Product Owner)
+# ==============================
+
+def _proyectos_autorizados_qs(integrante: Integrante):
+    """
+    QS de proyectos visibles para el integrante según PermisoProyecto.
+    Requiere que PermisoProyecto tenga: proyecto(FK)->related_name='permisos_integrantes'
+    y un booleano 'activo'. Ajusta el related_name si usaste otro.
+    """
+    if not integrante:
+        return Proyecto.objects.none()
+    if integrante.es_admin():
+        return Proyecto.objects.all()
+    if integrante.es_visualizador():
+        return Proyecto.objects.filter(
+            permisos_integrantes__integrante=integrante,
+            permisos_integrantes__activo=True,
+            activo=True
+        ).distinct()
+    return Proyecto.objects.none()
+
+def _filtrar_por_proyectos_autorizados_tareas(qs, integrante: Integrante):
+    """Restringe Tarea por proyectos autorizados (vía epica__proyecto) para visualizadores/PO."""
+    if not integrante or not integrante.es_visualizador():
+        return qs
+    proys = _proyectos_autorizados_qs(integrante)
+    if not proys.exists():
+        return qs.none()
+    return qs.filter(epica__proyecto__in=proys).distinct()
+
+def _filtrar_por_proyectos_autorizados_epicas(qs, integrante: Integrante):
+    """Restringe Epica por proyecto para visualizadores/PO."""
+    if not integrante or not integrante.es_visualizador():
+        return qs
+    proys = _proyectos_autorizados_qs(integrante)
+    if not proys.exists():
+        return qs.none()
+    return qs.filter(proyecto__in=proys).distinct()
 
 def _es_admin(request):
     integrante = getattr(request.user, "integrante", None)
@@ -66,18 +106,26 @@ def _es_responsable(tarea: Tarea, integrante: Integrante) -> bool:
 def _queryset_visible_tareas(integrante: Integrante, puede_ver_todo: bool):
     """
     Construye el queryset base de tareas según permisos:
-    - Admin/Visualizador: ven todo.
+    - Admin: ve todo.
+    - Visualizador/PO: SOLO tareas de sus proyectos autorizados.
     - Usuario normal: solo tareas que le corresponden (M2M o FK).
     """
     base = (
         Tarea.objects
-        .select_related("asignado_a__user", "sprint", "epica")
+        .select_related("asignado_a__user", "sprint", "epica", "epica__proyecto")
         .prefetch_related("asignados__user")
     )
-    if puede_ver_todo:
-        return base
+
     if not integrante:
         return Tarea.objects.none()
+
+    if integrante.es_admin():
+        return base
+
+    if integrante.es_visualizador():
+        return _filtrar_por_proyectos_autorizados_tareas(base, integrante)
+
+    # Miembro normal → solo lo propio
     return base.filter(Q(asignados=integrante) | Q(asignado_a=integrante)).distinct()
 
 # ==============================
@@ -425,33 +473,59 @@ def daily_personal(request):
 @login_required
 def daily_resumen(request):
     integrante, es_admin, es_visualizador, _ = _flags_usuario(request)
-    puede_filtrar = es_admin or es_visualizador  # admin y visualizador pueden filtrar/ver todo
+    puede_filtrar = es_admin or es_visualizador  # admin y visualizador pueden filtrar/ver
 
-    if puede_filtrar:
-        registros = Daily.objects.select_related("integrante__user").order_by("-fecha")
-        integrantes = Integrante.objects.select_related("user").all().order_by(
-            "user__first_name", "user__last_name"
-        )
+    fecha_limite = datetime.now().date() - timedelta(days=7)
+
+    if not puede_filtrar:
+        # Usuario normal: solo sus dailies
+        registros = Daily.objects.filter(integrante=integrante, fecha__gte=fecha_limite).order_by("-fecha") if integrante else Daily.objects.none()
+        integrantes = []
+        persona_id = None
+    else:
+        if es_admin:
+            # Admin ve todo
+            registros = Daily.objects.select_related("integrante__user").filter(fecha__gte=fecha_limite).order_by("-fecha")
+            integrantes = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
+        else:
+            # Visualizador/PO: restringir por proyectos autorizados
+            proyectos = _proyectos_autorizados_qs(integrante)
+            if not proyectos.exists():
+                registros = Daily.objects.none()
+                integrantes = []
+            else:
+                ids_legacy = Tarea.objects.filter(epica__proyecto__in=proyectos).values_list("asignado_a_id", flat=True)
+                ids_m2m = Tarea.objects.filter(epica__proyecto__in=proyectos).values_list("asignados__id", flat=True)
+                ids_integrantes = {i for i in list(ids_legacy) + list(ids_m2m) if i is not None}
+
+                registros = (
+                    Daily.objects
+                    .select_related("integrante__user")
+                    .filter(integrante_id__in=ids_integrantes, fecha__gte=fecha_limite)
+                    .order_by("-fecha")
+                )
+                integrantes = (
+                    Integrante.objects
+                    .select_related("user")
+                    .filter(id__in=ids_integrantes)
+                    .order_by("user__first_name", "user__last_name")
+                )
+
+        # Filtro por persona (respetando scope)
         persona_id = request.GET.get("persona")
         if persona_id:
             try:
-                registros = registros.filter(integrante__id=int(persona_id))
+                pid = int(persona_id)
+                registros = registros.filter(integrante__id=pid)
             except (ValueError, Integrante.DoesNotExist):
                 pass
-    else:
-        registros = Daily.objects.filter(integrante=integrante).order_by("-fecha") if integrante else Daily.objects.none()
-        integrantes = []
-        persona_id = None
-
-    fecha_limite = datetime.now().date() - timedelta(days=7)
-    registros = registros.filter(fecha__gte=fecha_limite)
 
     return render(request, "backlog/daily_resumen.html", {
         "registros": registros,
         "integrantes": integrantes,
         "tiene_permisos_admin": es_admin,
         "puede_filtrar": puede_filtrar,
-        "persona_id": persona_id,
+        "persona_id": persona_id if puede_filtrar else None,
     })
 
 # ==============================
@@ -461,24 +535,45 @@ def daily_resumen(request):
 def backlog_lista(request):
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    # Base visible
-    tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
+    # Conmutador de agrupación (proyecto | epica | sprint | none)
+    group_by  = request.GET.get("group", "epica")
+    expand_id = request.GET.get("expand")  # id del grupo a expandir (para "ver más")
 
-    # Listas para filtros
+    # Base visible
+    tareas = (
+        _queryset_visible_tareas(integrante, puede_ver_todo)
+        .select_related("sprint", "epica", "epica__proyecto")
+        .prefetch_related("asignados__user")
+    )
+
+    # Listas para filtros (acotadas para visualizador)
     sprints = Sprint.objects.all().order_by("inicio")
+
     if puede_ver_todo:
-        # Integrantes con tareas (por cualquiera de los dos campos)
-        integrantes = (Integrante.objects
-                       .filter(Q(tareas_asignadas__isnull=False) | Q(tareas_asignadas_legacy__isnull=False))
-                       .select_related("user")
-                       .distinct()
-                       .order_by("user__first_name", "user__last_name"))
+        # Integrantes visibles: derivados de las tareas visibles (evita ver gente fuera del scope)
+        ids_a = tareas.values_list("asignado_a_id", flat=True)
+        ids_m = tareas.values_list("asignados__id", flat=True)
+        ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
+        integrantes = (
+            Integrante.objects
+            .select_related("user")
+            .filter(id__in=ids_set) if es_visualizador else
+            Integrante.objects.select_related("user").all()
+        )
+        integrantes = integrantes.order_by("user__first_name", "user__last_name").distinct()
+
+        # Épicas visibles
         epicas = Epica.objects.filter(tareas__isnull=False).distinct().order_by("titulo")
+        if es_visualizador:
+            epicas = _filtrar_por_proyectos_autorizados_epicas(epicas, integrante)
     else:
         integrantes = []
-        epicas = Epica.objects.filter(
-            Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante)
-        ).distinct().order_by("titulo")
+        epicas = (
+            Epica.objects
+            .filter(Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante))
+            .distinct()
+            .order_by("titulo")
+        )
 
     # Filtros (solo si presiona “Filtrar”)
     aplicar_filtros = request.GET.get("filtrar") == "1"
@@ -509,10 +604,43 @@ def backlog_lista(request):
         elif estado == "cerradas":
             tareas = tareas.filter(completada=True)
 
-    tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
+    # Orden estable según agrupación
+    if group_by == "proyecto":
+        tareas = tareas.order_by("epica__proyecto__nombre", "sprint__inicio", "categoria", "titulo")
+    elif group_by == "epica":
+        tareas = tareas.order_by("epica__titulo", "sprint__inicio", "categoria", "titulo")
+    elif group_by == "sprint":
+        tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
+    else:
+        tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
+
+    # Agrupación / Paginación
+    grouped = None
+    paginator = None
+    PAGE_SIZE = 25
+
+    if group_by in ("proyecto", "epica", "sprint"):
+        grouped = {}
+        for t in tareas:
+            if group_by == "proyecto":
+                k = t.epica.proyecto if (t.epica and hasattr(t.epica, "proyecto")) else None
+            elif group_by == "epica":
+                k = t.epica
+            else:  # sprint
+                k = t.sprint
+            grouped.setdefault(k, []).append(t)
+        # Sin paginación global en modo agrupado (usamos "ver más" por grupo)
+    else:
+        paginator = Paginator(tareas, PAGE_SIZE)
+        page_number = request.GET.get("page")
+        tareas = paginator.get_page(page_number)
 
     return render(request, "backlog/backlog_lista.html", {
-        "tareas": tareas,
+        "tareas": tareas,                   # page o queryset
+        "grouped": grouped,                 # dict o None
+        "group_by": group_by,
+        "expand_id": expand_id,
+        "paginator": paginator,             # solo en modo plano
         "sprints": sprints,
         "integrantes": integrantes,
         "epicas": epicas,
@@ -534,7 +662,16 @@ def backlog_matriz(request):
     persona_id = request.GET.get("persona")
 
     if puede_ver_todo:
-        integrantes = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
+        # Integrantes visibles derivados de tareas visibles si es visualizador
+        ids_a = tareas.values_list("asignado_a_id", flat=True)
+        ids_m = tareas.values_list("asignados__id", flat=True)
+        ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
+        integrantes = (
+            Integrante.objects.select_related("user")
+            .filter(id__in=ids_set) if es_visualizador else
+            Integrante.objects.select_related("user").all()
+        ).order_by("user__first_name", "user__last_name")
+
         if persona_id:
             try:
                 pid = int(persona_id)
@@ -772,15 +909,25 @@ def kanban_board(request):
         except ValueError:
             pass
 
-    integrantes = (
-        Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
-        if puede_ver_todo else []
-    )
-    epicas = (
-        Epica.objects.all().order_by("titulo")
-        if puede_ver_todo else
-        Epica.objects.filter(Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante)).distinct()
-    )
+    if puede_ver_todo:
+        # Integrantes del scope (si es visualizador) o todos (si admin)
+        ids_a = tareas.values_list("asignado_a_id", flat=True)
+        ids_m = tareas.values_list("asignados__id", flat=True)
+        ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
+        integrantes = (
+            Integrante.objects.select_related("user").filter(id__in=ids_set)
+            if es_visualizador else
+            Integrante.objects.select_related("user").all()
+        ).order_by("user__first_name", "user__last_name")
+
+        epicas = Epica.objects.all().order_by("titulo")
+        if es_visualizador:
+            epicas = _filtrar_por_proyectos_autorizados_epicas(epicas, integrante)
+    else:
+        integrantes = []
+        epicas = Epica.objects.filter(
+            Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante)
+        ).distinct()
 
     estados = {
         "nuevo":        tareas.filter(estado__iexact="NUEVO"),
@@ -883,17 +1030,26 @@ def cambiar_categoria_tarea(request, tarea_id):
 def epica_list(request):
     """
     Lista todas las épicas visibles para el usuario actual.
-    - Admin y Visualizador: ven todas las épicas.
-    - Miembros normales: épicas donde tengan tareas asignadas O sean owners/co-owners.
+    - Admin: ve todas
+    - Visualizador/PO: solo proyectos autorizados
+    - Miembros normales: épicas donde participan
     - Permite filtrar por proyecto (FK normalizado).
     """
     integrante, admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    if puede_ver_todo:
+    if admin:
         epicas = (
             Epica.objects
             .select_related("owner", "proyecto")
             .prefetch_related("owners__user", "sprints")
+            .order_by("-creada_en")
+        )
+    elif es_visualizador:
+        epicas = (
+            _filtrar_por_proyectos_autorizados_epicas(
+                Epica.objects.select_related("owner", "proyecto").prefetch_related("owners__user", "sprints"),
+                integrante
+            )
             .order_by("-creada_en")
         )
     else:
@@ -921,7 +1077,15 @@ def epica_list(request):
         except ValueError:
             pass
 
-    proyectos = Proyecto.objects.filter(activo=True).order_by("codigo")
+    # Proyectos listados en el filtro
+    if admin:
+        proyectos = Proyecto.objects.filter(activo=True).order_by("codigo")
+    elif es_visualizador:
+        proyectos = _proyectos_autorizados_qs(integrante).order_by("codigo")
+    else:
+        proyectos = Proyecto.objects.filter(
+            activo=True, epicas__tareas__asignados=integrante
+        ).distinct().order_by("codigo")
 
     context = {
         "epicas": epicas,
@@ -1010,8 +1174,15 @@ def epica_detail(request, epica_id):
         .get(pk=epica_id)
     )
 
-    # Permisos: si no es admin ni visualizador, validar si participa
-    if not puede_ver_todo:
+    # Visualizador/PO: validar scope de proyecto
+    if es_visualizador and not es_admin:
+        proyectos = _proyectos_autorizados_qs(integrante)
+        if not proyectos.filter(id=getattr(epica.proyecto, "id", None)).exists():
+            messages.error(request, "❌ No tienes permisos para ver esta épica.")
+            return redirect("epica_list")
+
+    # Miembro normal: validar si participa
+    if not puede_ver_todo and not es_visualizador:
         es_owner = bool(
             integrante and (
                 epica.owner_id == integrante.id or epica.owners.filter(id=integrante.id).exists()

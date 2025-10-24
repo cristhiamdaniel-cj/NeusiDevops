@@ -30,8 +30,11 @@ class Integrante(models.Model):
     # === Roles canónicos usados en la app ===
     ROL_SM_PO = "Scrum Master / PO"
     ROL_ARQ_DIR = "Arquitecto de Software y Director General"
+    ROL_GH = "Coordinadora de Gestión Humana y Administrativa"
+    # === Roles dueños de producto visualizan solo su proyecto ===
     ROL_VISUALIZADOR = "Visualizador"
     ROL_PO_COOFISAM = "Product Owner Coofisam360"
+    ROL_PO = "Product Owner"
 
     # (Opcionales) otros roles existentes en tu base actual
     ROL_DBA = "Administrador de Bases de Datos (DBA)"
@@ -40,15 +43,19 @@ class Integrante(models.Model):
     ROL_DEV_FE = "Desarrollador Frontend"
     ROL_DEV_BE = "Desarrollador Backend"
     ROL_MKT = "Coordinadora de Marketing y Comunicación"
-    ROL_GH = "Coordinadora de Gestión Humana y Administrativa"
     ROL_CONTABLE = "Contadora General"
     ROL_MIEMBRO = "Miembro"  # fallback
 
     ROL_CHOICES = [
         (ROL_SM_PO, ROL_SM_PO),
         (ROL_ARQ_DIR, ROL_ARQ_DIR),
+        (ROL_GH, ROL_GH),
+
         (ROL_VISUALIZADOR, ROL_VISUALIZADOR),
+        (ROL_PO, ROL_PO),
         (ROL_PO_COOFISAM, ROL_PO_COOFISAM),
+        
+        
         # — Opcionales/actuales en tu BD —
         (ROL_DBA, ROL_DBA),
         (ROL_LIDER_COMERCIAL, ROL_LIDER_COMERCIAL),
@@ -56,7 +63,7 @@ class Integrante(models.Model):
         (ROL_DEV_FE, ROL_DEV_FE),
         (ROL_DEV_BE, ROL_DEV_BE),
         (ROL_MKT, ROL_MKT),
-        (ROL_GH, ROL_GH),
+        
         (ROL_CONTABLE, ROL_CONTABLE),
         (ROL_MIEMBRO, ROL_MIEMBRO),
     ]
@@ -70,6 +77,7 @@ class Integrante(models.Model):
 
         # Visualizadores (solo lectura)
         ROL_VISUALIZADOR: set(),
+        ROL_PO: set(),
         ROL_PO_COOFISAM: set(),
 
         # Resto de roles → sin permisos de admin (ven solo lo propio por lógica de views)
@@ -98,7 +106,7 @@ class Integrante(models.Model):
         return self.ROL_PERMISOS.get(self.rol, set())
 
     def es_visualizador(self) -> bool:
-        return self.rol in {self.ROL_VISUALIZADOR, self.ROL_PO_COOFISAM}
+        return self.rol in {self.ROL_VISUALIZADOR, self.ROL_PO, self.ROL_PO_COOFISAM}
 
     def es_admin(self) -> bool:
         # Admin operativo: Scrum/PO, Arq/Director, Gestión Humana, o superuser
@@ -114,7 +122,31 @@ class Integrante(models.Model):
     def puede_editar_tareas(self) -> bool:
         return "editar_tareas" in self._perms() or self.es_admin()
 
+# ==============================
+# Permisos de Proyecto para visualizadores o dueños de producto
+# ==============================
+class PermisoProyecto(models.Model):
+    integrante = models.ForeignKey(
+        "Integrante",
+        on_delete=models.CASCADE,
+        related_name="permisos_proyectos"
+    )
+    proyecto = models.ForeignKey(
+        "Proyecto",
+        on_delete=models.CASCADE,
+        related_name="permisos_integrantes"
+    )
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(default=timezone.now, editable=False)
 
+    class Meta:
+        db_table = "backlog_permisoproyecto"
+        managed = False
+        unique_together = ("integrante", "proyecto")
+
+    def __str__(self):
+        estado = "Activo" if self.activo else "Inactivo"
+        return f"{self.integrante} → {self.proyecto} ({estado})"
 # ==============================
 # Proyecto (normalizado)
 # ==============================

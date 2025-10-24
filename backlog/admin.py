@@ -1,6 +1,18 @@
 from django.contrib import admin
-from .models import Integrante, Sprint, Epica, Tarea, Evidencia, Daily, Proyecto
+from .models import (
+    Integrante, Sprint, Epica, Tarea, Evidencia, Daily, Proyecto, PermisoProyecto
+)
 
+# ==========================
+# Inline de permisos por proyecto
+# ==========================
+class PermisoProyectoInline(admin.TabularInline):
+    model = PermisoProyecto
+    extra = 1
+    autocomplete_fields = ("proyecto",)
+    fields = ("proyecto", "activo")  # <-- solo campos seguros existentes
+    verbose_name = "Proyecto autorizado"
+    verbose_name_plural = "Proyectos autorizados (Visualizador / Product Owner)"
 
 # ==========================
 # Integrante
@@ -12,6 +24,20 @@ class IntegranteAdmin(admin.ModelAdmin):
     list_filter = ("rol",)
     ordering = ("user__username",)
 
+    inlines = [PermisoProyectoInline]
+
+    def get_inlines(self, request, obj=None):
+        """
+        Muestra el inline solo para roles Visualizador o Product Owner.
+        (Incluye compatibilidad si existiera el rol PO antiguo)
+        """
+        if not obj:
+            return []
+        roles_po = [getattr(Integrante, "ROL_PO", None), getattr(Integrante, "ROL_PO_COOFISAM", None)]
+        roles_po = [r for r in roles_po if r]  # filtra None
+        if obj.rol in [Integrante.ROL_VISUALIZADOR, *roles_po]:
+            return [PermisoProyectoInline]
+        return []
 
 # ==========================
 # Sprint
@@ -22,10 +48,10 @@ class SprintAdmin(admin.ModelAdmin):
     list_filter = ("inicio", "fin")
     search_fields = ("nombre",)
     ordering = ("-inicio",)
-# ==========================
-# Proyecto y Epica
-# ==========================
 
+# ==========================
+# Proyecto y Épica
+# ==========================
 @admin.register(Proyecto)
 class ProyectoAdmin(admin.ModelAdmin):
     list_display = ("codigo", "nombre", "activo", "creado_en")
@@ -36,17 +62,15 @@ class ProyectoAdmin(admin.ModelAdmin):
 class EpicaAdmin(admin.ModelAdmin):
     list_display = (
         "codigo", "titulo", "proyecto", "estado", "prioridad",
-        "progreso",      # <- método de esta clase
-        "sprints_list", "creada_en"
+        "progreso", "sprints_list", "creada_en"
     )
     list_filter = ("proyecto", "estado", "prioridad")
     search_fields = ("codigo", "titulo", "descripcion", "kpis")
     autocomplete_fields = ("proyecto", "owner", "sprints")
-    readonly_fields = ("progreso", "creada_en", "actualizada_en")  # <- aquí también
+    readonly_fields = ("progreso", "creada_en", "actualizada_en")
 
     @admin.display(description="Avance (%)")
     def progreso(self, obj):
-        # usa la propiedad 'avance' del modelo (manual o calculado)
         return f"{obj.avance:.0f}%"
 
 # ==========================
@@ -78,7 +102,6 @@ class TareaAdmin(admin.ModelAdmin):
         }),
     )
 
-
 # ==========================
 # Evidencia
 # ==========================
@@ -94,7 +117,6 @@ class EvidenciaAdmin(admin.ModelAdmin):
     def comentario_resumen(self, obj):
         return (obj.comentario[:70] + "...") if obj.comentario and len(obj.comentario) > 70 else obj.comentario
     comentario_resumen.short_description = "Comentario"
-
 
 # ==========================
 # Daily
