@@ -1,0 +1,99 @@
+/* ====== Team Disponibilidad (tabla semanal) ====== */
+
+/* ===== Fondo global (forzado con pseudo-elemento detrás de todo) ===== */
+html, body { min-height: 100%; }
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;                 /* top/right/bottom/left: 0 */
+  z-index:-1;              /* se queda detrás de todo */
+  background:
+    radial-gradient(1200px 600px at -10% -10%, rgba(108,99,255,.12), transparent 60%),
+    radial-gradient(1200px 600px at 110% 110%, rgba(14,165,233,.14), transparent 60%),
+    linear-gradient(180deg, #ead6ff 0%, #f4f7ff 50%, #ffd4ab 100%);
+}
+
+/* Contenedor ancho */
+.container{ max-width:1280px; }
+
+/* Caja flotante de la tabla (para que el fondo se note dentro) */
+.table-wrap{
+  background:#ecc5ffcc;               /* blanco semi-transparente */
+  backdrop-filter: blur(4px);
+  border-radius:14px;
+  box-shadow:0 12px 30px rgba(17,24,39,.08);
+  padding:12px;
+}
+
+/* ---------- Tabla ---------- */
+.table{
+  background: transparent;            /* clave para ver el fondo */
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:none;
+}
+
+.table thead th{
+  background:#deb3ff;
+  color:#000000;
+  font-weight:700;
+  font-size:.95rem;
+  vertical-align:bottom;
+  position:sticky; top:0; z-index:3;
+  border-bottom:1px solid #273d5a;
+}
+
+.table tbody td, .table thead th, .table tbody th{
+  padding:.55rem .75rem;
+  border-color:#022147;
+}
+
+.table tbody tr:nth-child(even){ background:#fafbff; }
+.table tbody tr:hover{ background:#f1f5ff; }
+
+/* Primera columna sticky */
+.table thead th:first-child,
+.table tbody td:first-child{
+  position:sticky; left:0; z-index:2;
+  background:#ffffff;
+  min-width:240px;
+  border-right:1px solid #000a16;
+}
+.table tbody td:first-child strong{ font-weight:700; color:#0f172a; }
+.table tbody td:first-child small{ color:#8b6464; }
+
+/* Fines de semana (1=Usuario, 2=Mon, ... 7=Sat, 8=Sun) */
+.table thead th:nth-child(7),
+.table thead th:nth-child(8),
+.table tbody td:nth-child(7),
+.table tbody td:nth-child(8){ background:#fff7ed; }
+.table tbody tr:nth-child(even) td:nth-child(7),
+.table tbody tr:nth-child(even) td:nth-child(8){ background:#fff2e5; }
+
+/* Badges */
+.badge{
+  border-radius:999px; font-weight:700; padding:.35rem .6rem;
+  letter-spacing:.2px; box-shadow:0 1px 0 rgba(0,0,0,.04);
+  min-width:86px; display:inline-flex; justify-content:center;
+}
+.text-bg-success{ background-color:#10b981 !important; color:#fff !important; }
+.text-bg-secondary{ background-color:#64748b !important; color:#fff !important; }
+.text-bg-info{ background-color:#0ea5e9 !important; color:#fff !important; border:1px solid rgba(14,165,233,.25); }
+
+/* Botones */
+.btn-outline-primary,.btn-outline-secondary{ border-width:2px; }
+button.btn.btn-outline-primary{ border-color:#2563eb; color:#2563eb; }
+button.btn.btn-outline-primary:hover{ background:#2563eb; color:#fff; }
+
+/* Selects y labels */
+.form-select{ border-radius:10px; border-color:#000e1e; }
+.form-label{ color:#475569; font-weight:600; }
+
+/* Responsive */
+@media (max-width: 992px){
+  .table thead th:first-child, .table tbody td:first-child{ min-width:200px; }
+}
+@media (max-width: 576px){
+  .table thead th:first-child, .table tbody td:first-child{ min-width:180px; }
+  .btn-group .btn{ padding:.4rem .55rem; font-size:.9rem; }
+}

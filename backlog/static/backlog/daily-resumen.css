@@ -91,46 +91,51 @@ h2{
   padding: 16px !important;
 }
 
-/* =====================  Tabla  ===================== */
+/* =====================  Tabla ===================== */
 table{
   width:100%;
   border-collapse: collapse;
-  table-layout: fixed; /* columnas más consistentes */
-  background: rgba(6, 4, 85, 0.96);
+  table-layout: fixed;
+  background: rgba(255,255,255,.96);        /* antes: rgba(146,102,233,.96) */
   border: 1px solid rgba(16,24,40,.08);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 16px 40px rgba(16,24,40,.12);
+  box-shadow: 0 16px 40px rgba(16,24,40,.10);
 }
+
 th, td{
-  padding: 12px 14px;                  /* ← corregido (antes había un carácter inválido) */
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(16,24,40,.06);
   color:#0f1320;
   vertical-align: top;
   text-align: left;
   white-space: normal;
-  word-break: break-word;              /* evita desbordes con textos largos */
+  word-break: break-word;
+  background: #ffffff;                      /* celda clara */
 }
+
 th{
-  background: linear-gradient(180deg, rgba(125, 98, 223, 0.98), rgba(255, 255, 255, 0.92));
+  background: linear-gradient(180deg, #ede9fe, #fafafa); /* header lila muy claro */
   font-weight: 900;
 }
-tr:hover td{ background: rgba(97, 31, 204, 0.04); }
 
-/* Fila fuera de horario */
-tr.fuera-horario td{
-  background:#f0e3f5 !important;
+tr:nth-child(even) td{                      /* alterna filas claras */
+  background:#faf7ff;
 }
 
-/* Estados */
+tr:hover td{                                /* hover suave */
+  background: rgba(109,40,217,.06);
+}
+
+/* Fila fuera de horario (ligeramente rosada) */
+tr.fuera-horario td{
+  background:#fff0f4 !important;
+}
+
+/* Estados*/
 .estado-ok{ color: var(--green); font-weight:800; }
 .estado-fuera{ color: #d62f52; font-weight:800; }
 
-/* Aviso (cuando no hay persona admin) */
-.card[style*="#fff3cd"]{
-  background:#fff7df !important;
-  border-color:#ffe8a3 !important;
-}
 
 /* Accesibilidad: menos movimiento si el usuario lo pide */
 @media (prefers-reduced-motion: reduce){
