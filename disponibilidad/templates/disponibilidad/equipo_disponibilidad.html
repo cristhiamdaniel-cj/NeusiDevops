@@ -1,6 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% load disponibilidad_extras %}
+
 {% block title %}Disponibilidad del Equipo (Semana){% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'disponibilidad/team-disponibilidad.css' %}?v=7">
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -34,8 +40,8 @@
       <button class="btn btn-outline-primary">Filtrar</button>
     </div>
   </form>
-
-  <div class="table-responsive">
+  
+  <div class="table-responsive table-wrap">
     <table class="table table-sm align-middle">
       <thead class="table-light">
         <tr>
