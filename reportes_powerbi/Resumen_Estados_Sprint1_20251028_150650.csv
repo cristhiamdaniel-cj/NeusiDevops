@@ -1,0 +1,9 @@
+Line style is unicode.
+Border style is 2.
+Null display is "[NULL]".
+estado,cantidadtareas,storypoints,porcentaje
+NUEVO,27,89,56.25
+COMPLETADO,16,58,33.33
+TODO,2,10,4.17
+EN_PROGRESO,2,5,4.17
+APROBADO,1,3,2.08

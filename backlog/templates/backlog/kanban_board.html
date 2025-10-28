@@ -2,416 +2,409 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Kanban Board - NEUSI Task Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-   <style>
-  /* ===============================
-     Fondo lila tipo “niebla”
-     =============================== */
-  html, body { background: transparent !important; }
-  body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    z-index:0;
-    pointer-events:none;
-    background:
-      radial-gradient(1200px 600px at 10% -10%, #ead6ff, transparent 60%),
-      radial-gradient(1200px 600px at 110% 10%, #e6dbff, transparent 60%),
-      #f4efff;
-  }
-  /* Asegura que todo el contenido quede por encima del fondo */
-  body > *{ position:relative; z-index:2; }
+  <meta charset="UTF-8" />
+  <title>Kanban Board - NEUSI Task Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  /* ===============================
-     Layout de cabecera y acciones
-     =============================== */
-  .header-container{
-    max-width: 1100px;
-    margin: 0 auto 20px;
-    padding: 0 16px;
-    display:flex; justify-content:space-between; align-items:center;
-  }
-  .header-container h2{
-    margin: 0;
-    font-weight:800;
-    color:#5b21b6;
-  }
+  <style>
+    /* ===============================
+       Fondo lila tipo “niebla”
+       =============================== */
+    html, body { background: transparent !important; }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #ead6ff, transparent 60%),
+        radial-gradient(1200px 600px at 110% 10%, #e6dbff, transparent 60%),
+        #f4efff;
+    }
+    /* Asegura que todo el contenido quede por encima del fondo */
+    body > *{ position:relative; z-index:2; }
 
-  /* Botones coherentes con el resto */
-  .btn{ border:none; border-radius:10px; font-weight:800; padding:8px 14px; }
-  .btn-primary{ background:#3b82f6; color:#111 !important; }
-  .btn-secondary{ background:#7c3aed; color:#111 !important; }
-  .btn-danger{ background:#dc3545; color:#fff !important; }
-  .btn-info{ background:#17a2b8; color:#fff; }
-  .btn-delete{ background:#8B0000; color:#fff; }
+    /* ===============================
+       Layout de cabecera y acciones
+       =============================== */
+    .header-container{
+      max-width: 1100px;
+      margin: 0 auto 20px;
+      padding: 0 16px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .header-container h2{
+      margin: 0;
+      font-weight:800;
+      color:#5b21b6;
+    }
 
-  /* Contenedor de filtros */
-  .mb-3 > div{
-    max-width:1100px;
-    margin: 15px auto 0;
-    padding: 15px;
-    background:#eef2ff;                /* suave lila */
-    border:1px solid #e6e8ee;
-    border-radius:16px;
-    box-shadow:0 6px 16px rgba(32,44,80,.06);
-  }
-  .mb-3 form{ display:flex; flex-wrap:wrap; gap:12px 16px; align-items:center; }
+    /* Botones coherentes con el resto */
+    .btn{ border:none; border-radius:10px; font-weight:800; padding:8px 14px; }
+    .btn-primary{ background:#3b82f6; color:#111 !important; }
+    .btn-secondary{ background:#7c3aed; color:#111 !important; }
+    .btn-danger{ background:#dc3545; color:#fff !important; }
+    .btn-info{ background:#17a2b8; color:#fff; }
+    .btn-delete{ background:#8B0000; color:#fff; }
 
-  /* ===============================
-     Kanban
-     =============================== */
-  .kanban-container{
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 20px 16px 40px;
-    display:flex;
-    gap: 18px;
-    overflow-x:auto;
-  }
-  .kanban-column{
-    min-width: 280px;
-    flex: 1;
-    background:#fff;                   /* tarjeta blanca */
-    border:1px solid #e6e8ee;
-    border-radius:16px;
-    padding: 15px;
-    box-shadow:0 10px 24px rgba(32,44,80,.08);
-  }
-  .kanban-column h5{
-    margin-bottom: 14px;
-    font-weight:800;
-    text-align:center;
-    padding:10px;
-    background:#fff;
-    border-radius:10px;
-    border:1px solid #eef0f6;
-  }
-  /* Colores de “borde superior” por estado */
-  .column-nuevo{        border-top: 4px solid #6b7280; }
-  .column-aprobado{     border-top: 4px solid #0d6efd; }
-  .column-en-progreso{  border-top: 4px solid #f59e0b; }
-  .column-completado{   border-top: 4px solid #22c55e; }
-  .column-bloqueado{    border-top: 4px solid #dc3545; }
+    /* Contenedor de filtros */
+    .mb-3 > div{
+      max-width:1100px;
+      margin: 15px auto 0;
+      padding: 15px;
+      background:#eef2ff;
+      border:1px solid #e6e8ee;
+      border-radius:16px;
+      box-shadow:0 6px 16px rgba(32,44,80,.06);
+    }
+    .mb-3 form{ display:flex; flex-wrap:wrap; gap:12px 16px; align-items:center; }
 
-  /* Tarjetas */
-  .task-card{
-    background:#fff;
-    border-radius:12px;
-    border:1px solid #eef0f6;
-    padding:12px;
-    margin-bottom:10px;
-    cursor:grab;
-    box-shadow:0 2px 4px rgba(0,0,0,.06);
-    transition: transform .15s ease, box-shadow .15s ease;
-  }
-  .task-card:hover{ transform: translateY(-2px); box-shadow:0 6px 16px rgba(32,44,80,.12); }
-  .task-card:active{ cursor:grabbing; }
-  .task-card.dragging{ opacity:.5; }
+    /* ===============================
+       Kanban
+       =============================== */
+    .kanban-container{
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      display:flex;
+      gap: 18px;
+      overflow-x:auto;
+    }
+    .kanban-column{
+      min-width: 280px;
+      flex: 1;
+      background:#fff;
+      border:1px solid #e6e8ee;
+      border-radius:16px;
+      padding: 15px;
+      box-shadow:0 10px 24px rgba(32,44,80,.08);
+    }
+    .kanban-column h5{
+      margin-bottom: 14px;
+      font-weight:800;
+      text-align:center;
+      padding:10px;
+      background:#fff;
+      border-radius:10px;
+      border:1px solid #eef0f6;
+    }
+    /* Colores de “borde superior” por estado */
+    .column-nuevo{        border-top: 4px solid #6b7280; }
+    .column-en-progreso{  border-top: 4px solid #f59e0b; }
+    .column-completado{   border-top: 4px solid #22c55e; }
+    .column-bloqueado{    border-top: 4px solid #dc3545; }
 
-  .task-title{ font-weight:800; margin-bottom:6px; color:#111827; }
-  .task-meta{ font-size:.88rem; color:#596275; margin: 4px 0; }
-  .task-actions{ margin-top:10px; padding-top:8px; border-top:1px solid #eef0f6; }
+    /* Tarjetas */
+    .task-card{
+      background:#fff;
+      border-radius:12px;
+      border:1px solid #eef0f6;
+      padding:12px;
+      margin-bottom:10px;
+      cursor:grab;
+      box-shadow:0 2px 4px rgba(0,0,0,.06);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .task-card:hover{ transform: translateY(-2px); box-shadow:0 6px 16px rgba(32,44,80,.12); }
+    .task-card:active{ cursor:grabbing; }
+    .task-card.dragging{ opacity:.5; }
 
-  /* Estado de drop */
-  .kanban-column.drag-over{
-    background: linear-gradient(#f8fbff, #eef6ff);
-    border:2px dashed #0d6efd;
-  }
+    .task-title{ font-weight:800; margin-bottom:6px; color:#111827; }
+    .task-meta{ font-size:.88rem; color:#596275; margin: 4px 0; }
+    .task-actions{ margin-top:10px; padding-top:8px; border-top:1px solid #eef0f6; }
 
-  /* Badges de categoría/épica */
-  .badge-ui  { background:#dc3545; color:#fff; padding:3px 6px; border-radius:6px; font-size:.75em; }
-  .badge-nui { background:#6b7280; color:#fff; padding:3px 6px; border-radius:6px; font-size:.75em; }
-  .badge-uni { background:#f59e0b; color:#111; padding:3px 6px; border-radius:6px; font-size:.75em; }
-  .badge-nui { background:#6b7280; color:#fff; padding:3px 6px; border-radius:6px; font-size:.75em; }
-  .badge-epica{ background:#0d6efd; color:#fff; padding:3px 6px; border-radius:6px; font-size:.73em; text-decoration:none; }
+    /* Estado de drop */
+    .kanban-column.drag-over{
+      background: linear-gradient(#f8fbff, #eef6ff);
+      border:2px dashed #0d6efd;
+    }
 
-  /* Responsive */
-  @media (max-width: 992px){
-    .header-container{ flex-direction:column; gap:10px; text-align:center; }
-    .mb-3 > div{ border-radius:12px; }
-  }
-</style>
+    /* Badges de categoría/épica */
+    .badge-ui  { background:#dc3545; color:#fff; padding:3px 6px; border-radius:6px; font-size:.75em; }
+    .badge-nui { background:#6b7280; color:#fff; padding:3px 6px; border-radius:6px; font-size:.75em; }
+    .badge-uni { background:#f59e0b; color:#111; padding:3px 6px; border-radius:6px; font-size:.75em; }
+    .badge-epica{ background:#0d6efd; color:#fff; padding:3px 6px; border-radius:6px; font-size:.73em; text-decoration:none; }
 
+    /* Responsive */
+    @media (max-width: 992px){
+      .header-container{ flex-direction:column; gap:10px; text-align:center; }
+      .mb-3 > div{ border-radius:12px; }
+    }
+  </style>
 </head>
 <body class="container-fluid mt-4">
 
-    <div class="header-container">
-        <h2>📋 Kanban Board - NEUSI Task Manager</h2>
-        
-        {% if request.user.is_authenticated %}
-        <div>
-            <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-            <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-            <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+  <div class="header-container">
+    <h2>📋 Kanban Board - NEUSI Task Manager</h2>
+    {% if request.user.is_authenticated %}
+      <div>
+        <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
+        <span style="margin: 0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="mb-3">
+    <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily</a>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Ver en Lista</a>
+    <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
+
+    {% if tiene_permisos_admin %}
+      <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+        <form method="get" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px;">
+          <!-- Filtro persona -->
+          <label for="persona">Filtrar por persona:</label>
+          <select name="persona" id="persona" onchange="this.form.submit()">
+            <option value="">-- Todas las personas --</option>
+            {% for i in integrantes %}
+              <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
+                {{ i.user.first_name }} {{ i.user.last_name }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <!-- Filtro por Épica -->
+          <label for="epica">Épica:</label>
+          <select name="epica" id="epica" onchange="this.form.submit()">
+            <option value="">-- Todas --</option>
+            {% for e in epicas %}
+              <option value="{{ e.id }}" {% if request.GET.epica == e.id|stringformat:"s" %}selected{% endif %}>
+                {{ e.titulo }}
+              </option>
+            {% endfor %}
+          </select>
+
+          {% if persona_id or request.GET.epica %}
+            <a href="{% url 'kanban_board' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
+          {% endif %}
+        </form>
+      </div>
+    {% else %}
+      <div style="margin-top: 15px; padding: 15px; background: #d1ecf1; border-radius: 5px; border: 1px solid #bee5eb;">
+        <strong style="color: #0c5460;">💡 Instrucciones:</strong>
+        <span style="color: #0c5460;">Arrastra tus tareas entre las columnas para cambiar su estado.</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="kanban-container">
+    <!-- Columna: NUEVO -->
+    <div class="kanban-column column-nuevo" data-estado="NUEVO">
+      <h5>📝 Nuevo</h5>
+      {% for tarea in nuevo %}
+        <div class="task-card" draggable="true" data-id="{{ tarea.id }}" data-estado="{{ tarea.estado }}">
+          <div class="task-title">{{ tarea.titulo }}</div>
+
+          {% if tarea.epica %}
+            <div class="task-meta">
+              <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
+                {{ tarea.epica.titulo }}
+              </a>
+            </div>
+          {% endif %}
+
+          <div class="task-meta">
+            <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
+          </div>
+          <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
+          <div class="task-meta">🗓 {{ tarea.sprint }}</div>
+          <div class="task-actions">
+            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+            {% if tiene_permisos_admin %}
+              <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
+              <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
+            {% endif %}
+          </div>
         </div>
-        {% endif %}
+      {% empty %}
+        <p class="text-muted text-center">Sin tareas</p>
+      {% endfor %}
     </div>
 
-    <div class="mb-3">
-        <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily</a>
-        <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Ver en Lista</a>
-        <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
-        
-        {% if tiene_permisos_admin %}
-        <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px;">
-            <form method="get" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px;">
-                <!-- Filtro persona -->
-                <label for="persona">Filtrar por persona:</label>
-                <select name="persona" id="persona" onchange="this.form.submit()">
-                    <option value="">-- Todas las personas --</option>
-                    {% for i in integrantes %}
-                        <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
-                            {{ i.user.first_name }} {{ i.user.last_name }}
-                        </option>
-                    {% endfor %}
-                </select>
+    <!-- Columna: EN PROGRESO -->
+    <div class="kanban-column column-en-progreso" data-estado="EN_PROGRESO">
+      <h5>⚙️ En Progreso</h5>
+      {% for tarea in en_progreso %}
+        <div class="task-card" draggable="true" data-id="{{ tarea.id }}" data-estado="{{ tarea.estado }}">
+          <div class="task-title">{{ tarea.titulo }}</div>
 
-                <!-- 🔹 Nuevo: filtro por Épica -->
-                <label for="epica">Épica:</label>
-                <select name="epica" id="epica" onchange="this.form.submit()">
-                    <option value="">-- Todas --</option>
-                    {% for e in epicas %}
-                        <option value="{{ e.id }}">{{ e.titulo }}</option>
-                    {% endfor %}
-                </select>
+          {% if tarea.epica %}
+            <div class="task-meta">
+              <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
+                {{ tarea.epica.titulo }}
+              </a>
+            </div>
+          {% endif %}
 
-                {% if persona_id or request.GET.epica %}
-                    <a href="{% url 'kanban_board' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
-                {% endif %}
-            </form>
+          <div class="task-meta">
+            <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
+          </div>
+          <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
+          <div class="task-meta">🗓 {{ tarea.sprint }}</div>
+          <div class="task-actions">
+            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+            {% if tiene_permisos_admin %}
+              <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
+              <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
+            {% endif %}
+          </div>
         </div>
-        {% else %}
-        <div style="margin-top: 15px; padding: 15px; background: #d1ecf1; border-radius: 5px; border: 1px solid #bee5eb;">
-            <strong style="color: #0c5460;">💡 Instrucciones:</strong> 
-            <span style="color: #0c5460;">Arrastra tus tareas entre las columnas para cambiar su estado.</span>
-        </div>
-        {% endif %}
+      {% empty %}
+        <p class="text-muted text-center">Sin tareas</p>
+      {% endfor %}
     </div>
 
-    <div class="kanban-container">
-        <!-- Columna: NUEVO -->
-        <div class="kanban-column column-nuevo" data-estado="NUEVO">
-            <h5>📝 Nuevo</h5>
-            {% for tarea in nuevo %}
-                <div class="task-card" draggable="true" data-id="{{ tarea.id }}">
-                    <div class="task-title">{{ tarea.titulo }}</div>
+    <!-- Columna: COMPLETADO -->
+    <div class="kanban-column column-completado" data-estado="COMPLETADO">
+      <h5>🎉 Completado</h5>
+      {% for tarea in completado %}
+        <div class="task-card" draggable="true" data-id="{{ tarea.id }}" data-estado="{{ tarea.estado }}">
+          <div class="task-title">{{ tarea.titulo }}</div>
 
-                    <!-- 🔹 Badge Épica -->
-                    {% if tarea.epica %}
-                        <div class="task-meta">
-                            <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
-                                {{ tarea.epica.titulo }}
-                            </a>
-                        </div>
-                    {% endif %}
+          {% if tarea.epica %}
+            <div class="task-meta">
+              <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
+                {{ tarea.epica.titulo }}
+              </a>
+            </div>
+          {% endif %}
 
-                    <div class="task-meta">
-                        <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
-                    </div>
-                    <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
-                    <div class="task-meta">🗓 {{ tarea.sprint }}</div>
-                    <div class="task-actions">
-                        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                        {% if tiene_permisos_admin %}
-                            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
-                            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% empty %}
-                <p class="text-muted text-center">Sin tareas</p>
-            {% endfor %}
+          <div class="task-meta">
+            <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
+          </div>
+          <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
+          <div class="task-meta">🗓 {{ tarea.sprint }}</div>
+          <div class="task-actions">
+            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+            {% if tiene_permisos_admin %}
+              <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
+              <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
+            {% endif %}
+          </div>
         </div>
-
-        <!-- Columna: APROBADO -->
-        <div class="kanban-column column-aprobado" data-estado="APROBADO">
-            <h5>✅ Aprobado</h5>
-            {% for tarea in aprobado %}
-                <div class="task-card" draggable="true" data-id="{{ tarea.id }}">
-                    <div class="task-title">{{ tarea.titulo }}</div>
-
-                    {% if tarea.epica %}
-                        <div class="task-meta">
-                            <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
-                                {{ tarea.epica.titulo }}
-                            </a>
-                        </div>
-                    {% endif %}
-
-                    <div class="task-meta">
-                        <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
-                    </div>
-                    <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
-                    <div class="task-meta">🗓 {{ tarea.sprint }}</div>
-                    <div class="task-actions">
-                        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                        {% if tiene_permisos_admin %}
-                            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
-                            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% empty %}
-                <p class="text-muted text-center">Sin tareas</p>
-            {% endfor %}
-        </div>
-
-        <!-- Columna: EN PROGRESO -->
-        <div class="kanban-column column-en-progreso" data-estado="EN_PROGRESO">
-            <h5>⚙️ En Progreso</h5>
-            {% for tarea in en_progreso %}
-                <div class="task-card" draggable="true" data-id="{{ tarea.id }}">
-                    <div class="task-title">{{ tarea.titulo }}</div>
-
-                    {% if tarea.epica %}
-                        <div class="task-meta">
-                            <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
-                                {{ tarea.epica.titulo }}
-                            </a>
-                        </div>
-                    {% endif %}
-
-                    <div class="task-meta">
-                        <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
-                    </div>
-                    <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
-                    <div class="task-meta">🗓 {{ tarea.sprint }}</div>
-                    <div class="task-actions">
-                        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                        {% if tiene_permisos_admin %}
-                            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
-                            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% empty %}
-                <p class="text-muted text-center">Sin tareas</p>
-            {% endfor %}
-        </div>
-
-        <!-- Columna: COMPLETADO -->
-        <div class="kanban-column column-completado" data-estado="COMPLETADO">
-            <h5>🎉 Completado</h5>
-            {% for tarea in completado %}
-                <div class="task-card" draggable="true" data-id="{{ tarea.id }}">
-                    <div class="task-title">{{ tarea.titulo }}</div>
-
-                    {% if tarea.epica %}
-                        <div class="task-meta">
-                            <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
-                                {{ tarea.epica.titulo }}
-                            </a>
-                        </div>
-                    {% endif %}
-
-                    <div class="task-meta">
-                        <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
-                    </div>
-                    <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
-                    <div class="task-meta">🗓 {{ tarea.sprint }}</div>
-                    <div class="task-actions">
-                        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                        {% if tiene_permisos_admin %}
-                            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
-                            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% empty %}
-                <p class="text-muted text-center">Sin tareas</p>
-            {% endfor %}
-        </div>
-
-        <!-- Columna: BLOQUEADO -->
-        <div class="kanban-column column-bloqueado" data-estado="BLOQUEADO">
-            <h5>🚫 Bloqueado</h5>
-            {% for tarea in bloqueado %}
-                <div class="task-card" draggable="true" data-id="{{ tarea.id }}">
-                    <div class="task-title">{{ tarea.titulo }}</div>
-
-                    {% if tarea.epica %}
-                        <div class="task-meta">
-                            <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
-                                {{ tarea.epica.titulo }}
-                            </a>
-                        </div>
-                    {% endif %}
-
-                    <div class="task-meta">
-                        <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
-                    </div>
-                    <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
-                    <div class="task-meta">🗓 {{ tarea.sprint }}</div>
-                    <div class="task-actions">
-                        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
-                        {% if tiene_permisos_admin %}
-                            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
-                            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% empty %}
-                <p class="text-muted text-center">Sin tareas</p>
-            {% endfor %}
-        </div>
+      {% empty %}
+        <p class="text-muted text-center">Sin tareas</p>
+      {% endfor %}
     </div>
 
-    <script>
-        let draggedCard = null;
+    <!-- Columna: BLOQUEADO -->
+    <div class="kanban-column column-bloqueado" data-estado="BLOQUEADO">
+      <h5>🚫 Bloqueado</h5>
+      {% for tarea in bloqueado %}
+        <div class="task-card" draggable="true" data-id="{{ tarea.id }}" data-estado="{{ tarea.estado }}">
+          <div class="task-title">{{ tarea.titulo }}</div>
 
-        // Drag & Drop
-        document.querySelectorAll(".task-card").forEach(card => {
-            card.addEventListener("dragstart", e => {
-                if (e.target.tagName === 'A') { e.preventDefault(); return; }
-                draggedCard = card;
-                card.classList.add("dragging");
-            });
-            card.addEventListener("dragend", () => { card.classList.remove("dragging"); });
-        });
+          {% if tarea.epica %}
+            <div class="task-meta">
+              <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica" style="text-decoration:none;">
+                {{ tarea.epica.titulo }}
+              </a>
+            </div>
+          {% endif %}
 
-        document.querySelectorAll(".kanban-column").forEach(column => {
-            column.addEventListener("dragover", e => { e.preventDefault(); column.classList.add("drag-over"); });
-            column.addEventListener("dragleave", () => { column.classList.remove("drag-over"); });
-            column.addEventListener("drop", e => {
-                e.preventDefault();
-                column.classList.remove("drag-over");
-                if (draggedCard) {
-                    column.appendChild(draggedCard);
-                    const tareaId = draggedCard.dataset.id;
-                    const nuevoEstado = column.dataset.estado;
-                    fetch(`/tarea/${tareaId}/cambiar-estado/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
-                        body: JSON.stringify({ estado: nuevoEstado })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (!data.success) { alert('Error: ' + data.error); location.reload(); }
-                    })
-                    .catch(() => { alert('Error al actualizar el estado. Recarga la página.'); location.reload(); });
-                }
-            });
-        });
+          <div class="task-meta">
+            <span class="badge-{{ tarea.categoria|lower }}">{{ tarea.get_categoria_display }}</span>
+          </div>
+          <div class="task-meta">👤 {% if tarea.asignado_a %}{{ tarea.asignado_a.user.first_name }}{% else %}—{% endif %}</div>
+          <div class="task-meta">🗓 {{ tarea.sprint }}</div>
+          <div class="task-actions">
+            <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info btn-sm">👁️ Ver</a>
+            {% if tiene_permisos_admin %}
+              <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-secondary btn-sm">✏️</a>
+              <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete btn-sm">🗑️</a>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted text-center">Sin tareas</p>
+      {% endfor %}
+    </div>
+  </div>
 
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
+  <script>
+    let draggedCard = null;
+
+    // Drag & Drop
+    document.querySelectorAll(".task-card").forEach(card => {
+      card.addEventListener("dragstart", e => {
+        if (e.target.tagName === 'A') { e.preventDefault(); return; }
+        draggedCard = card;
+        card.classList.add("dragging");
+      });
+      card.addEventListener("dragend", () => { card.classList.remove("dragging"); });
+    });
+
+    document.querySelectorAll(".kanban-column").forEach(column => {
+      column.addEventListener("dragover", e => { e.preventDefault(); column.classList.add("drag-over"); });
+      column.addEventListener("dragleave", () => { column.classList.remove("drag-over"); });
+      column.addEventListener("drop", e => {
+        e.preventDefault();
+        column.classList.remove("drag-over");
+        if (!draggedCard) return;
+
+        const tareaId     = draggedCard.dataset.id;
+        const estadoPrev  = (draggedCard.dataset.estado || "").toUpperCase();
+        const nuevoEstado = column.dataset.estado;
+
+        // Si no hay cambio real, no llamamos API y solo devolvemos la carta a su sitio visual.
+        if (estadoPrev === nuevoEstado) {
+          column.appendChild(draggedCard);
+          return;
         }
-    </script>
+
+        // Si pasa a EN_PROGRESO pedimos observación (opcional).
+        let observacion = "";
+        if (nuevoEstado === "EN_PROGRESO") {
+          observacion = window.prompt(
+            "Observación al devolver a 'En Progreso' (opcional):\nEj: Se deja en progreso: no cumple criterios HU-123"
+          ) || "";
+          observacion = observacion.trim();
+        }
+
+        // Mover visualmente en el DOM ya
+        column.appendChild(draggedCard);
+
+        fetch(`/tarea/${tareaId}/cambiar-estado/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ estado: nuevoEstado, observacion })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) {
+            alert('Error: ' + (data.error || 'Desconocido'));
+            location.reload();
+            return;
+          }
+          // actualizar estado actual en el data-atributo
+          draggedCard.dataset.estado = nuevoEstado;
+        })
+        .catch(() => {
+          alert('Error al actualizar el estado. Recarga la página.');
+          location.reload();
+        });
+      });
+    });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  </script>
 </body>
 </html>

@@ -931,7 +931,6 @@ def kanban_board(request):
 
     estados = {
         "nuevo":        tareas.filter(estado__iexact="NUEVO"),
-        "aprobado":     tareas.filter(estado__iexact="APROBADO"),
         "en_progreso":  tareas.filter(estado__iexact="EN_PROGRESO"),
         "completado":   tareas.filter(estado__iexact="COMPLETADO"),
         "bloqueado":    tareas.filter(estado__iexact="BLOQUEADO"),
@@ -946,9 +945,9 @@ def kanban_board(request):
         "puede_ver_todo": puede_ver_todo,
     })
 
+# views.py
 @login_required
 def cambiar_estado_tarea(request, tarea_id):
-    """API para cambiar el estado de una tarea (drag & drop Kanban)"""
     if request.method != "POST":
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
@@ -961,16 +960,35 @@ def cambiar_estado_tarea(request, tarea_id):
     try:
         data = json.loads(request.body)
         nuevo_estado = data.get("estado", "").upper()
-        estados_validos = ["NUEVO", "APROBADO", "EN_PROGRESO", "COMPLETADO", "BLOQUEADO"]
+        observacion  = (data.get("observacion") or "").strip()  # ← NUEVO
+
+        estados_validos = ["NUEVO", "EN_PROGRESO", "COMPLETADO", "BLOQUEADO"]
         if nuevo_estado not in estados_validos:
             return JsonResponse({"error": "Estado no válido"}, status=400)
 
+        estado_anterior = tarea.estado  # ← NUEVO (para bitácora)
         tarea.estado = nuevo_estado
+
+        # Si pasa a completado: cerrar
         if nuevo_estado == "COMPLETADO":
             tarea.completada = True
             if not tarea.fecha_cierre:
                 tarea.fecha_cierre = now()
+        else:
+            # Si sale de COMPLETADO o queremos reabrir explícito
+            tarea.completada = False
+            tarea.fecha_cierre = None
+
         tarea.save()
+
+        # ===== Bitácora con Evidencia cuando regresan a EN_PROGRESO =====
+        if nuevo_estado == "EN_PROGRESO" and observacion:
+            from .models import Evidencia
+            Evidencia.objects.create(
+                tarea=tarea,
+                comentario=f"[OBS ESTADO] {observacion}\n(De: {estado_anterior} → EN_PROGRESO)",
+                creado_por=request.user
+            )
 
         return JsonResponse({
             "success": True,
@@ -978,6 +996,7 @@ def cambiar_estado_tarea(request, tarea_id):
             "nuevo_estado": nuevo_estado,
             "mensaje": f"Tarea movida a {tarea.get_estado_display()}"
         })
+
     except json.JSONDecodeError:
         return JsonResponse({"error": "JSON inválido"}, status=400)
     except Exception as e:
@@ -1211,7 +1230,6 @@ def epica_detail(request, epica_id):
 
     estados = {
         "NUEVO": tareas_qs.filter(estado__iexact="NUEVO"),
-        "APROBADO": tareas_qs.filter(estado__iexact="APROBADO"),
         "EN_PROGRESO": tareas_qs.filter(estado__iexact="EN_PROGRESO"),
         "BLOQUEADO": tareas_qs.filter(estado__iexact="BLOQUEADO"),
         "COMPLETADO": tareas_qs.filter(estado__iexact="COMPLETADO"),

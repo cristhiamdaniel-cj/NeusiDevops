@@ -1,0 +1,38 @@
+[
+    {
+        "sprint": "Sprint 1",
+        "fecha_inicio_sprint": "2025-10-21",
+        "fecha_fin_sprint": "2025-10-25",
+        "nombre_persona": "Andr\u00e9s Gonz\u00e1lez",
+        "rol": "Especialista en Visualizaci\u00f3n y BI",
+        "tarea_id": "207",
+        "titulo": "Crear Dashboard Power BI Indicadores Financieros y Talento",
+        "categoria": "UI",
+        "estado": "NUEVO",
+        "completada": false,
+        "esfuerzo_sp": 3,
+        "fecha_cierre": null,
+        "criterios_aceptacion": "\u2022 Power BI conectado a PostgreSQL VM \u2022 Datasets Financiera y Talento validados \u2022 Dashboard con KPIs principales creado \u2022 Indicadores actualizados autom\u00e1ticamente \u2022 Visualizaciones coherentes y claras \u2022 Dashboard validado con datos reales",
+        "informe_cierre": "",
+        "total_evidencias": "0",
+        "archivos_evidencia": null
+    },
+    {
+        "sprint": "Sprint 1",
+        "fecha_inicio_sprint": "2025-10-21",
+        "fecha_fin_sprint": "2025-10-25",
+        "nombre_persona": "Andr\u00e9s Gonz\u00e1lez",
+        "rol": "Especialista en Visualizaci\u00f3n y BI",
+        "tarea_id": "208",
+        "titulo": "Dashboard Power BI Cartera Cr\u00e9dito y Documentos",
+        "categoria": "UI",
+        "estado": "NUEVO",
+        "completada": false,
+        "esfuerzo_sp": 3,
+        "fecha_cierre": null,
+        "criterios_aceptacion": "\u2022 Dashboard Cartera con KPIs creado \u2022 Indicadores de Cr\u00e9dito visualizados \u2022 M\u00e9tricas documentales incluidas \u2022 Conexi\u00f3n a vistas SQL optimizada \u2022 Dashboard actualizado en tiempo real \u2022 Validaci\u00f3n con equipo Coofisam",
+        "informe_cierre": "",
+        "total_evidencias": "0",
+        "archivos_evidencia": null
+    }
+]

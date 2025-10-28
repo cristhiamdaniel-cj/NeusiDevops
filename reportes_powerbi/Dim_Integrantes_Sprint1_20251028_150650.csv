@@ -1,0 +1,15 @@
+Line style is unicode.
+Border style is 2.
+Null display is "[NULL]".
+usuarioid,username,nombre,apellido,nombrecompleto,email,rol,totaltareas,spasignados,tareascompletadas,spcompletados,porcentajetareas,porcentajesp,evidenciassubidas,capacidadmaximasp,porcentajecapacidad,estadocompletado,estadoaprobado,estadoenprogreso,estadotodo,estadonuevo
+10,jorge_cardona,Jorge,Cardona,Jorge Cardona,"",Desarrollador Backend,7,30,6,25,85.71,83.33,6,14,214.29,6,0,0,1,0
+7,daniela,Daniela,Mazuera,Daniela Mazuera,"",Scrum Master / PO,6,20,6,20,100.00,100.00,4,14,142.86,0,0,0,0,6
+4,andres_gomez,Andrés,Gómez,Andrés Gómez,"",Líder Comercial,7,21,6,18,85.71,85.71,5,14,150.00,6,0,1,0,0
+3,diana,Diana,Marín,Diana Marín,"",Coordinadora de Gestión Humana y Administrativa,8,31,4,18,50.00,58.06,1,14,221.43,0,0,0,0,8
+2,laura,Laura,Rivera,Laura Rivera,"",Contadora General,4,15,3,13,75.00,86.67,0,14,107.14,3,0,1,0,0
+8,juan,Juan,Santa María,Juan Santa María,"",Scrum Master / PO,3,12,3,12,100.00,100.00,0,14,85.71,3,0,0,0,0
+9,samir,Samir,Sánchez,Samir Sánchez,"",Desarrollador Backend,3,9,2,6,66.67,66.67,0,14,64.29,2,1,0,0,0
+12,alex_aguilar,Javier Alexander,Aguilar,Javier Alexander Aguilar,"",Administrador de Bases de Datos (DBA),4,16,0,0,0.00,0.00,0,14,114.29,0,0,0,0,4
+5,andres_gonzalez,Andrés,González,Andrés González,"",Especialista en Visualización y BI,2,6,0,0,0.00,0.00,0,14,42.86,0,0,0,0,2
+6,christian,Christian,Jiménez,Christian Jiménez,"",Desarrollador Frontend,4,11,0,0,0.00,0.00,0,14,78.57,0,0,0,0,4
+1,daniel,Daniel,Campos,Daniel Campos,"",Arquitecto de Software y Director General,3,8,0,0,0.00,0.00,0,14,57.14,0,0,0,0,3

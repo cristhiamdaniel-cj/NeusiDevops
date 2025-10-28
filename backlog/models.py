@@ -315,7 +315,6 @@ class Tarea(models.Model):
 
     ESTADO_CHOICES = [
         ("NUEVO", "Nuevo"),
-        ("APROBADO", "Aprobado"),
         ("EN_PROGRESO", "En Progreso"),
         ("COMPLETADO", "Completado"),
         ("BLOQUEADO", "Bloqueado"),

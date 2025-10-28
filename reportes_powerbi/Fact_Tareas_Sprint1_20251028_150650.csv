@@ -1,0 +1,209 @@
+Line style is unicode.
+Border style is 2.
+Null display is "[NULL]".
+tareaid,titulo,descripcion,estado,categoria,estacompletada,storypoints,fechacierre,horacierre,fechahoracierre,horacierrenum,diasemana,nombredia,turnocierre,usuarioasignado,rolasignado,epica,codigoepica,sprint,sprintid,informecierre,criteriosaceptacion,spcompletados,escompletado,enprogreso,porhacer,nuevo,aprobado
+146,Crear estructura documental y roles NEUSI,"Como administradora, necesito crear la estructura documental y roles NEUSI para estandarizar la gestión. Incluye: Manual de Roles completo, organigrama actualizado y validación con Dirección.",NUEVO,UI,t,5,2025-10-28,01:34:18,2025-10-28 01:34:18,1,2,Tuesday  ,Madrugada,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,informes_cierre/WhatsApp_Image_2025-10-27_at_8.33.14_PM.jpeg,"• Manual de Roles y Políticas Internas completado
+- Organigrama institucional actualizado con roles y responsabilidades
+- Documento validado y aprobado por Dirección General (Daniel)
+- Archivo PDF generado: ""Manual_Roles_NEUSI.pdf""",5,0,0,0,1,0
+147,Levantar procesos administrativos actuales,"Como administradora, necesito documentar todos los procesos administrativos actuales para identificar oportunidades de mejora y automatización.",NUEVO,NUI,f,3,,,,,,,Madrugada,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,"","• Listado completo de procesos administrativos documentado
+- Mapeo de flujos de trabajo actuales con diagramas
+- Identificación de cuellos de botella y procesos manuales
+- Documento de diagnóstico inicial entregado",0,0,0,0,1,0
+148,Estandarizar estructura de carpetas digitales,"Como administradora, necesito estandarizar las carpetas digitales en Google Drive para organizar eficientemente toda la información administrativa y de talento humano.",NUEVO,NUI,f,2,,,,,,,Madrugada,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,"","• Estructura de carpetas definida y documentada
+- Nomenclatura estandarizada aplicada
+- Carpetas creadas en Google Drive con permisos configurados
+- Guía de uso de la estructura documental compartida",0,0,0,0,1,0
+149,Clasificar y migrar contratos y actas a KenDOCdata,"Como administradora, necesito clasificar todos los contratos y actas existentes y migrarlos al sistema KenDOCdata para centralizar la gestión documental. Trabajo conjunto con Laura (Contabilidad).",NUEVO,NUI,t,3,2025-10-28,13:39:20,2025-10-28 13:39:20,13,2,Tuesday  ,Tarde,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,informes_cierre/Documentacion_contratacion.zip,"• Todos los contratos clasificados por tipo y fecha
+- Actas organizadas cronológicamente
+- Documentos digitalizados y subidos a KenDOCdata
+- Índice de documentos migrados entregado
+- Validación con Laura Rivera completada",3,0,0,0,1,0
+150,Revisar y validar documentación administrativa existente,"Como directora de NEUSI, necesito revisar toda la documentación administrativa existente para validar el estado actual y definir prioridades de mejora.",NUEVO,NUI,f,2,,,,,,,Madrugada,daniel,Arquitecto de Software y Director General,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,"","• Inventario completo de documentación administrativa realizado
+- Reporte de gaps y documentos faltantes identificado
+- Priorización de documentos pendientes definida
+- Sesión de validación con Diana completada",0,0,0,0,1,0
+151,Auditoría de identidad visual actual de NEUSI,"Como diseñadora de marca, necesito realizar una auditoría completa de la identidad visual actual de NEUSI para identificar oportunidades de mejora y modernización.",NUEVO,UI,t,2,2025-10-27,05:30:30,2025-10-27 05:30:30,5,1,Monday   ,Madrugada,daniela,Scrum Master / PO,NEUVIBE: Comunicación y Marca,EPICA-005,Sprint 1,1,informes_cierre/Auditoría_de_identidad_visual_actual_de_NEUSI.pdf,"• Documento de auditoría visual completado
+- Análisis de logo, colores, tipografía y materiales actuales
+- Benchmark con 3 empresas referentes del sector
+- Informe de hallazgos y recomendaciones entregado",2,0,0,0,1,0
+152,Definir paleta cromática y tipografía institucional,"Como diseñadora de marca, necesito definir la nueva paleta de colores y tipografía de NEUSI que reflejen innovación, tecnología y cercanía.",NUEVO,UI,t,3,2025-10-27,16:21:48,2025-10-27 16:21:48,16,1,Monday   ,Tarde,daniela,Scrum Master / PO,NEUVIBE: Comunicación y Marca,EPICA-005,Sprint 1,1,informes_cierre/PALETA_CROMÁTICA_Y_TIPOGRAFÍA_INSTITUCIONAL_NEUSI.pdf,"• Paleta cromática definida (colores primarios, secundarios y de apoyo)
+- Tipografía principal y secundaria seleccionada
+- Propuesta validada con Dirección General (Daniel)
+- Documento de especificaciones técnicas de color y tipografía",3,0,0,0,1,0
+153,Rediseñar logo NEUSI Solutions,"Como diseñadora de marca, necesito rediseñar el logo de NEUSI Solutions para modernizar la percepción institucional y alinearla con la visión 2025-2026.",NUEVO,UI,t,5,2025-10-28,03:04:42,2025-10-28 03:04:42,3,2,Tuesday  ,Madrugada,daniela,Scrum Master / PO,NEUVIBE: Comunicación y Marca,EPICA-005,Sprint 1,1,informes_cierre/LOGOS_CON_TIPOGRAFÍA_INSTITUCIONAL_MODIFICADA.zip,"• Mínimo 3 propuestas de rediseño de logo presentadas
+- Logo final aprobado por Dirección General
+- Versiones del logo: horizontal, vertical, isotipo, negativo
+- Archivos en formatos: SVG, PNG, AI, PDF
+- Manual de uso del logo (espacios, tamaños mínimos, usos incorrectos)",5,0,0,0,1,0
+154,Crear guía básica de uso de marca NEUSI,"Como diseñadora institucional, necesito crear una guía de uso de marca que estandarice la aplicación de la identidad visual en todos los materiales.",NUEVO,UI,t,3,2025-10-28,13:44:03,2025-10-28 13:44:03,13,2,Tuesday  ,Tarde,daniela,Scrum Master / PO,NEUVIBE: Comunicación y Marca,EPICA-005,Sprint 1,1,informes_cierre/LINK_BRAND_KIT_CANVA_NEUSI_1.pdf,"• Guía de marca con logo, colores, tipografía y aplicaciones
+- Ejemplos de uso correcto e incorrecto
+- Plantilla básica de presentación corporativa
+- Documento PDF ""Guia_Marca_NEUSI_v1.pdf"" entregado",3,0,0,0,1,0
+155,Presentar Brand Kit NEUSI en Figma/Canva,"Como diseñadora de marca, necesito consolidar todos los elementos de identidad visual en un Brand Kit digital accesible para todo el equipo.",NUEVO,NUI,t,2,2025-10-27,02:41:01,2025-10-27 02:41:01,2,1,Monday   ,Madrugada,daniela,Scrum Master / PO,NEUVIBE: Comunicación y Marca,EPICA-005,Sprint 1,1,informes_cierre/EVIDENCIA_Reunión_Presentación_BrandKit_Neusi_.pdf,"• Brand Kit creado en Figma o Canva
+- Incluye: logo, colores, tipografía, iconografía básica
+- Enlace compartido con el equipo NEUSI
+- Presentación del Brand Kit en reunión de equipo",2,0,0,0,1,0
+156,Exportar balance general y estado de resultados desde Siigo Nube,"Como contadora, necesito exportar urgentemente el balance general y estado de resultados 2025 desde Siigo Nube para presentarlo a Dirección esta semana.",COMPLETADO,UNI,t,5,2025-10-25,02:10:35,2025-10-25 02:10:35,2,6,Saturday ,Madrugada,laura,Contadora General,NEUCONTA: Sistema Contable y Financiero,EPICA-003,Sprint 1,1,informes_cierre/Exportar_balance_general_y_estado_de_resultados_desde_Siigo_Nube.xlsx,"• Balance General 2025 exportado en Excel
+- Estado de Resultados 2025 exportado en Excel
+- Archivos guardados en /NEUCONTA/URGENTE/Balance_y_Resultados_2025/
+- Validación preliminar de cifras completada",5,1,0,0,0,0
+157,Exportar plan de cuentas y terceros desde Siigo Nube,"Como contadora, necesito exportar el plan de cuentas y base de terceros desde Siigo Nube para iniciar el proceso de migración a NEUCONTA.",COMPLETADO,UNI,t,3,2025-10-25,04:10:49,2025-10-25 04:10:49,4,6,Saturday ,Madrugada,laura,Contadora General,NEUCONTA: Sistema Contable y Financiero,EPICA-003,Sprint 1,1,informes_cierre/Exportar_plan_de_cuentas_y_terceros_desde_Siigo_Nube.xlsx,"• Plan de cuentas exportado sin errores
+- Base de terceros (clientes y proveedores) exportada
+- Archivos guardados en /NEUCONTA/LEVANTAMIENTO_2025/RAW_DATA/
+- Formato Excel validado",3,1,0,0,0,0
+158,Limpiar y depurar balance general y estado de resultados,"Como contadora, necesito limpiar y depurar el balance y estado de resultados exportados, ajustando formatos y validando consistencia de cifras para presentación urgente.",COMPLETADO,UI,t,5,2025-10-27,13:03:14,2025-10-27 13:03:14,13,1,Monday   ,Tarde,laura,Contadora General,NEUCONTA: Sistema Contable y Financiero,EPICA-003,Sprint 1,1,informes_cierre/Limpiar_y_depurar_balance_general_y_estado_de_resultados.docx,"• Balance General con formato limpio y validado
+- Estado de Resultados con cifras consistentes
+- Ajustes de formato (fechas, números, nombres de cuentas) completados
+- Archivos listos para presentación a Dirección",5,1,0,0,0,0
+159,Elaborar y presentar informe financiero urgente,"Como contadora, necesito consolidar el balance y estado de resultados en un informe ejecutivo para presentarlo a Dirección General esta semana.",EN_PROGRESO,UI,f,2,,,,,,,Madrugada,laura,Contadora General,NEUCONTA: Sistema Contable y Financiero,EPICA-003,Sprint 1,1,"","• Informe ""Balance_y_Resultados_2025_Ejecutivo.pdf"" elaborado
+- Presentación ejecutiva con análisis de cifras principales
+- Informe validado y presentado a Daniel (Dirección)
+- Archivo subido a carpeta de seguimiento",0,0,1,0,0,0
+160,Definición del embudo de ventas NEUSI,"Como líder comercial, necesito diseñar y documentar el embudo de ventas institucional en Notion/Airtable, estableciendo etapas: Atracción → Calificación → Propuesta → Negociación → Cierre → Fidelización.",COMPLETADO,UI,t,3,2025-10-27,14:02:43,2025-10-27 14:02:43,14,1,Monday   ,Tarde,andres_gomez,Líder Comercial,NeoSales: Crecimiento Comercial,EPICA-006,Sprint 1,1,informes_cierre/Leads_Gestion_Completa_NEUSI.xlsx,"• Documento visible y compartido con Dirección General
+- Cada etapa tiene criterios claros de avance
+- Embudo documentado en Notion con flujo completo
+- Validación con Daniel completada",3,1,0,0,0,0
+161,Creación de la base de leads calificados,"Como líder comercial, necesito identificar y registrar al menos 15 clientes potenciales (educativo, cooperativo, público), priorizando contactos estratégicos.",COMPLETADO,UI,t,3,2025-10-23,15:11:58,2025-10-23 15:11:58,15,4,Thursday ,Tarde,andres_gomez,Líder Comercial,NeoSales: Crecimiento Comercial,EPICA-006,Sprint 1,1,informes_cierre/20251016_Informe_Técnico_de_Avances_y_Novedades.docx,"• Mínimo 15 leads registrados en base de datos
+- Base con campos completos: nombre, empresa, cargo, correo, teléfono
+- Segmentación por sector y prioridad (Alta, Media, Baja)
+- Leads validados como contactos estratégicos",3,1,0,0,0,0
+162,Activación de canales institucionales de contacto,"Como líder comercial, necesito crear y configurar LinkedIn, WhatsApp Business y correo comercial con imagen corporativa NEUSI unificada. Trabajo conjunto con Daniela (Marketing).",EN_PROGRESO,UI,f,3,,,,,,,Madrugada,andres_gomez,Líder Comercial,NeoSales: Crecimiento Comercial,EPICA-006,Sprint 1,1,"","• LinkedIn corporativo activo y verificado
+- WhatsApp Business configurado con mensaje de bienvenida
+- Correo comercial @neusi.com activo
+- Descripción corporativa configurada en todos los canales
+- Coordinación completada con Daniela Mazuera",0,0,1,0,0,0
+163,Diseño inicial de materiales institucionales,"Como líder comercial, necesito crear versiones preliminares de brochure y pitch deck institucional con contenido alineado a los servicios NEUSI. Trabajo conjunto con Daniela (Marketing).",COMPLETADO,NUI,t,3,2025-10-23,15:10:33,2025-10-23 15:10:33,15,4,Thursday ,Tarde,andres_gomez,Líder Comercial,NeoSales: Crecimiento Comercial,EPICA-006,Sprint 1,1,informes_cierre/20251017_Pitch_comercial_Neusi.docx,"• Brochure institucional preliminar creado (PDF o Canva)
+- Pitch deck institucional preliminar creado
+- 2 piezas gráficas revisadas por Dirección
+- Alineadas a la identidad visual NEUSI (colores, logo, mensaje)
+- Validación de Daniela completada",3,1,0,0,0,0
+164,Registro y reporte comercial semanal,"Como líder comercial, necesito consolidar un reporte con avances de contactos, reuniones agendadas y observaciones para mantener informada a la Dirección.",COMPLETADO,NUI,t,3,2025-10-23,15:14:15,2025-10-23 15:14:15,15,4,Thursday ,Tarde,andres_gomez,Líder Comercial,NeoSales: Crecimiento Comercial,EPICA-006,Sprint 1,1,"","• Reporte semanal elaborado con formato estándar NEUSI
+- Registro compartido en canal #proyectos-clientes
+- Incluye: contactos realizados, reuniones agendadas, observaciones
+- Documento validado por Dirección General",3,1,0,0,0,0
+165,Configurar entorno PostgreSQL y archivo .env,"Como desarrollador backend, necesito instalar PostgreSQL en el servidor .101, crear base neusitaskmanager_db, usuario y contraseña seguras, y ajustar settings.py para conectar mediante .env usando psycopg2.",COMPLETADO,NUI,t,5,2025-10-23,01:06:19,2025-10-23 01:06:19,1,4,Thursday ,Madrugada,jorge_cardona,Desarrollador Backend,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","• PostgreSQL instalado y corriendo en servidor .101
+- Base de datos neusitaskmanager_db creada
+- Usuario y contraseña configurados de forma segura
+- Archivo .env configurado con credenciales
+- python manage.py migrate ejecuta sin errores
+- Tablas creadas correctamente en PostgreSQL (verificado con \dt)",5,1,0,0,0,0
+166,Migrar datos desde SQLite a PostgreSQL,"Como desarrollador backend, necesito exportar los datos de db.sqlite3 y cargarlos en PostgreSQL utilizando dumpdata y loaddata, verificando la integridad de relaciones y conteos por tabla.",TODO,NUI,f,5,,,,,,,Madrugada,jorge_cardona,Desarrollador Backend,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","• Datos exportados desde SQLite usando dumpdata
+- Datos importados a PostgreSQL usando loaddata
+- Conteo de registros en PostgreSQL coincide con SQLite
+- Relaciones ForeignKey se mantienen sin errores
+- Pruebas de integridad completadas exitosamente",0,0,0,1,0,0
+167,Implementar roles de usuario,"Como desarrollador backend, necesito definir roles (Administrador, Colaborador, Invitado) con acceso diferenciado a los endpoints del backlog",COMPLETADO,UI,t,3,2025-10-24,17:58:03,2025-10-24 17:58:03,17,5,Friday   ,Tarde,jorge_cardona,Desarrollador Backend,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","- Roles definidos: Administrador, Colaborador, Invitado
+- Roles restringen acceso desde panel y API correctamente",3,1,0,0,0,0
+168,Implementar respaldo y restauración PostgreSQL,"Como desarrollador backend, necesito crear scripts backup_pg.sh y restore_pg.sh para respaldos automáticos mediante pg_dump, programados con cron y almacenados en /backups/.",COMPLETADO,UI,t,2,2025-10-26,19:06:36,2025-10-26 19:06:36,19,0,Sunday   ,Noche,jorge_cardona,Desarrollador Backend,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","• Script backup_pg.sh creado y funcional
+- Script restore_pg.sh creado y funcional
+- Cron job configurado para respaldos automáticos
+- Respaldos almacenados en directorio /backups/
+- Respaldo y restauración verificados en entorno de prueba sin pérdida de datos",2,1,0,0,0,0
+169,Integrar vistas HTML con modelos del nuevo backend PostgreSQL,"Como desarrollador frontend, necesito ajustar los templates y vistas (backlog_lista.html, home.html, tareas.html) para consumir datos del backend PostgreSQL modularizado por Jorge. Dependencia: espera finalización de tareas de migración PostgreSQL de Jorge.",COMPLETADO,UNI,t,5,2025-10-27,03:12:20,2025-10-27 03:12:20,3,1,Monday   ,Madrugada,juan,Scrum Master / PO,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","• Templates ajustados: backlog_lista.html, home.html, tareas.html
+- Todas las vistas renderizan sin errores de ORM
+- Datos cargan correctamente desde PostgreSQL
+- Interfaz actual no se ve afectada negativamente
+- Coordinación completada con Jorge Cardona",5,1,0,0,0,0
+170,Actualizar plantillas con colores e identidad visual NEUSI,"Como desarrollador frontend, necesito aplicar la nueva paleta de colores y elementos de identidad visual NEUSI a todas las plantillas del Task Manager para alinearlas con la imagen corporativa. Trabajo coordinado con Daniela (Marketing).",TODO,UI,f,5,,,,,,,Madrugada,Sin asignar,,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","• Paleta de colores NEUSI aplicada en todas las plantillas
+- Logo NEUSI integrado en header/navbar
+- Tipografía corporativa aplicada consistentemente
+- Base.html actualizado con estilos globales NEUSI
+- Validación de Daniela Mazuera completada
+- Interfaz visualmente coherente con identidad NEUSI",0,0,0,1,0,0
+172,Documentar estructura y dependencias visuales del v1.1,"Como desarrollador frontend, necesito registrar en docs/frontend_dependencias_v1_1.md qué templates dependen de qué vistas y qué modelos/URLs del backend para facilitar mantenimiento futuro.",COMPLETADO,NUI,t,2,2025-10-26,01:08:00,2025-10-26 01:08:00,1,0,Sunday   ,Madrugada,juan,Scrum Master / PO,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","• Documento docs/frontend_dependencias_v1_1.md creado
+- Describe al menos 3 relaciones directas (template → view → model)
+- Documento versionado en rama v1.1_monolito_front
+- Documentación validada por Dirección Técnica",2,1,0,0,0,0
+184,Validación arquitectónica del ecosistema COOFiSAM360,"Como arquitecto, necesito validar compatibilidad Django-PostgreSQL-BI, revisar logs, dependencias y flujo completo de los 5 módulos en VM Coofisam.",NUEVO,UI,f,3,,,,,,,Madrugada,daniel,Arquitecto de Software y Director General,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"","• Compatibilidad Django + PostgreSQL validada
+- Entorno virtual operativo
+- Logs sin errores críticos
+- Flujo completo de datos verificado
+- Dependencias documentadas
+- Sistema estable sin advertencias
+- Coordinación con todo el equipo completada",0,0,0,0,1,0
+185,Configurar roles y permisos por módulo,"Como arquitecto, necesito definir y configurar roles de usuario con acceso diferenciado a cada módulo según estructura organizacional de Coofisam.",NUEVO,UI,f,2,,,,,,,Madrugada,Sin asignar,,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"","• Roles definidos: Admin, Gerente, Usuario, Auditor
+- Permisos configurados por módulo
+- Restricciones de acceso funcionando
+- Usuarios sin permisos reciben error 403
+- Matriz de permisos documentada",0,0,0,0,1,0
+186,Documentación técnica integral Sprint 1 COOFiSAM360,"Como arquitecto, necesito elaborar documentación completa con arquitectura, pasos técnicos, validaciones y capturas de todos los módulos migrados.",NUEVO,UI,f,3,,,,,,,Madrugada,daniel,Arquitecto de Software y Director General,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"","• Documento arquitectura del sistema completo
+- Pasos técnicos de migración documentados
+- Capturas de pantalla de validaciones
+- Evidencias en /evidencias/migracion_sprint1/
+- Diagrama de arquitectura actualizado
+- Documento validado por Coofisam y NEUSI
+- Archivado en repositorio Git",0,0,0,0,1,0
+201,Configurar Django y endpoints REST para Financiera y Talento,"Como desarrollador backend, necesito configurar settings.py, .env y crear endpoints REST base /api/financiera/ y /api/talento/ con autenticación JWT.",COMPLETADO,UI,t,3,2025-10-27,21:16:47,2025-10-27 21:16:47,21,1,Monday   ,Noche,samir,Desarrollador Backend,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• settings.py configurado con PostgreSQL VM • Archivo .env con credenciales seguras • Migraciones ejecutadas correctamente • Endpoints /api/financiera/ funcionando • Endpoints /api/talento/ funcionando • Autenticación JWT operativa • API responde 200 OK en Postman,3,1,0,0,0,0
+202,Implementar endpoints REST /api/cartera/ y /api/credito/,"Como desarrollador backend, necesito implementar API REST completa con autenticación JWT y métodos CRUD para Cartera y Crédito.",APROBADO,UI,f,3,,,,,,,Madrugada,samir,Desarrollador Backend,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• Endpoints /api/cartera/ con CRUD completo • Endpoints /api/credito/ con CRUD completo • Autenticación JWT validada • Todos los endpoints responden 200 OK • Datos se almacenan correctamente • Pruebas Postman documentadas,0,0,0,0,0,1
+203,Desarrollar API /api/documentos/ con carga de archivos,"Como desarrollador backend, necesito crear endpoint para carga, descarga y consulta de documentos con validaciones de tipo y tamaño.",COMPLETADO,UI,t,3,2025-10-27,21:16:57,2025-10-27 21:16:57,21,1,Monday   ,Noche,samir,Desarrollador Backend,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"","• Endpoint /api/documentos/ con CRUD • Carga de archivos funcionando • Validación de tipo de archivo (PDF, DOC, XLS) • Validación de tamaño (<10MB) • Descarga de archivos operativa • CRUD documentales funcional en Postman",3,1,0,0,0,0
+204,Crear interfaces Django para Financiera y Talento y Cultura,"Como desarrollador frontend, necesito diseñar y desarrollar formularios y plantillas HTML para los módulos Financiera y Talento y Cultura.",NUEVO,UI,f,3,,,,,,,Madrugada,christian,Desarrollador Frontend,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• Formularios Financiera operativos • Plantillas Talento y Cultura funcionales • Formularios conectados a backend PostgreSQL • Validaciones de campos implementadas • Interfaz responsive y coherente • Pruebas de usuario completadas,0,0,0,0,1,0
+205,Desarrollar formularios Django para Cartera y Crédito,"Como desarrollador frontend, necesito crear formularios y vistas Django para registrar y consultar operaciones de Cartera y Crédito.",NUEVO,UI,f,3,,,,,,,Madrugada,christian,Desarrollador Frontend,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• Formularios Cartera funcionales • Formularios Crédito operativos • Vistas de consulta implementadas • Formularios coherentes con backend • CRUD operativo desde interfaz • Estilo visual unificado,0,0,0,0,1,0
+206,Implementar interfaz de carga y gestión documental,"Como desarrollador frontend, necesito crear interfaz visual para carga de archivos con validaciones, alertas y diseño responsive.",NUEVO,UI,f,2,,,,,,,Madrugada,christian,Desarrollador Frontend,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• Interfaz de carga de archivos funcional • Validaciones visuales de tamaño y formato • Alertas de éxito/error implementadas • Lista de documentos cargados visible • Descarga de documentos operativa • Diseño responsive validado,0,0,0,0,1,0
+207,Crear Dashboard Power BI Indicadores Financieros y Talento,"Como analista BI, necesito conectar Power BI a PostgreSQL VM Coofisam y crear visualización con KPIs de Financiera y Talento y Cultura.",NUEVO,UI,f,3,,,,,,,Madrugada,andres_gonzalez,Especialista en Visualización y BI,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• Power BI conectado a PostgreSQL VM • Datasets Financiera y Talento validados • Dashboard con KPIs principales creado • Indicadores actualizados automáticamente • Visualizaciones coherentes y claras • Dashboard validado con datos reales,0,0,0,0,1,0
+208,Dashboard Power BI Cartera Crédito y Documentos,"Como analista BI, necesito crear dashboard integrado con indicadores de Cartera, Crédito y estadísticas de Gestión Documental.",NUEVO,UI,f,3,,,,,,,Madrugada,andres_gonzalez,Especialista en Visualización y BI,Estrategia y Cultura NEUSI Agile,EPICA-008,Sprint 1,1,"",• Dashboard Cartera con KPIs creado • Indicadores de Crédito visualizados • Métricas documentales incluidas • Conexión a vistas SQL optimizada • Dashboard actualizado en tiempo real • Validación con equipo Coofisam,0,0,0,0,1,0
+211,Ajustes Varios de desarrollo,"Como desarrollador backend, necesito realizar ajustes y mejoras en el backend del NEUSI Task Manager para optimizar el rendimiento, corregir inconsistencias detectadas en las pruebas de integración, y preparar el sistema para la siguiente fase de desarrollo. Esto incluye refactorización de código, optimización de consultas, corrección de bugs menores y mejora de logs del sistema.",COMPLETADO,UI,t,5,2025-10-26,19:11:59,2025-10-26 19:11:59,19,0,Sunday   ,Noche,jorge_cardona,Desarrollador Backend,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","1. Optimización de Consultas
+2. Refactorización de Código
+3. Corrección de Bugs
+4. Mejora de Logs
+5. Pruebas y Validación
+6. Performance",5,1,0,0,0,0
+212,Ajustes varios de frontend y optimización de interfaces del Task Manager,"Como desarrollador frontend, necesito realizar ajustes y mejoras en las interfaces del NEUSI Task Manager para optimizar la experiencia de usuario, corregir inconsistencias visuales detectadas en las pruebas, y mejorar la responsividad del sistema. Esto incluye corrección de estilos, mejora de validaciones del lado del cliente, optimización de carga de páginas y estandarización de componentes visuales.",COMPLETADO,UI,t,5,2025-10-26,01:08:02,2025-10-26 01:08:02,1,0,Sunday   ,Madrugada,juan,Scrum Master / PO,Task Manager: Gestión Ágil Interna,EPICA-007,Sprint 1,1,"","1. Corrección de Estilos y Consistencia Visual
+2. Responsividad y Adaptabilidad
+3. Validaciones del Cliente
+4. Optimización de Carga
+5. Experiencia de Usuario (UX)
+6. Corrección de Bugs Visuales
+7. Accesibilidad Básica
+8. Documentación y Pruebas",5,1,0,0,0,0
+213,"Gestionar inscripción del equipo al programa ""Finanzas para Aprender"" de Cámara de Comercio","Como Coordinadora de Gestión Humana y Administrativa, necesito inscribir al equipo NEUSI en el programa de capacitación ""Finanzas para Aprender"" ofrecido por la Cámara de Comercio, coordinando fechas, horarios y logística para asegurar la participación del equipo en esta formación financiera que fortalecerá nuestras competencias en gestión empresarial.",NUEVO,UNI,f,3,,,,,,,Madrugada,diana,Coordinadora de Gestión Humana y Administrativa,"Formación, Certificación y Desarrollo del Talento NEUSI",EPICA-009,Sprint 1,1,"","Investigación y Registro
+Coordinación con el Equipo
+Logística y Recursos
+Seguimiento y Documentación
+Comunicación
+Información Adicional",0,0,0,0,1,0
+214,Consolidar y distribuir videos de todas las sesiones anteriores de Cámara de Comercio,"Como Coordinadora de Gestión Humana y Administrativa, necesito recopilar, organizar y consolidar todos los videos de las capacitaciones previas realizadas con la Cámara de Comercio, crear una biblioteca digital accesible para todo el equipo y asegurar que este material de aprendizaje esté disponible para referencia futura y para nuevos integrantes.",NUEVO,UNI,t,5,2025-10-27,14:30:02,2025-10-27 14:30:02,14,1,Monday   ,Tarde,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,informes_cierre/Screenshot_20251027_092850_Chrome.jpg,"Recopilación de Material
+Organización y Estructura
+Procesamiento de Videos
+Distribución y Acceso
+Documentación
+Preservación y Backup",5,0,0,0,1,0
+215,Identificar y recomendar cursos de capacitación específicos para cada miembro del equipo,"Como Coordinadora de Gestión Humana y Administrativa, necesito realizar un diagnóstico de necesidades de capacitación del equipo NEUSI, investigar cursos y programas de formación disponibles (gratuitos y pagos) y crear un plan de capacitación personalizado para cada integrante según su rol, nivel de experiencia y objetivos de desarrollo profesional.",NUEVO,NUI,f,5,,,,,,,Madrugada,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,"","Diagnóstico de Necesidades
+Investigación de Cursos
+Evaluación de Opciones
+Plan de Capacitación Personalizado
+Consolidación y Presentación
+Seguimiento y Métricas",0,0,0,0,1,0
+216,Ejecutar tareas varias asignadas por Dirección General,"Como Coordinadora de Gestión Humana y Administrativa, necesito ejecutar diversas tareas delegadas por la Dirección General (Daniel Campos) que incluyen gestiones administrativas, coordinación organizacional, asuntos personales de dirección, trámites institucionales y otras actividades de apoyo que requieren seguimiento y ejecución durante el sprint. Estas tareas son de naturaleza variada y pueden surgir según las necesidades operativas de NEUSI y del Director General.",NUEVO,UI,t,5,2025-10-27,15:57:21,2025-10-27 15:57:21,15,1,Monday   ,Tarde,diana,Coordinadora de Gestión Humana y Administrativa,NEUADMIN: Gestión Humana y Administrativa,EPICA-004,Sprint 1,1,informes_cierre/Screenshot_20251027_105613_WhatsApp.jpg,"Gestión Administrativa
+Coordinación Organizacional
+Gestión Institucional
+Apoyo Personal a Dirección
+Compras y Logística
+Recursos Humanos
+Seguimiento y Comunicación
+Documentación",5,0,0,0,1,0
+217,Corrección de tabla de cupos de crédito y ajustes de codificación en tabla de presupuesto,"Como desarrollador de base de datos, necesito corregir los tipos de datos y codificación de caracteres en la tabla cupos_credito y en la tabla presupuesto, para  evitar errores de interpretación con tildes y caracteres especiales, garantizando integridad y legibilidad de los datos financieros.",NUEVO,UI,f,5,,,,,,,Madrugada,alex_aguilar,Administrador de Bases de Datos (DBA),Plataforma Coofisam360 (Web + BI),EPICA-002,Sprint 1,1,"","* Se verifica que la tabla cupos_credito tenga tipos de datos coherentes con los campos requeridos por el sistema financiero.
+* Los campos tipo character varying aceptan correctamente tildes y caracteres especiales.
+* Se comprueba la correcta visualización de los datos en los módulos de interfaz (Power BI y Django).
+* Se documentan los cambios en un archivo SQL versionado (ajustes_bd_financiero.sql).",0,0,0,0,1,0
+218,Contenerizar el módulo de base de datos del sistema financiero.,"Como desarrollador de base de datos, necesito dockerizar el módulo financiero, incluyendo la base de datos y sus dependencias, para garantizar portabilidad, replicabilidad y despliegue controlado en los entornos de desarrollo, pruebas y producción.",NUEVO,UI,f,3,,,,,,,Madrugada,alex_aguilar,Administrador de Bases de Datos (DBA),Plataforma Coofisam360 (Web + BI),EPICA-002,Sprint 1,1,"","* Se crea un Dockerfile y un docker-compose.yml con configuración de PostgreSQL y volúmenes persistentes.
+* Se definen variables de entorno (.env) para credenciales y rutas seguras.
+* El contenedor se ejecuta correctamente con los datos de prueba del módulo financiero.
+* Documentación clara del proceso en /docs/docker_financiero.md.",0,0,0,0,1,0
+219,Diseño y creación de estructura de base de datos para Cartera y Crédito.,"Como desarrollador de base de datos, necesito diseñar, normalizar y crear las tablas y relaciones para los módulos de cartera y crédito, con el fin de integrar estos subsistemas dentro del esquema general financiero y permitir análisis consistentes en los reportes y dashboards.",NUEVO,UI,f,3,,,,,,,Madrugada,alex_aguilar,Administrador de Bases de Datos (DBA),Plataforma Coofisam360 (Web + BI),EPICA-002,Sprint 1,1,"","* Se entrega modelo entidad-relación (MER) actualizado en formato .png y .sql.
+* Se crean las tablas cartera, detalle_cartera, credito, historial_credito, etc., con claves primarias, foráneas e índices.
+* Se garantiza compatibilidad con los módulos de usuarios y transacciones.
+* Se realizan pruebas de inserción, actualización y eliminación sin errores.",0,0,0,0,1,0
+220,Validar la migración completa del módulo financiero a la máquina virtual designada.,"Como desarrollador de base de datos, necesito validar junto con Daniel la correcta migración del módulo financiero a la máquina virtual de COOFISAM, para asegurar integridad de datos, conexión estable y correcto funcionamiento de los servicios dependientes*.",NUEVO,UI,f,5,,,,,,,Madrugada,alex_aguilar,Administrador de Bases de Datos (DBA),Plataforma Coofisam360 (Web + BI),EPICA-002,Sprint 1,1,"","* Se verifica la restauración de la base de datos en la VM sin pérdida de registros.
+* Se comprueba conectividad desde los módulos frontend y backend.
+* Se documentan rutas de conexión, credenciales y logs de migración.
+* Se realiza una prueba funcional con los usuarios de Finanzas y Contabilidad.",0,0,0,0,1,0
+221,"Diseñar, desarrollar e integrar la interfaz completa del módulo comercial dentro del ecosistema COOFISAM360.","Como desarrollador frontend, necesito construir toda la interfaz web del módulo comercial, incluyendo sus pantallas, formularios, dashboards e interacciones, para que los usuarios del área comercial puedan gestionar clientes, campañas, oportunidades, ventas y reportes de desempeño de manera intuitiva, visualmente coherente y totalmente integrada con los demás módulos del sistema.",NUEVO,UI,f,3,,,,,,,Madrugada,christian,Desarrollador Frontend,Plataforma Coofisam360 (Web + BI),EPICA-002,Sprint 1,1,"","* El módulo comercial se integra en la App Web principal con rutas dinámicas (/comercial/clientes, /comercial/campañas, /comercial/dashboard).
+* Todas las pantallas son *responsivas*, adaptables a desktop, tablet y móvil.
+*  Se implementa una *barra lateral navegable*, encabezado fijo y breadcrumb por sección.
+* Los formularios validan correctamente los campos requeridos y muestran notificaciones visuales.
+*  El *dashboard comercial* utiliza librerías gráficas dinámicas (Chart.js, ApexCharts o similares) conectadas a datos reales.
+*  Se mantiene *coherencia visual* con los módulos financiero y talento (estilo NEUSI).
+*  Se documentan las rutas, componentes y endpoints consumidos.
+* Se ejecutan pruebas de integración en entorno Docker junto al backend.
+* Se entrega evidencia visual y técnica de funcionamiento estable.",0,0,0,0,1,0
