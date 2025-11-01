@@ -23,7 +23,20 @@ urlpatterns = [
     path("tarea/<int:tarea_id>/eliminar/", views.eliminar_tarea, name="eliminar_tarea"),  # Eliminar
     path("tarea/<int:tarea_id>/cambiar-categoria/", views.cambiar_categoria_tarea, name="cambiar_categoria_tarea"),
 
-    # 📎 Evidencias
+    # 🧱 Bloques y Subtareas
+    path("bloque/<int:bloque_id>/editar/", views.bloque_edit, name="bloque_edit"),
+    path("bloque/<int:bloque_id>/subtareas/nueva/", views.subtarea_create, name="subtarea_create"),
+    path("subtareas/<int:subtarea_id>/editar/", views.subtarea_edit, name="subtarea_edit"),
+    path("subtareas/<int:subtarea_id>/eliminar/", views.subtarea_delete, name="subtarea_delete"),
+
+    # ⚙️ Estado de Subtarea (nuevo)
+    path(
+        "subtareas/<int:subtarea_id>/estado/",
+        views.subtarea_cambiar_estado,
+        name="subtarea_cambiar_estado",
+    ),
+
+    # 📎 Evidencias de Tarea
     path("tarea/<int:tarea_id>/evidencia/", views.agregar_evidencia, name="agregar_evidencia"),  # Agregar
     path(
         "tarea/<int:tarea_id>/evidencia/<int:evidencia_id>/editar/",
@@ -35,6 +48,23 @@ urlpatterns = [
         views.eliminar_evidencia,
         name="eliminar_evidencia"
     ),  # Eliminar
+
+    # 📎 Evidencias por Subtarea (nuevo)
+    path(
+        "subtareas/<int:subtarea_id>/evidencias/nueva/",
+        views.agregar_evidencia_subtarea,
+        name="agregar_evidencia_subtarea",
+    ),
+    path(
+        "subtareas/<int:subtarea_id>/evidencias/<int:evid_id>/editar/",
+        views.editar_evidencia_subtarea,
+        name="editar_evidencia_subtarea",
+    ),
+    path(
+        "subtareas/<int:subtarea_id>/evidencias/<int:evid_id>/eliminar/",
+        views.eliminar_evidencia_subtarea,
+        name="eliminar_evidencia_subtarea",
+    ),
 
     # 📌 Checklist (por integrante)
     path("checklist/<int:integrante_id>/", views.checklist_view, name="checklist"),

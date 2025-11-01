@@ -1,0 +1,101 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{% if modo == 'editar' %}Editar{% else %}Nueva{% endif %} Subtarea</title>
+  <link rel="stylesheet" href="{% static 'backlog/tarea_detail.css' %}?v=6">
+  <style>
+    body{font-family:sans-serif;background:#f9fafb;padding:30px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;max-width:760px;margin:auto}
+    h1{margin-top:0;margin-bottom:20px}
+    label{font-weight:600}
+    .btn{display:inline-block;padding:8px 14px;border-radius:10px;border:1px solid #e5e7eb;text-decoration:none;cursor:pointer}
+    .btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
+    .btn-success{background:#16a34a;border-color:#16a34a;color:#fff}
+    .btn-secondary{background:#111827;border-color:#111827;color:#fff}
+    .btn-light{background:#fff;color:#111827}
+    .btn-danger{background:#dc2626;border-color:#dc2626;color:#fff}
+    .muted{color:#6b7280}
+    .form-group{margin-bottom:15px}
+    .text-danger{color:#dc2626;font-size:.95rem;margin-top:6px}
+    .soft{background:#f9fafb;border:1px solid #eef2f7;border-radius:10px;padding:10px}
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>{% if modo == 'editar' %}✏️ Editar Subtarea{% else %}➕ Nueva Subtarea{% endif %}</h1>
+
+  <p><strong>Tarea Macro:</strong> {{ tarea.titulo }}</p>
+  <p><strong>Bloque:</strong> #{{ bloque.indice }} - {{ bloque.nombre|default:"Bloque" }}</p>
+  <p class="muted">🗓️ Rango del bloque: {{ bloque.fecha_inicio|date:"d/m/Y" }} → {{ bloque.fecha_fin|date:"d/m/Y" }}</p>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {# Campo oculto para no permitir mover la subtarea de bloque #}
+    {% if form.bloque %}{{ form.bloque.as_hidden }}{% endif %}
+
+    {# Errores generales del form #}
+    {% if form.non_field_errors %}
+      <div class="text-danger" style="margin-bottom:10px;">
+        {% for e in form.non_field_errors %}• {{ e }}<br>{% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="form-group">
+      {{ form.titulo.label_tag }}
+      {{ form.titulo }}
+      {% for e in form.titulo.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      {{ form.responsable.label_tag }}
+      {{ form.responsable }}
+      {% if form.responsable.help_text %}
+        <small class="muted">{{ form.responsable.help_text }}</small>
+      {% endif %}
+      {% for e in form.responsable.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      {{ form.estado.label_tag }}
+      {{ form.estado }}
+      {% for e in form.estado.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+    </div>
+
+    {# Story Points cortos para subtareas (p.ej. 1, 2, 3, 5) #}
+    {% if form.esfuerzo_sp %}
+      <div class="form-group">
+        {{ form.esfuerzo_sp.label_tag }}
+        {{ form.esfuerzo_sp }}
+        {% for e in form.esfuerzo_sp.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+      </div>
+    {% endif %}
+
+    {# Descripción de la subtarea #}
+    {% if form.descripcion %}
+      <div class="form-group">
+        {{ form.descripcion.label_tag }}
+        {{ form.descripcion }}
+        {% for e in form.descripcion.errors %}<div class="text-danger">{{ e }}</div>{% endfor %}
+      </div>
+    {% endif %}
+
+    {# Fechas NO se muestran (van amarradas al bloque y se fuerzan en el form.save) #}
+    {# Si tu form aún trae estos campos, los escondemos por seguridad: #}
+    {% if form.fecha_inicio %}{{ form.fecha_inicio.as_hidden }}{% endif %}
+    {% if form.fecha_fin %}{{ form.fecha_fin.as_hidden }}{% endif %}
+
+    <div class="actions" style="margin-top:20px;">
+      <button type="submit" class="btn btn-success">
+        {% if modo == 'editar' %}💾 Guardar Cambios{% else %}✅ Crear Subtarea{% endif %}
+      </button>
+      <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">↩ Volver</a>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>

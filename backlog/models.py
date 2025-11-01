@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-
 # ==============================
 # Validadores
 # ==============================
@@ -18,7 +17,6 @@ def validar_story_points(value):
         raise ValidationError(
             f"Los story points deben ser uno de: {', '.join(map(str, validos))}."
         )
-
 
 # ==============================
 # Integrante
@@ -54,8 +52,7 @@ class Integrante(models.Model):
         (ROL_VISUALIZADOR, ROL_VISUALIZADOR),
         (ROL_PO, ROL_PO),
         (ROL_PO_COOFISAM, ROL_PO_COOFISAM),
-        
-        
+
         # — Opcionales/actuales en tu BD —
         (ROL_DBA, ROL_DBA),
         (ROL_LIDER_COMERCIAL, ROL_LIDER_COMERCIAL),
@@ -63,7 +60,7 @@ class Integrante(models.Model):
         (ROL_DEV_FE, ROL_DEV_FE),
         (ROL_DEV_BE, ROL_DEV_BE),
         (ROL_MKT, ROL_MKT),
-        
+
         (ROL_CONTABLE, ROL_CONTABLE),
         (ROL_MIEMBRO, ROL_MIEMBRO),
     ]
@@ -147,6 +144,7 @@ class PermisoProyecto(models.Model):
     def __str__(self):
         estado = "Activo" if self.activo else "Inactivo"
         return f"{self.integrante} → {self.proyecto} ({estado})"
+
 # ==============================
 # Proyecto (normalizado)
 # ==============================
@@ -169,7 +167,6 @@ class Proyecto(models.Model):
     def __str__(self):
         return f"{self.codigo} — {self.nombre}"
 
-
 # ==============================
 # Sprint
 # ==============================
@@ -183,7 +180,6 @@ class Sprint(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.inicio} - {self.fin})"
-
 
 # ==============================
 # Épica
@@ -301,9 +297,8 @@ class Epica(models.Model):
         if self.avance_manual is not None and not (0 <= self.avance_manual <= 100):
             raise ValidationError("El avance manual debe estar entre 0 y 100.")
 
-
 # ==============================
-# Tarea
+# Tarea (tratada como Macro por proceso, sin campos nuevos)
 # ==============================
 class Tarea(models.Model):
     MATRIZ_CHOICES = [
@@ -395,6 +390,25 @@ class Tarea(models.Model):
         nombres = [str(i) for i in self.asignados.all()]
         return ", ".join(nombres) if nombres else "—"
 
+    # Estos helpers no crean tablas; solo calculan si existieran "bloques" relacionados
+    # en otra app/fase. Si no existen, siguen devolviendo (0, 0) y no rompen nada.
+    def bloques_cerrados(self):
+        if not hasattr(self, "bloques"):
+            return (0, 0)
+        total = self.bloques.count()
+        cerrados = 0
+        for b in self.bloques.all():
+            qs = getattr(b, "subtareas", None)
+            if qs is None:
+                continue
+            qs = qs.all()
+            if qs.exists() and not qs.exclude(estado='cerrada').exists():
+                cerrados += 1
+        return (cerrados, total)
+
+    def puede_cerrarse_por_bloques(self):
+        cerrados, total = self.bloques_cerrados()
+        return total > 0 and cerrados == total
 
 # ==============================
 # Evidencia
@@ -417,7 +431,6 @@ class Evidencia(models.Model):
     def __str__(self):
         return f"Evidencia de {self.tarea.titulo} ({self.creado_por})"
 
-
 # ==============================
 # Daily
 # ==============================
@@ -437,3 +450,143 @@ class Daily(models.Model):
 
     def __str__(self):
         return f"Daily {self.integrante} - {self.fecha}"
+
+# =====================================================================
+# Bloques y Subtareas dentro de Tarea (macro)
+# =====================================================================
+
+ESTADO_SUBTAREA = [
+    ('pendiente', 'Pendiente'),
+    ('en_progreso', 'En progreso'),
+    ('entregada', 'Entregada'),
+    ('cerrada', 'Cerrada'),
+]
+
+class BloqueTarea(models.Model):
+    """
+    Bloques que componen una Tarea macro (HU).
+    Las fechas deben estar dentro del rango del Sprint de la Tarea.
+    """
+    tarea = models.ForeignKey("Tarea", on_delete=models.CASCADE, related_name="bloques")
+    indice = models.PositiveSmallIntegerField(help_text="Orden del bloque dentro de la tarea (1,2,3,...)")
+    nombre = models.CharField(max_length=80, blank=True)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+
+    class Meta:
+        ordering = ['indice', 'id']
+        unique_together = (('tarea', 'indice'),)
+        managed = True
+        db_table = "backlog_bloquetarea"
+
+    def __str__(self):
+        return f"{self.tarea.titulo} / {self.etiqueta()}"
+
+    def etiqueta(self):
+        return self.nombre or f"Bloque {self.indice}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        # Coherencia básica
+        if self.fecha_inicio and self.fecha_fin and self.fecha_inicio > self.fecha_fin:
+            raise ValidationError('En el bloque, la fecha de inicio no puede ser posterior a la fecha fin.')
+
+        # Validar contra el sprint SOLO si ambas fechas existen
+        if self.tarea_id and self.tarea and self.tarea.sprint_id:
+            sprint = self.tarea.sprint
+            if self.fecha_inicio and self.fecha_fin:
+                if self.fecha_inicio < sprint.inicio or self.fecha_fin > sprint.fin:
+                    raise ValidationError('Las fechas del bloque deben estar dentro del rango del Sprint de la tarea macro.')
+
+        # Evitar solapamientos SOLO si hay fechas
+        if self.fecha_inicio and self.fecha_fin:
+            qs = BloqueTarea.objects.filter(tarea_id=self.tarea_id)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            for other in qs:
+                if other.fecha_inicio and other.fecha_fin:
+                    # hay intersección si inicio <= fin_otro y fin >= inicio_otro
+                    if self.fecha_inicio <= other.fecha_fin and self.fecha_fin >= other.fecha_inicio:
+                        raise ValidationError('Este bloque se solapa con otro bloque de la misma tarea.')
+
+    @property
+    def dias_restantes(self):
+        from django.utils import timezone
+        return (self.fecha_fin - timezone.localdate()).days
+
+    @property
+    def semaforo(self):
+        d = self.dias_restantes
+        if d > 3:
+            return 'verde'
+        if 1 < d <= 3:
+            return 'amarillo'
+        return 'rojo'
+
+
+class Subtarea(models.Model):
+    """
+    Subtareas (HUs chicas) dentro de un bloque.
+    """
+    ESTADOS = [
+        ("NUEVO", "Nuevo"),
+        ("EN_PROGRESO", "En progreso"),
+        ("BLOQUEADO", "Bloqueado"),
+        ("COMPLETADO", "Completado"),
+    ]
+
+    ESFUERZO_CORTO = [
+        (1, "1"),
+        (2, "2"),
+        (3, "3"),
+        (5, "5"),
+    ]
+
+    bloque = models.ForeignKey(BloqueTarea, on_delete=models.CASCADE, related_name='subtareas')
+    titulo = models.CharField(max_length=160)
+    responsable = models.ForeignKey("Integrante", on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='subtareas_responsable')
+    estado = models.CharField(max_length=20, choices=ESTADO_SUBTAREA, default='pendiente')
+    descripcion = models.TextField(blank=True)
+    esfuerzo_sp = models.PositiveSmallIntegerField(choices=ESFUERZO_CORTO, null=True, blank=True)
+    fecha_inicio = models.DateField(null=True, blank=True)
+    fecha_fin = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['bloque__indice', 'id']
+        managed = False
+        db_table = "backlog_subtarea"
+
+    def __str__(self):
+        return f"{self.titulo} ({self.bloque.etiqueta()})"
+
+    @property
+    def tarea(self):
+        return self.bloque.tarea
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.fecha_inicio and self.fecha_fin and self.fecha_inicio > self.fecha_fin:
+            raise ValidationError('En la Subtarea, la fecha de inicio no puede ser posterior a la fecha fin.')
+        if self.fecha_inicio and (self.fecha_inicio < self.bloque.fecha_inicio or self.fecha_inicio > self.bloque.fecha_fin):
+            raise ValidationError('La fecha de inicio debe estar dentro del rango del bloque.')
+        if self.fecha_fin and (self.fecha_fin < self.bloque.fecha_inicio or self.fecha_fin > self.bloque.fecha_fin):
+            raise ValidationError('La fecha de fin debe estar dentro del rango del bloque.')
+
+# Evidencias específicas de una Subtarea
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+class EvidenciaSubtarea(models.Model):
+    subtarea   = models.ForeignKey(Subtarea, on_delete=models.CASCADE, related_name="evidencias")
+    comentario = models.TextField(blank=True)
+    archivo    = models.FileField(upload_to="evidencias_subtareas/%Y/%m", blank=True, null=True)
+    creado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name="evid_subt_creador")
+    creado_en  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-creado_en",)
+
+    def __str__(self):
+        return f"Evidencia ST#{self.subtarea_id} {self.creado_en:%Y-%m-%d %H:%M}"

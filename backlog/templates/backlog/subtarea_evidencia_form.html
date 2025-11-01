@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{% if modo == 'editar' %}Editar{% else %}Nueva{% endif %} Evidencia - Subtarea</title>
+  <link rel="stylesheet" href="{% static 'backlog/tarea_detail.css' %}?v=7">
+  <style>
+    body{font-family:sans-serif;background:#f9fafb;padding:30px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px;max-width:700px;margin:auto}
+    h1{margin-top:0;margin-bottom:20px}
+    label{font-weight:600}
+    textarea,input[type=file]{width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:10px}
+    .btn{display:inline-block;padding:8px 14px;border-radius:10px;border:1px solid #e5e7eb;text-decoration:none;cursor:pointer}
+    .btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
+    .btn-success{background:#16a34a;border-color:#16a34a;color:#fff}
+    .btn-secondary{background:#111827;border-color:#111827;color:#fff}
+    .btn-light{background:#fff;color:#111827}
+    .btn-danger{background:#dc2626;border-color:#dc2626;color:#fff}
+    .muted{color:#6b7280}
+    .form-group{margin-bottom:15px}
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>{% if modo == 'editar' %}✏️ Editar Evidencia{% else %}📎 Nueva Evidencia{% endif %}</h1>
+
+  <p><strong>Subtarea:</strong> {{ subtarea.titulo }}</p>
+  <p><strong>Tarea Macro:</strong> {{ tarea.titulo }}</p>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="comentario">💬 Comentario</label>
+      <textarea name="comentario" id="comentario" rows="4" placeholder="Describe brevemente la evidencia...">{% if evidencia %}{{ evidencia.comentario }}{% endif %}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="archivo">📁 Archivo (opcional)</label>
+      <input type="file" name="archivo" id="archivo">
+      {% if evidencia and evidencia.archivo %}
+        <p class="muted">Archivo actual: 
+          <a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-light">📥 Ver archivo</a>
+        </p>
+      {% endif %}
+    </div>
+
+    <div style="margin-top:20px;">
+      <button type="submit" class="btn btn-success">
+        {% if modo == 'editar' %}💾 Guardar Cambios{% else %}✅ Registrar Evidencia{% endif %}
+      </button>
+      <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">↩ Volver</a>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>

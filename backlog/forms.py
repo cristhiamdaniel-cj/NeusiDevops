@@ -1,13 +1,10 @@
 # backlog/forms.py
 from django import forms
+from django.forms import inlineformset_factory
 
 from .models import (
-    Tarea,
-    Daily,
-    Evidencia,
-    Sprint,
-    Epica,
-    Proyecto,
+    Tarea, Daily, Evidencia, Sprint, Epica, Proyecto,
+    Integrante, BloqueTarea, Subtarea,EvidenciaSubtarea,
 )
 
 # ==============================
@@ -39,18 +36,9 @@ class DailyForm(forms.ModelForm):
 
 
 # ==============================
-# Tarea
+# Tarea (macro)
 # ==============================
-# backlog/forms.py
-# ==============================
-# backlog/forms.py
-# ==============================
-from django import forms
-from .models import Tarea, Epica, Integrante
-
-
 class TareaForm(forms.ModelForm):
-    # Combo de story points (opcional)
     ESFUERZO_CHOICES = [(None, "— Selecciona —")] + [(v, str(v)) for v in (1, 2, 3, 5, 8, 13, 21)]
 
     esfuerzo_sp = forms.TypedChoiceField(
@@ -63,7 +51,6 @@ class TareaForm(forms.ModelForm):
         help_text="Story points estimados (1, 2, 3, 5, 8, 13, 21). Opcional."
     )
 
-    # NUEVO: selector de estado (para Kanban)
     estado = forms.ChoiceField(
         choices=Tarea.ESTADO_CHOICES,
         widget=forms.Select(attrs={"class": "form-select"}),
@@ -72,10 +59,11 @@ class TareaForm(forms.ModelForm):
         required=True,
     )
 
-    # Responsables múltiples
     asignados = forms.ModelMultipleChoiceField(
         required=False,
-        queryset=Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name"),
+        queryset=Integrante.objects.select_related("user").all().order_by(
+            "user__first_name", "user__last_name"
+        ),
         widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
         label="Responsables (pueden ser varios)",
         help_text="Tip: Ctrl/⌘ para seleccionar varios."
@@ -108,11 +96,10 @@ class TareaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Ordena épicas por proyecto y título
         self.fields["epica"].queryset = Epica.objects.select_related("proyecto").order_by(
             "proyecto__codigo", "titulo"
         )
-        # Precarga responsable único en M2M si aplica
+        # Si solo tenía el FK legado, preinicializa M2M
         if self.instance and self.instance.pk and not self.instance.asignados.exists() and self.instance.asignado_a_id:
             self.initial.setdefault("asignados", [self.instance.asignado_a_id])
 
@@ -126,9 +113,6 @@ class TareaForm(forms.ModelForm):
         return v
 
     def clean_estado(self):
-        """
-        Valida que el estado sea uno permitido del modelo.
-        """
         est = self.cleaned_data.get("estado")
         validos = {c[0] for c in Tarea.ESTADO_CHOICES}
         if est not in validos:
@@ -136,22 +120,32 @@ class TareaForm(forms.ModelForm):
         return est
 
     def save(self, commit=True):
-        """
-        Guarda la tarea y sincroniza el responsable único si aplica.
-        """
         tarea = super().save(commit=False)
         asignados_qs = self.cleaned_data.get("asignados")
-
         if asignados_qs is not None:
-            if len(asignados_qs) == 1:
-                tarea.asignado_a = list(asignados_qs)[0]
-            else:
-                tarea.asignado_a = None
-
+            asignados_list = list(asignados_qs)
+            tarea.asignado_a = asignados_list[0] if len(asignados_list) == 1 else None
         if commit:
             tarea.save()
             self.save_m2m()
         return tarea
+
+
+# --- Form minimalista para responsables (solo pueden cambiar estado) ---
+class TareaEstadoForm(forms.ModelForm):
+    class Meta:
+        model = Tarea
+        fields = ["estado"]
+        labels = {"estado": "Estado (Kanban)"}
+        help_texts = {"estado": "Solo puedes actualizar el estado de la tarea."}
+        widgets = {"estado": forms.Select(attrs={"class": "form-select"})}
+
+    def clean_estado(self):
+        est = self.cleaned_data.get("estado")
+        validos = {c[0] for c in Tarea.ESTADO_CHOICES}
+        if est not in validos:
+            raise forms.ValidationError("Estado no válido.")
+        return est
 
 
 # ==============================
@@ -222,18 +216,14 @@ class ProyectoForm(forms.ModelForm):
             raise forms.ValidationError("El código del proyecto es obligatorio.")
         return v
 
-# ==============================
-# Épica - Form
-# ==============================
-from django import forms
-from .models import Epica, Proyecto, Sprint, Integrante
 
-
+# ==============================
+# Épica
+# ==============================
 class EpicaForm(forms.ModelForm):
-    # 🔹 Campo explícito para varios responsables (M2M)
     owners = forms.ModelMultipleChoiceField(
         queryset=Integrante.objects.select_related("user").all(),
-        required=True,  # se requiere al menos uno
+        required=True,
         widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
         label="Responsables del producto",
         help_text="Selecciona uno o varios integrantes encargados de esta épica."
@@ -242,19 +232,9 @@ class EpicaForm(forms.ModelForm):
     class Meta:
         model = Epica
         fields = [
-            "codigo",
-            "proyecto",
-            "titulo",
-            "descripcion",
-            "estado",
-            "prioridad",
-            "owners",          # ✅ campo principal de responsables
-            "sprints",
-            "fecha_inicio",
-            "fecha_fin",
-            "kpis",
-            "avance_manual",
-            "documentos_url",
+            "codigo", "proyecto", "titulo", "descripcion", "estado", "prioridad",
+            "owners", "sprints", "fecha_inicio", "fecha_fin", "kpis",
+            "avance_manual", "documentos_url",
         ]
         labels = {
             "codigo": "Código (ej. NEUSI-001)",
@@ -276,65 +256,31 @@ class EpicaForm(forms.ModelForm):
                              "Déjalo vacío para usar el progreso automático por tareas.",
         }
         widgets = {
-            "codigo": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "NEUSI-001"
-            }),
+            "codigo": forms.TextInput(attrs={"class": "form-control", "placeholder": "NEUSI-001"}),
             "proyecto": forms.Select(attrs={"class": "form-select"}),
-            "titulo": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Nombre de la épica"
-            }),
-            "descripcion": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "Descripción general de la épica"
-            }),
+            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre de la épica"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Descripción general de la épica"}),
             "estado": forms.Select(attrs={"class": "form-select"}),
             "prioridad": forms.Select(attrs={"class": "form-select"}),
             "owners": forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
             "sprints": forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
             "fecha_inicio": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "fecha_fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "kpis": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "Métricas clave, criterios de éxito…"
-            }),
-            "avance_manual": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": 0,
-                "max": 100
-            }),
-            "documentos_url": forms.URLInput(attrs={
-                "class": "form-control",
-                "placeholder": "https://..."
-            }),
+            "kpis": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Métricas clave, criterios de éxito…"}),
+            "avance_manual": forms.NumberInput(attrs={"class": "form-control", "min": 0, "max": 100}),
+            "documentos_url": forms.URLInput(attrs={"class": "form-control", "placeholder": "https://..."}),
         }
 
-    # ==============================
-    # Inicialización
-    # ==============================
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if "proyecto" in self.fields:
-            self.fields["proyecto"].queryset = Proyecto.objects.filter(activo=True).order_by("codigo")
-        if "sprints" in self.fields:
-            self.fields["sprints"].queryset = Sprint.objects.all().order_by("inicio")
-        if "owners" in self.fields:
-            self.fields["owners"].queryset = (
-                Integrante.objects.select_related("user")
-                .order_by("user__first_name", "user__last_name")
-            )
-
-        # Inicializar owners M2M si la épica ya existe
-        if self.instance and self.instance.pk and "owners" in self.fields:
+        self.fields["proyecto"].queryset = Proyecto.objects.filter(activo=True).order_by("codigo")
+        self.fields["sprints"].queryset = Sprint.objects.all().order_by("inicio")
+        self.fields["owners"].queryset = (
+            Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name")
+        )
+        if self.instance and self.instance.pk:
             self.fields["owners"].initial = self.instance.owners.values_list("pk", flat=True)
 
-    # ==============================
-    # Validaciones
-    # ==============================
     def clean_codigo(self):
         v = (self.cleaned_data.get("codigo") or "").strip().upper()
         return v or None
@@ -351,18 +297,152 @@ class EpicaForm(forms.ModelForm):
             raise forms.ValidationError("El avance manual debe estar entre 0 y 100.")
         return v
 
-    # ==============================
-    # Guardado personalizado
-    # ==============================
     def save(self, commit=True):
         epica = super().save(commit=False)
         if commit:
             epica.save()
         self.save_m2m()
-
-        # 🔹 Sincroniza automáticamente el owner único con owners múltiples
         seleccion = list(self.cleaned_data.get("owners") or [])
         epica.owner = seleccion[0] if len(seleccion) == 1 else None
         if commit:
             epica.save(update_fields=["owner"])
         return epica
+
+
+# ==============================
+# Bloques y Subtareas
+# ==============================
+class BloqueTareaForm(forms.ModelForm):
+    class Meta:
+        model = BloqueTarea
+        fields = ["indice", "nombre", "fecha_inicio", "fecha_fin"]
+        widgets = {
+            "indice": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+            "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre (opcional)"}),
+            "fecha_inicio": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "fecha_fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        ini = cleaned.get("fecha_inicio")
+        fin = cleaned.get("fecha_fin")
+        if ini and fin and fin < ini:
+            raise forms.ValidationError("La fecha fin no puede ser anterior a la fecha inicio.")
+        return cleaned
+
+
+# Formset para CREAR/EDITAR bloques (usado en views)
+BloqueFormSet = inlineformset_factory(
+    parent_model=Tarea,
+    model=BloqueTarea,
+    form=BloqueTareaForm,
+    fields=["indice", "nombre", "fecha_inicio", "fecha_fin"],
+    extra=1,
+    can_delete=True,
+    max_num=50,
+)
+
+
+class SubtareaForm(forms.ModelForm):
+    esfuerzo_sp = forms.TypedChoiceField(
+        required=False,
+        coerce=lambda v: int(v) if v not in (None, "",) else None,
+        empty_value=None,
+        choices=[(None, "— Selecciona —")] + [(v, str(v)) for v in (1, 2, 3, 5)],
+        label="Esfuerzo (SP)",
+        help_text="Story points cortos (1, 2, 3 o 5)."
+    )
+
+    class Meta:
+        model = Subtarea
+        fields = ["bloque", "titulo", "descripcion", "responsable", "estado", "esfuerzo_sp", "fecha_inicio", "fecha_fin"]
+        widgets = {
+            "bloque": forms.Select(attrs={"class": "form-select"}),
+            "titulo": forms.TextInput(attrs={"class": "form-control", "placeholder": "Título de la subtarea"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Descripción breve de la subtarea (opcional)"}),
+            "responsable": forms.Select(attrs={"class": "form-select"}),
+            "estado": forms.Select(attrs={"class": "form-select"}),
+            # fechas: ocultas/solo backend (se heredan del bloque)
+            "fecha_inicio": forms.HiddenInput(),
+            "fecha_fin": forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self._tarea = kwargs.pop("tarea", None)
+        self._bloque = kwargs.pop("bloque", None)
+        es_admin = kwargs.pop("es_admin", False)
+        super().__init__(*args, **kwargs)
+
+        if self._bloque is None and getattr(self.instance, "bloque", None):
+            self._bloque = self.instance.bloque
+        if self._tarea is None and isinstance(self._bloque, BloqueTarea):
+            self._tarea = self._bloque.tarea
+
+        # queryset de responsable (admin ve todos; responsable ve solo los de la macro)
+        if es_admin:
+            qs_resp = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
+        else:
+            qs_resp = Integrante.objects.none()
+            if isinstance(self._tarea, Tarea) and self._tarea.pk:
+                ids = set(self._tarea.asignados.values_list("id", flat=True))
+                if self._tarea.asignado_a_id:
+                    ids.add(self._tarea.asignado_a_id)
+                if ids:
+                    qs_resp = (
+                        Integrante.objects
+                        .select_related("user")
+                        .filter(id__in=ids)
+                        .order_by("user__first_name", "user__last_name")
+                    )
+            if not qs_resp.exists():
+                self.fields["responsable"].help_text = (
+                    "No hay responsables definidos en la tarea macro. "
+                    "Primero asigna responsables a la macro."
+                )
+        self.fields["responsable"].queryset = qs_resp
+
+        # inicializar fechas (aunque no se muestran)
+        if isinstance(self._bloque, BloqueTarea):
+            self.initial.setdefault("fecha_inicio", self._bloque.fecha_inicio)
+            self.initial.setdefault("fecha_fin", self._bloque.fecha_fin)
+
+    def clean(self):
+        cleaned = super().clean()
+        if isinstance(self._bloque, BloqueTarea):
+            cleaned["fecha_inicio"] = self._bloque.fecha_inicio
+            cleaned["fecha_fin"] = self._bloque.fecha_fin
+        return cleaned
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        if isinstance(self._bloque, BloqueTarea):
+            obj.bloque = self._bloque
+            obj.fecha_inicio = self._bloque.fecha_inicio
+            obj.fecha_fin = self._bloque.fecha_fin
+        if commit:
+            obj.save()
+            self.save_m2m()
+        return obj
+
+class EvidenciaSubtareaForm(forms.ModelForm):
+    class Meta:
+        model  = EvidenciaSubtarea
+        fields = ["comentario", "archivo"]
+        labels = {
+            "comentario": "💬 Comentario",
+            "archivo": "📎 Archivo (opcional)",
+        }
+        widgets = {
+            "comentario": forms.Textarea(attrs={
+                "rows": 2, "class": "form-control",
+                "placeholder": "Describe el avance o adjunta soporte…"
+            }),
+            "archivo": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        }
+
+    def clean(self):
+        data = super().clean()
+        if not data.get("comentario") and not data.get("archivo"):
+            raise forms.ValidationError("Debes adjuntar archivo o escribir un comentario.")
+        return data

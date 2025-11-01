@@ -1,99 +1,177 @@
+{# templates/backlog/nueva_tarea.html #}
 {% extends "base.html" %}
-
 {% load static %}
 
+{% block title %}Nueva Tarea (Historia de Usuario){% endblock %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'backlog/tareas_form.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'backlog/tareas_form.css' %}?v=2">
+<style>
+  .card-section{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px}
+  .form-help{font-size:.9rem;color:#6b7280}
+  .block-row{border:1px dashed #e5e7eb;border-radius:12px;padding:14px;margin-bottom:12px}
+  .block-row .form-label{font-weight:600}
+  .empty-note{font-size:.95rem;color:#6b7280}
+</style>
 {% endblock %}
 
 {% block content %}
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-  <h2>➕ Nueva Tarea (Historia de Usuario)</h2>
 
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2>➕ Nueva Tarea (Historia de Usuario)</h2>
   {% if request.user.is_authenticated %}
-  <div style="text-align:right;">
-    <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-    <span style="margin:0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-    <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+  <div class="text-end">
+    <a href="{% url 'home' %}" class="btn btn-light border">🏠 Home</a>
+    <span class="mx-3">👤 {{ request.user.first_name|default:request.user.username }}</span>
+    <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar sesión</a>
   </div>
   {% endif %}
 </div>
 
-<form method="post" enctype="multipart/form-data"
-      style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:20px;">
+<form method="post" enctype="multipart/form-data" class="card-section mb-4" id="formNuevaTarea">
   {% csrf_token %}
   {{ form.non_field_errors }}
 
   <div class="row g-3">
-    <!-- Épica -->
     <div class="col-md-6">
       <label class="form-label">{{ form.epica.label }}</label>
       {{ form.epica }}
       {% if form.epica.errors %}<div class="text-danger small">{{ form.epica.errors }}</div>{% endif %}
     </div>
 
-    <!-- Sprint -->
     <div class="col-md-6">
       <label class="form-label">{{ form.sprint.label }}</label>
       {{ form.sprint }}
       {% if form.sprint.errors %}<div class="text-danger small">{{ form.sprint.errors }}</div>{% endif %}
     </div>
 
-    <!-- Título -->
-    <div class="col-md-12">
+    <div class="col-12">
       <label class="form-label">{{ form.titulo.label }}</label>
       {{ form.titulo }}
       {% if form.titulo.errors %}<div class="text-danger small">{{ form.titulo.errors }}</div>{% endif %}
     </div>
 
-    <!-- Descripción -->
-    <div class="col-md-12">
+    <div class="col-12">
       <label class="form-label">{{ form.descripcion.label }}</label>
       {{ form.descripcion }}
       {% if form.descripcion.errors %}<div class="text-danger small">{{ form.descripcion.errors }}</div>{% endif %}
     </div>
 
-    <!-- Criterios de aceptación -->
-    <div class="col-md-12">
+    <div class="col-12">
       <label class="form-label">{{ form.criterios_aceptacion.label }}</label>
       {{ form.criterios_aceptacion }}
-      {% if form.criterios_aceptacion.help_text %}
-        <div class="form-text">{{ form.criterios_aceptacion.help_text }}</div>
-      {% endif %}
+      {% if form.criterios_aceptacion.help_text %}<div class="form-text">{{ form.criterios_aceptacion.help_text }}</div>{% endif %}
       {% if form.criterios_aceptacion.errors %}<div class="text-danger small">{{ form.criterios_aceptacion.errors }}</div>{% endif %}
     </div>
 
-    <!-- Categoría -->
-    <div class="col-md-6">
+    <div class="col-md-4">
       <label class="form-label">{{ form.categoria.label }}</label>
       {{ form.categoria }}
       {% if form.categoria.errors %}<div class="text-danger small">{{ form.categoria.errors }}</div>{% endif %}
     </div>
 
-    <!-- 👇 NUEVO: Estado (para Kanban) -->
-    <div class="col-md-6">
+    <div class="col-md-4">
       <label class="form-label">{{ form.estado.label }}</label>
       {{ form.estado }}
       {% if form.estado.help_text %}<div class="form-text">{{ form.estado.help_text }}</div>{% endif %}
       {% if form.estado.errors %}<div class="text-danger small">{{ form.estado.errors }}</div>{% endif %}
     </div>
 
-    <!-- Esfuerzo -->
-    <div class="col-md-6">
+    <div class="col-md-4">
       <label class="form-label">{{ form.esfuerzo_sp.label }}</label>
       {{ form.esfuerzo_sp }}
       {% if form.esfuerzo_sp.errors %}<div class="text-danger small">{{ form.esfuerzo_sp.errors }}</div>{% endif %}
     </div>
 
-    <!-- Responsables múltiples -->
-    <div class="col-md-12">
+    <div class="col-12">
       <label class="form-label">{{ form.asignados.label }}</label>
       {{ form.asignados }}
-      {% if form.asignados.help_text %}
-        <div class="form-text">{{ form.asignados.help_text }}</div>
-      {% endif %}
+      {% if form.asignados.help_text %}<div class="form-text">{{ form.asignados.help_text }}</div>{% endif %}
       {% if form.asignados.errors %}<div class="text-danger small">{{ form.asignados.errors }}</div>{% endif %}
     </div>
+  </div>
+
+  <hr class="my-4">
+  <div class="d-flex align-items-center justify-content-between">
+    <h4>🧱 Bloques de trabajo <span class="text-muted">(opcional)</span></h4>
+    <div class="form-help">Crea rangos de fechas para organizar tus futuras subtareas dentro de esta Tarea Macro.</div>
+  </div>
+
+  {{ formset.management_form }}
+
+  <div id="bloques-container" class="mt-3">
+    {% for f in formset.forms %}
+      <div class="block-row" data-form-index="{{ forloop.counter0 }}">
+        {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+        <div class="row g-3 align-items-end">
+          <div class="col-sm-2">
+            <label class="form-label">Índice</label>
+            {{ f.indice }}
+            {% if f.indice.errors %}<div class="text-danger small">{{ f.indice.errors }}</div>{% endif %}
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label">Nombre del bloque</label>
+            {{ f.nombre }}
+            {% if f.nombre.errors %}<div class="text-danger small">{{ f.nombre.errors }}</div>{% endif %}
+          </div>
+          <div class="col-sm-3">
+            <label class="form-label">Fecha inicio</label>
+            {{ f.fecha_inicio }}
+            {% if f.fecha_inicio.errors %}<div class="text-danger small">{{ f.fecha_inicio.errors }}</div>{% endif %}
+          </div>
+          <div class="col-sm-3">
+            <label class="form-label">Fecha fin</label>
+            {{ f.fecha_fin }}
+            {% if f.fecha_fin.errors %}<div class="text-danger small">{{ f.fecha_fin.errors }}</div>{% endif %}
+          </div>
+        </div>
+        {% if f.DELETE %}
+        <div class="mt-2">
+          <label class="form-check-label">
+            {{ f.DELETE }} Eliminar este bloque
+          </label>
+        </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="empty-note">No has agregado bloques aún. Puedes crear 1 o varios y dejarlos listos como contenedores de subtareas.</p>
+    {% endfor %}
+  </div>
+
+  <template id="bloque-empty-template">
+    <div class="block-row" data-form-index="__index__">
+      {% for hidden in formset.empty_form.hidden_fields %}{{ hidden.as_widget|safe }}{% endfor %}
+      <div class="row g-3 align-items-end">
+        <div class="col-sm-2">
+          <label class="form-label">Índice</label>
+          {{ formset.empty_form.indice.as_widget|safe }}
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label">Nombre del bloque</label>
+          {{ formset.empty_form.nombre.as_widget|safe }}
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label">Fecha inicio</label>
+          {{ formset.empty_form.fecha_inicio.as_widget|safe }}
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label">Fecha fin</label>
+          {{ formset.empty_form.fecha_fin.as_widget|safe }}
+        </div>
+      </div>
+      {% if formset.can_delete %}
+      <div class="mt-2">
+        <label class="form-check-label">
+          {{ formset.empty_form.DELETE.as_widget|safe }} Eliminar este bloque
+        </label>
+      </div>
+      {% endif %}
+    </div>
+  </template>
+
+  <div class="d-flex gap-2 mt-2">
+    <button type="button" class="btn btn-outline-primary" id="btnAddBloque">➕ Añadir bloque</button>
+    <button type="button" class="btn btn-outline-secondary" id="btnAutoIndices"># Auto-indizar</button>
   </div>
 
   <div class="mt-4">
@@ -104,7 +182,7 @@
 
 <hr class="my-4">
 
-<div>
+<div class="d-flex gap-2">
   <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Ver Lista</a>
   <a href="{% url 'backlog_matriz' %}" class="btn btn-info">🔲 Ver Matriz</a>
   <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Ver Kanban</a>
@@ -112,5 +190,65 @@
   <a href="{% url 'epica_list' %}" class="btn btn-warning text-dark">🧱 Ver Épicas</a>
   {% endif %}
 </div>
+
+{# === JS embebido: no depende de block extra_js === #}
+<script>
+(function(){
+  const container = document.getElementById('bloques-container');
+  const tmpl = document.getElementById('bloque-empty-template');
+  const addBtn = document.getElementById('btnAddBloque');
+  const autoBtn = document.getElementById('btnAutoIndices');
+
+  // Lee management_form por NAME (prefijo 'bloques')
+  const totalInput = document.querySelector('input[name="bloques-TOTAL_FORMS"]');
+  const maxInput   = document.querySelector('input[name="bloques-MAX_NUM_FORMS"]');
+  const prefix = 'bloques';
+
+  if (!container || !tmpl || !totalInput) {
+    // Si llegas aquí, el problema era que el script no se estaba cargando.
+    return;
+  }
+
+  function currentCount(){
+    return container.querySelectorAll('.block-row').length;
+  }
+
+  function replaceAll(html, index){
+    // Django usa __prefix__ dentro del empty_form
+    return html.replaceAll('__prefix__', index).replaceAll('__index__', index);
+  }
+
+  function addRow(){
+    const count = currentCount();
+    const max = maxInput && maxInput.value ? parseInt(maxInput.value, 10) : null;
+    if (max !== null && count >= max){
+      alert('Has alcanzado el número máximo de bloques permitido.');
+      return;
+    }
+    const idx = parseInt(totalInput.value || '0', 10);
+    const html = replaceAll(tmpl.innerHTML, idx);
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    const row = wrapper.firstElementChild;
+
+    container.appendChild(row);
+    totalInput.value = String(idx + 1);
+  }
+
+  function autoIndex(){
+    const rows = container.querySelectorAll('.block-row');
+    let i = 1;
+    rows.forEach(row => {
+      const idxInput = row.querySelector(`input[name^="${prefix}-"][name$="-indice"]`);
+      if (idxInput) idxInput.value = i++;
+    });
+  }
+
+  // Bind
+  if (addBtn) addBtn.addEventListener('click', addRow);
+  if (autoBtn) autoBtn.addEventListener('click', autoIndex);
+})();
+</script>
 
 {% endblock %}

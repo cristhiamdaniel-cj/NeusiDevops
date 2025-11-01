@@ -1,150 +1,410 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="utf-8">
   <title>Detalle Tarea - NEUSI Task Manager</title>
-  <!-- Unificación: se usa la hoja de estilos externa de Juan -->
-  <link rel="stylesheet" href="{% static 'backlog/tarea_detail.css' %}?v=1">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'backlog/tarea_detail.css' %}?v=10">
+
+  <style>
+    :root{
+      --neu-primary:#6C2BD9;
+      --neu-deep:#3B1D82;
+      --neu-pink:#E14D8B;
+      --neu-orange:#FF6A3D;
+      --neu-ink:#0f172a;
+      --neu-soft:#f6f7fb;
+      --neu-border:#e5e7eb;
+    }
+    body{background: linear-gradient(180deg, #5c23d6 0%, #6C2BD9 15%, #ffffff 15% 100%);}
+    .container-page{max-width:1160px;margin:32px auto;}
+    .neu-card{background:#fff;border:1px solid var(--neu-border);border-radius:16px;padding:20px}
+    .neu-section-title{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}
+    .neu-section-desc{color:#6b7280;font-size:.95rem;margin-bottom:1.2rem}
+    .neu-pill{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .7rem;border-radius:999px;background:#f3f4f6;border:1px solid var(--neu-border);font-size:.9rem}
+    .neu-badge{border:none;border-radius:999px;padding:.25rem .6rem}
+    .state-NUEVO{background:#EEF2FF;color:#3730a3}
+    .state-EN_PROGRESO{background:#DBEAFE;color:#1e40af}
+    .state-BLOQUEADO{background:#FEE2E2;color:#b91c1c}
+    .state-COMPLETADO{background:#DCFCE7;color:#166534}
+    .semaforo{font-weight:700;border-radius:999px;padding:.25rem .6rem}
+    .sem-verde{background:#DCFCE7;color:#14532d}
+    .sem-amarillo{background:#FEF9C3;color:#92400e}
+    .sem-rojo{background:#FEE2E2;color:#991b1b}
+    .btn-neu{--bs-btn-bg:var(--neu-primary);--bs-btn-border-color:var(--neu-primary);--bs-btn-hover-bg:#5a23c5;--bs-btn-hover-border-color:#5a23c5;--bs-btn-color:#fff}
+    .btn-neu-ghost{--bs-btn-color:var(--neu-primary);--bs-btn-border-color:var(--neu-primary);--bs-btn-hover-bg:rgba(108,43,217,.08);--bs-btn-hover-border-color:var(--neu-primary)}
+    .btn-neu-danger{--bs-btn-bg:#dc2626;--bs-btn-border-color:#dc2626;--bs-btn-hover-bg:#b91c1c;--bs-btn-hover-border-color:#b91c1c;--bs-btn-color:#fff}
+    .btn-neu-dark{--bs-btn-bg:#111827;--bs-btn-border-color:#111827;--bs-btn-hover-bg:#0b1220;--bs-btn-hover-border-color:#0b1220;--bs-btn-color:#fff}
+    .soft-block{background:#f9fafb;border:1px solid #eef2f7;border-radius:12px;padding:12px}
+    .muted{color:#64748b}
+    .grid{display:grid;gap:12px}
+    @media(min-width:992px){.grid.cols-2{grid-template-columns:1fr 1fr}}
+    .chip-ui{background:#fee2e2;border:1px solid #fecaca}
+    .chip-nui{background:#dcfce7;border:1px solid #bbf7d0}
+    .chip-uni{background:#fef9c3;border:1px solid #fde68a}
+    .chip-nuni{background:#e5e7eb;border:1px solid #d1d5db}
+
+    /* Acordeón de Subtareas */
+    .st-accordion .accordion-item{
+      border:1px dashed var(--neu-border);
+      border-radius:14px; overflow:hidden; background:#fff;
+    }
+    .st-accordion .accordion-button{
+      gap:.6rem; background:#ffffff; box-shadow:none !important;
+    }
+    .st-accordion .accordion-button:not(.collapsed){
+      background:linear-gradient(180deg,#faf5ff 0%, #ffffff 70%);
+      color:#111;
+    }
+    .st-accordion .st-head-line{
+      display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;
+    }
+    .st-accordion .st-meta{
+      margin-left:auto; font-size:.9rem; color:#64748b;
+      display:flex; gap:.55rem; align-items:center;
+    }
+
+    /* Panel de evidencias dentro de la subtarea */
+    .ev-panel{border:1px solid var(--neu-border);border-left:6px solid var(--neu-primary);
+      background:linear-gradient(180deg,#faf5ff 0%, #ffffff 60%);border-radius:14px;overflow:hidden;}
+    .ev-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+      padding:.65rem .9rem;background:rgba(108,43,217,.08);border-bottom:1px solid var(--neu-border);}
+    .ev-title{display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--neu-deep)}
+    .ev-count{background:#fff;border:1px solid var(--neu-border);border-radius:999px;padding:.15rem .55rem;font-size:.85rem}
+    .ev-list{list-style:none;margin:0;padding:10px 14px}
+    .ev-item{position:relative;padding-left:18px;margin:10px 0 0}
+    .ev-item::before{content:"";position:absolute;left:6px;top:6px;bottom:-10px;width:2px;background:linear-gradient(#c4b5fd,#6C2BD9);opacity:.5;}
+    .ev-bullet{width:10px;height:10px;border-radius:999px;background:#6C2BD9;position:absolute;left:2px;top:6px;box-shadow:0 0 0 3px rgba(108,43,217,.15);}
+    .ev-card{background:#fff;border:1px solid var(--neu-border);border-radius:10px;padding:.6rem .75rem;margin-left:8px;}
+    .ev-meta{font-size:.85rem;color:#64748b}
+  </style>
 </head>
 <body>
 
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h1>📋 Detalle de Tarea</h1>
-    {% if request.user.is_authenticated %}
-    <div style="text-align:right;">
-      <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-      <span style="margin:0 15px;">👤 {{ request.user.first_name|default:request.user.username }}</span>
-      <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+  <div class="container-page px-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="text-dark fw-bold">📋 Detalle de Tarea</h1>
+      {% if request.user.is_authenticated %}
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'home' %}" class="btn btn-neu-dark">🏠 Home</a>
+        <span class="text-white px-2 py-1 rounded-3" style="background:rgba(0,0,0,.25)">{{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-neu-danger">🚪 Cerrar Sesión</a>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
-  </div>
 
-  {% for message in messages %}
-    <div class="card card-msg">{{ message }}</div>
-  {% endfor %}
+    {% for message in messages %}
+      <div class="alert alert-info neu-card py-2 mb-3">{{ message }}</div>
+    {% endfor %}
 
-  <div class="card">
-    <h2>{{ tarea.titulo }}</h2>
+    <!-- =====================
+         🧾 CABECERA DE TAREA
+         ===================== -->
+    <div class="neu-card mb-3">
+      <h2 class="mb-2">{{ tarea.titulo }}</h2>
+      <p class="neu-section-desc">Aquí puedes ver la información general, responsables y estado de la tarea principal. Desde esta sección puedes editar o cerrar la tarea macro cuando todo su flujo esté completado.</p>
 
-    {% if tarea.epica %}
-      <p><strong>Épica:</strong>
-        <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge badge-epica">{{ tarea.epica.titulo }}</a>
-      </p>
-    {% endif %}
-
-    <p><strong>Categoría:</strong>
-      <span class="badge
-        {% if tarea.categoria == 'UI' %}badge-ui
-        {% elif tarea.categoria == 'NUI' %}badge-nui
-        {% elif tarea.categoria == 'UNI' %}badge-uni
-        {% else %}badge-nuni{% endif %}">
-        {{ tarea.get_categoria_display }}
-      </span>
-    </p>
-
-    <p><strong>Sprint:</strong>
-      {% if tarea.sprint %}
-        {{ tarea.sprint.inicio|date:"M d, Y" }} – {{ tarea.sprint.fin|date:"M d, Y" }}
-      {% else %}
-        <span class="muted">—</span>
-      {% endif %}
-    </p>
-
-    <p><strong>Responsables:</strong>
-      {% if tarea.asignados.all %}
-        {% for r in tarea.asignados.all %}
-          {{ r.user.first_name }} {{ r.user.last_name }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-      {% elif tarea.asignado_a %}
-        {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}
-      {% else %}
-        <span class="muted">—</span>
-      {% endif %}
-    </p>
-
-    <p><strong>Estado workflow:</strong> {{ tarea.get_estado_display }}</p>
-    <p><strong>Completada:</strong> {% if tarea.completada %}✅ Sí{% else %}⏳ No{% endif %}</p>
-
-    {% if tarea.descripcion %}
-      <h4>📝 Descripción</h4>
-      <p class="soft-block">{{ tarea.descripcion|linebreaks }}</p>
-    {% endif %}
-
-    {% if tarea.criterios_aceptacion %}
-      <h4>✅ Criterios de Aceptación</h4>
-      <p class="soft-block">{{ tarea.criterios_aceptacion|linebreaks }}</p>
-    {% endif %}
-
-    {% if tarea.informe_cierre %}
-      <h4>📄 Informe de Cierre</h4>
-      <a href="{{ tarea.informe_cierre.url }}" target="_blank" class="btn btn-primary">📥 Descargar Informe</a>
-    {% endif %}
-
-    <div class="actions">
-      {% if puede_editar %}
-        <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-success">✏️ Editar Tarea</a>
-      {% endif %}
-      {% if not tarea.completada and puede_cerrar %}
-        <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-danger">✅ Cerrar Tarea</a>
-      {% endif %}
-      <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Volver al Backlog</a>
-    </div>
-  </div>
-
-  <!-- =======================
-       📎 Evidencias
-       ======================= -->
-  <div class="card">
-    <h3>📎 Evidencias</h3>
-
-    {% if not tarea.completada %}
-      {% if tiene_permisos_admin or puede_editar or request.user.integrante.puede_agregar_evidencias %}
-        <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data" class="evidencia-form">
-          {% csrf_token %}
-          <div>{{ form.comentario.label_tag }} {{ form.comentario }}</div>
-          <div>{{ form.archivo.label_tag }} {{ form.archivo }}</div>
-          <button type="submit" class="btn btn-success mt-2">📎 Agregar Evidencia</button>
-        </form>
-      {% else %}
-        <p class="muted" style="margin-bottom:10px;">
-          No tienes permisos para agregar evidencias en esta tarea.
+      {% if tarea.epica %}
+        <p><strong>Épica:</strong>
+          <a href="{% url 'epica_detail' tarea.epica.id %}" class="neu-pill" style="background:#f3e8ff;border-color:#e9d5ff;color:#6b21a8">
+            {{ tarea.epica.titulo }}
+          </a>
         </p>
       {% endif %}
-    {% else %}
-      <p class="muted" style="margin-bottom:10px;">
-        La tarea está completada; no se pueden agregar nuevas evidencias.
+
+      <p><strong>Categoría:</strong>
+        <span class="neu-pill
+          {% if tarea.categoria == 'UI' %}chip-ui
+          {% elif tarea.categoria == 'NUI' %}chip-nui
+          {% elif tarea.categoria == 'UNI' %}chip-uni
+          {% else %}chip-nuni{% endif %}">
+          {{ tarea.get_categoria_display }}
+        </span>
       </p>
-    {% endif %}
 
-    {% for evidencia in evidencias %}
-      <div class="evidencia">
-        <header>
-          <p><strong>👤 {{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</strong> ·
-             📅 {{ evidencia.creado_en|date:"d/m/Y H:i" }}</p>
-
-          {% if tiene_permisos_admin or evidencia.creado_por_id == request.user.id or puede_editar or request.user.integrante.puede_agregar_evidencias %}
-            <div>
-              <a href="{% url 'editar_evidencia' tarea.id evidencia.id %}" class="btn btn-light">✏️ Editar</a>
-              <form method="post" action="{% url 'eliminar_evidencia' tarea.id evidencia.id %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">🗑️ Eliminar</button>
-              </form>
-            </div>
-          {% endif %}
-        </header>
-
-        {% if evidencia.comentario %}
-          <p style="margin-top:8px;">{{ evidencia.comentario|linebreaks }}</p>
+      <p><strong>Sprint:</strong>
+        {% if tarea.sprint %}
+          {{ tarea.sprint.inicio|date:"M d, Y" }} – {{ tarea.sprint.fin|date:"M d, Y" }}
+        {% else %}
+          <span class="muted">—</span>
         {% endif %}
-        {% if evidencia.archivo %}
-          <p><a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-primary">📥 Descargar Archivo</a></p>
+      </p>
+
+      <p><strong>Responsables:</strong>
+        {% if tarea.asignados.all %}
+          {% for r in tarea.asignados.all %}
+            {{ r.user.first_name }} {{ r.user.last_name }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        {% elif tarea.asignado_a %}
+          {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}
+        {% else %}
+          <span class="muted">—</span>
         {% endif %}
+      </p>
+
+      <p><strong>Estado workflow:</strong> {{ tarea.get_estado_display }}</p>
+      <p><strong>Completada:</strong> {% if tarea.completada %}✅ Sí{% else %}⏳ No{% endif %}</p>
+
+      {% if tarea.descripcion %}
+        <h5 class="fw-semibold mt-3">📝 Descripción</h5>
+        <div class="soft-block">{{ tarea.descripcion|linebreaks }}</div>
+      {% endif %}
+
+      {% if tarea.criterios_aceptacion %}
+        <h5 class="fw-semibold mt-3">✅ Criterios de Aceptación</h5>
+        <div class="soft-block">{{ tarea.criterios_aceptacion|linebreaks }}</div>
+      {% endif %}
+
+      {% if tarea.informe_cierre %}
+        <h5 class="fw-semibold mt-3">📄 Informe de Cierre</h5>
+        <a href="{{ tarea.informe_cierre.url }}" target="_blank" class="btn btn-neu">📥 Descargar Informe</a>
+      {% endif %}
+
+      <div class="d-flex gap-2 mt-3">
+        {% if puede_editar %}
+          <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-neu">✏️ Editar Tarea</a>
+        {% endif %}
+        {% if not tarea.completada and puede_cerrar %}
+          <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-neu-ghost">✅ Cerrar Tarea</a>
+        {% endif %}
+        <a href="{% url 'backlog_lista' %}" class="btn btn-outline-secondary">📋 Volver al Backlog</a>
       </div>
-    {% empty %}
-      <p class="muted" style="font-style:italic;">No hay evidencias registradas.</p>
-    {% endfor %}
+    </div>
+
+    <!-- =====================
+         🧱 BLOQUES Y SUBTAREAS (con acordeón)
+         ===================== -->
+    <div class="neu-card mb-3">
+      <div class="neu-section-title">
+        <h3 class="mb-0">🧱 Bloques y Subtareas</h3>
+      </div>
+      <p class="neu-section-desc">Cada bloque representa una semana o fase del trabajo. Las subtareas aparecen colapsadas; despliega solo las que necesites para ver su detalle, evidencias y acciones.</p>
+
+      {% with bloques=tarea.bloques.all|dictsort:"indice" %}
+        {% if bloques %}
+          <div class="grid cols-2">
+            {% for bloque in bloques %}
+              <div class="soft-block">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <strong>#{{ bloque.indice }}</strong> ·
+                    <span>{{ bloque.nombre|default:"Bloque" }}</span>
+                  </div>
+                  {% with s=bloque.semaforo %}
+                    <span class="semaforo {% if s == 'verde' %}sem-verde{% elif s == 'amarillo' %}sem-amarillo{% else %}sem-rojo{% endif %}">
+                      {{ s|title }}
+                    </span>
+                  {% endwith %}
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  <span class="neu-pill">🗓️ {{ bloque.fecha_inicio|date:"d/m/Y" }} → {{ bloque.fecha_fin|date:"d/m/Y" }}</span>
+                  <span class="neu-pill">⏳ {{ bloque.dias_restantes }} día(s) restantes</span>
+                  <span class="neu-pill">📦 {{ bloque.subtareas.count }} subtarea(s)</span>
+                </div>
+
+                {% with qs=bloque.subtareas.all %}
+                  {% if qs %}
+                    <div class="accordion st-accordion" id="acc-bloque-{{ bloque.id }}">
+                      {% for st in qs %}
+                        <div class="accordion-item mb-2">
+                          <h2 class="accordion-header" id="st-h-{{ st.id }}">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#st-c-{{ st.id }}"
+                                    aria-expanded="false"
+                                    aria-controls="st-c-{{ st.id }}">
+                              <div class="st-head-line">
+                                <strong>{{ st.titulo }}</strong>
+                                <span class="neu-badge state-{{ st.estado }}">{{ st.get_estado_display }}</span>
+                                {% with evcount=st.evidencias.all|length %}
+                                  <span class="neu-pill">📎 {{ evcount }} evidencia(s)</span>
+                                {% endwith %}
+                              </div>
+                              <div class="st-meta">
+                                {% if st.responsable %}👤 {{ st.responsable.user.first_name }} {{ st.responsable.user.last_name }}{% endif %}
+                                {% if st.fecha_inicio or st.fecha_fin %}
+                                  <span>· 🗓️
+                                  {% if st.fecha_inicio %}{{ st.fecha_inicio|date:"d/m" }}{% endif %}
+                                  {% if st.fecha_fin %} → {{ st.fecha_fin|date:"d/m" }}{% endif %}
+                                  </span>
+                                {% endif %}
+                              </div>
+                            </button>
+                          </h2>
+
+                          <div id="st-c-{{ st.id }}" class="accordion-collapse collapse" aria-labelledby="st-h-{{ st.id }}" data-bs-parent="#acc-bloque-{{ bloque.id }}">
+                            <div class="accordion-body">
+                              {% if st.fecha_inicio or st.fecha_fin %}
+                                <div class="muted mb-1">
+                                  <strong>Rango dentro del bloque:</strong>
+                                  {% if st.fecha_inicio %}{{ st.fecha_inicio|date:"d/m/Y" }}{% else %}—{% endif %} →
+                                  {% if st.fecha_fin %}{{ st.fecha_fin|date:"d/m/Y" }}{% else %}—{% endif %}
+                                </div>
+                              {% endif %}
+
+                              <div class="mb-1">
+                                {% if st.esfuerzo_sp %}<strong>SP:</strong> {{ st.esfuerzo_sp }} · {% endif %}
+                                <strong>Estado:</strong> {{ st.get_estado_display }}
+                              </div>
+
+                              {% if st.descripcion %}
+                                <div class="soft-block mb-2">{{ st.descripcion|linebreaks }}</div>
+                              {% endif %}
+
+                              {# Evidencias de la Subtarea #}
+                              {% with evs=st.evidencias.all %}
+                                <div class="ev-panel mb-2">
+                                  <div class="ev-header">
+                                    <div class="ev-title">📎 Evidencias de esta subtarea</div>
+                                    <span class="ev-count">{{ evs|length }} ítem(s)</span>
+                                  </div>
+
+                                  {% if evs %}
+                                    <ul class="ev-list">
+                                      {% for ev in evs|dictsortreversed:"creado_en" %}
+                                        <li class="ev-item">
+                                          <span class="ev-bullet"></span>
+                                          <div class="ev-card">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                              <div>
+                                                <div class="ev-meta">
+                                                  👤 {{ ev.creado_por.first_name|default:ev.creado_por.username }}
+                                                  · 📅 {{ ev.creado_en|date:"d/m/Y H:i" }}
+                                                </div>
+                                                {% if ev.comentario %}
+                                                  <div class="mt-1">{{ ev.comentario|linebreaks }}</div>
+                                                {% endif %}
+                                                {% if ev.archivo %}
+                                                  <div class="mt-2">
+                                                    <a href="{{ ev.archivo.url }}" target="_blank" class="btn btn-neu btn-sm">📥 Descargar</a>
+                                                  </div>
+                                                {% endif %}
+                                              </div>
+                                              {% if tiene_permisos_admin or es_responsable or ev.creado_por_id == request.user.id %}
+                                                <div class="d-flex gap-2">
+                                                  <a href="{% url 'editar_evidencia_subtarea' st.id ev.id %}" class="btn btn-outline-secondary btn-sm">✏️ Editar</a>
+                                                  <form method="post" action="{% url 'eliminar_evidencia_subtarea' st.id ev.id %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta evidencia?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-neu-danger btn-sm">🗑️ Eliminar</button>
+                                                  </form>
+                                                </div>
+                                              {% endif %}
+                                            </div>
+                                          </div>
+                                        </li>
+                                      {% endfor %}
+                                    </ul>
+                                  {% else %}
+                                    <div class="p-3"><span class="muted">No hay evidencias en esta subtarea.</span></div>
+                                  {% endif %}
+
+                                  {% if tiene_permisos_admin or es_responsable %}
+                                    <div class="px-3 pb-3">
+                                      <a class="btn btn-neu btn-sm" href="{% url 'agregar_evidencia_subtarea' st.id %}">➕ Agregar evidencia</a>
+                                    </div>
+                                  {% endif %}
+                                </div>
+                              {% endwith %}
+
+                              <div class="d-flex flex-wrap gap-2">
+                                {% if tiene_permisos_admin or es_responsable %}
+                                  <a class="btn btn-outline-secondary" href="{% url 'subtarea_edit' st.id %}">✏️ Editar subtarea</a>
+                                  <form method="post" action="{% url 'subtarea_delete' st.id %}" onsubmit="return confirm('¿Eliminar subtarea?')" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-neu-danger">🗑️ Eliminar</button>
+                                  </form>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="muted">No hay subtareas en este bloque.</div>
+                  {% endif %}
+                {% endwith %}
+
+                <div class="mt-2 d-flex gap-2">
+                  {% if tiene_permisos_admin or es_responsable %}
+                    <a href="{% url 'subtarea_create' bloque.id %}" class="btn btn-outline-secondary">➕ Añadir subtarea</a>
+                  {% endif %}
+                  {% if tiene_permisos_admin %}
+                    <a href="{% url 'bloque_edit' bloque.id %}" class="btn btn-outline-secondary">✏️ Editar bloque</a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="muted fst-italic mb-0">Esta tarea macro aún no tiene bloques configurados.</p>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- =====================
+         📎 EVIDENCIAS (MACRO)
+         ===================== -->
+    <div class="neu-card">
+      <div class="neu-section-title">
+        <h3 class="mb-0">📎 Evidencias</h3>
+      </div>
+      <p class="neu-section-desc">Estas evidencias corresponden a entregables finales o soportes que validan el cumplimiento de la tarea completa. Se deben registrar una vez todas las subtareas estén completadas o al cierre del proceso.</p>
+
+      {% if not tarea.completada %}
+        {% if tiene_permisos_admin or puede_editar %}
+          <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data" class="row g-2">
+            {% csrf_token %}
+            <div class="col-12">
+              {{ form.comentario.label_tag }}
+              {{ form.comentario }}
+            </div>
+            <div class="col-12 col-md-6">
+              {{ form.archivo.label_tag }}
+              {{ form.archivo }}
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-neu mt-1">📎 Agregar Evidencia</button>
+            </div>
+          </form>
+        {% else %}
+          <p class="muted mb-2">No tienes permisos para agregar evidencias en esta tarea.</p>
+        {% endif %}
+      {% else %}
+        <p class="muted mb-2">La tarea está completada; no se pueden agregar nuevas evidencias.</p>
+      {% endif %}
+
+      {% for evidencia in evidencias %}
+        <div class="soft-block mt-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <p class="mb-1">
+              <strong>👤 {{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</strong> ·
+              📅 {{ evidencia.creado_en|date:"d/m/Y H:i" }}
+            </p>
+            {% if tiene_permisos_admin or es_responsable or evidencia.creado_por_id == request.user.id %}
+              <div class="d-flex gap-2">
+                <a href="{% url 'editar_evidencia' tarea.id evidencia.id %}" class="btn btn-outline-secondary btn-sm">✏️ Editar</a>
+                <form method="post" action="{% url 'eliminar_evidencia' tarea.id evidencia.id %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta evidencia?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-neu-danger btn-sm">🗑️ Eliminar</button>
+                </form>
+              </div>
+            {% endif %}
+          </div>
+          {% if evidencia.comentario %}<p class="mb-1">{{ evidencia.comentario|linebreaks }}</p>{% endif %}
+          {% if evidencia.archivo %}<a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-neu btn-sm">📥 Descargar Archivo</a>{% endif %}
+        </div>
+      {% empty %}
+        <p class="muted fst-italic mb-0">No hay evidencias registradas.</p>
+      {% endfor %}
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
