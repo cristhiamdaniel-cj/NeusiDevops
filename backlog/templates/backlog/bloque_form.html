@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Editar bloque</h3>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-success">Guardar</button>
+  <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

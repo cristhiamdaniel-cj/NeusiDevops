@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Confirmar eliminación</h3>
+<p>¿Eliminar la subtarea <strong>{{ subtarea.titulo }}</strong>?</p>
+<form method="post">{% csrf_token %}
+  <button class="btn btn-danger">Eliminar</button>
+  <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

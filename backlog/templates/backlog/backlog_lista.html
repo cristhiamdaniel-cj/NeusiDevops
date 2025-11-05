@@ -2,19 +2,36 @@
 {% load static %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'backlog/backlog.css' %}?v=5">
   <style>
-    .btn{padding:6px 12px;margin:3px;border:none;border-radius:5px;text-decoration:none;color:#fff;font-weight:bold}
-    .btn-primary{background:#007bff}.btn-secondary{background:#6c757d}.btn-danger{background:#dc3545}
-    .btn-info{background:#17a2b8}.btn-warning{background:#ffc107;color:#000}.btn-success{background:#28a745}
-    .btn-delete{background:#8B0000}
-    .tarea-card{border:1px solid #ddd;padding:15px;margin:10px 0;border-radius:8px;background:#f8f9fa}
-    .tarea-titulo{font-size:1.2em;font-weight:700;color:#333;margin-bottom:8px}
-    .tarea-meta{font-size:.9em;color:#666;margin:4px 0}
-    .badge{padding:4px 8px;border-radius:4px;color:#fff;font-size:.8em}
-    .badge-ui{background:#dc3545}.badge-nui{background:#28a745}.badge-uni{background:#ffc107;color:#000}.badge-nuni{background:#6c757d}
-    .badge-epica{background:#007bff}
-    .chip{display:inline-block;background:#e9f5ff;color:#0d6efd;border:1px solid #cfe8ff;border-radius:999px;padding:2px 8px;margin:2px 4px;font-weight:600}
+    :root{
+      --neu-primary:#6C2BD9;
+      --neu-deep:#3B1D82;
+      --neu-pink:#E14D8B;
+      --neu-orange:#FF6A3D;
+      --neu-ink:#0f172a;
+      --neu-soft:#f6f7fb;
+      --neu-border:#e5e7eb;
+    }
+    body{background:linear-gradient(180deg,#5c23d6 0%,#6C2BD9 14%,#ffffff 14% 100%)}
+    .wrap{max-width:1150px;margin:28px auto}
+    .neu-card{background:#fff;border:1px solid var(--neu-border);border-radius:14px;padding:16px}
+    .btn-neu{--bs-btn-bg:var(--neu-primary);--bs-btn-border-color:var(--neu-primary);--bs-btn-hover-bg:#5a23c5;--bs-btn-hover-border-color:#5a23c5;--bs-btn-color:#fff}
+    .btn-neu-ghost{--bs-btn-color:var(--neu-primary);--bs-btn-border-color:var(--neu-primary);--bs-btn-hover-bg:rgba(108,43,217,.08);--bs-btn-hover-border-color:var(--neu-primary)}
+    .btn-neu-dark{--bs-btn-bg:#111827;--bs-btn-border-color:#111827;--bs-btn-hover-bg:#0b1220;--bs-btn-hover-border-color:#0b1220;--bs-btn-color:#fff}
+    .btn-neu-danger{--bs-btn-bg:#dc2626;--bs-btn-border-color:#dc2626;--bs-btn-hover-bg:#b91c1c;--bs-btn-hover-border-color:#b91c1c;--bs-btn-color:#fff}
+    .chip{display:inline-block;background:#efe9ff;color:#4c1d95;border:1px solid #e4d8ff;border-radius:999px;padding:2px 8px;margin:2px 4px;font-weight:700}
+    .badge-epica{background:#f3e8ff;color:#6b21a8;border-radius:999px}
+    .badge-ui{background:#fee2e2}.badge-nui{background:#dcfce7}.badge-uni{background:#fef9c3;color:#78350f}.badge-nuni{background:#e5e7eb}
+    .tarea-card{border:1px solid var(--neu-border);padding:15px;margin:10px 0;border-radius:12px;background:#fafbff}
+    .tarea-titulo{font-size:1.05rem;font-weight:800;color:#1f2937;margin-bottom:6px}
+    .tarea-meta{font-size:.92rem;color:#64748b;margin:4px 0}
+    .accordion-button{font-weight:800}
+    .accordion-button:not(.collapsed){color:#fff;background:linear-gradient(90deg,var(--neu-primary),var(--neu-deep))}
+    .accordion-button:not(.collapsed)::after{filter:invert(1)}
+    .grp-inner .accordion-item{border:1px solid var(--neu-border);border-radius:10px;overflow:hidden;margin-bottom:8px}
+    .grp-inner .accordion-button{background:#fff;color:#111827}
+    .grp-inner .accordion-button:not(.collapsed){background:rgba(108,43,217,.06);color:#111827}
   </style>
 {% endblock %}
 
@@ -23,33 +40,31 @@
 {% endblock %}
 
 {% block content %}
+<div class="wrap px-3">
 
   <div class="d-flex justify-content-between align-items-center mb-3">
-    {# El header global (logo/título) ya viene en base.html; aquí solo acciones de usuario #}
+    <h2 class="fw-bold text-dark">📋 Backlog en Lista</h2>
     {% if request.user.is_authenticated %}
-      <div class="text-end w-100">
-        <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
-        <span class="mx-2">👤 {{ request.user.first_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn btn-danger">🚪 Cerrar Sesión</a>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'home' %}" class="btn btn-neu-dark">🏠 Home</a>
+        <span class="text-white px-2 py-1 rounded-3" style="background:rgba(0,0,0,.25)">
+          👤 {{ request.user.first_name|default:request.user.username }}
+        </span>
+        <a href="{% url 'logout' %}" class="btn btn-neu-danger">🚪 Cerrar Sesión</a>
       </div>
     {% endif %}
   </div>
 
-  <h2>📋 Backlog en Lista</h2>
-
   {% if request.user.is_authenticated and request.user.integrante %}
-    <div class="mb-3">
-      <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily de Hoy</a>
-    </div>
+    <div class="mb-3"><a href="{% url 'daily_personal' %}" class="btn btn-neu">📅 Mi Daily de Hoy</a></div>
   {% endif %}
 
-  <form method="get" class="mb-3 p-3 rounded" style="background:#e9ecef;">
+  <!-- Filtros -->
+  <form method="get" class="neu-card mb-3">
     <input type="hidden" name="filtrar" value="1">
-
     {% if puede_ver_todo %}
-      <!-- Persona -->
-      <label for="persona" class="me-1">Persona:</label>
-      <select name="persona" id="persona">
+      <label class="me-1 fw-semibold">Persona:</label>
+      <select name="persona" class="form-select d-inline-block w-auto">
         <option value="">-- Todos --</option>
         {% for i in integrantes %}
           <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
@@ -58,9 +73,8 @@
         {% endfor %}
       </select>
 
-      <!-- Sprint -->
-      <label for="sprint" class="ms-3 me-1">Sprint:</label>
-      <select name="sprint" id="sprint">
+      <label class="ms-3 me-1 fw-semibold">Sprint:</label>
+      <select name="sprint" class="form-select d-inline-block w-auto">
         <option value="">-- Todos --</option>
         {% for s in sprints %}
           <option value="{{ s.id }}" {% if sprint_id == s.id|stringformat:"s" %}selected{% endif %}>
@@ -76,9 +90,8 @@
         </small>
       </span>
 
-      <!-- Épica -->
-      <label for="epica" class="ms-3 me-1">Épica:</label>
-      <select name="epica" id="epica">
+      <label class="ms-3 me-1 fw-semibold">Épica:</label>
+      <select name="epica" class="form-select d-inline-block w-auto">
         <option value="">-- Todas --</option>
         {% for e in epicas %}
           <option value="{{ e.id }}" {% if epica_id == e.id|stringformat:"s" %}selected{% endif %}>
@@ -87,45 +100,44 @@
         {% endfor %}
       </select>
     {% else %}
-      <div class="mb-3 rounded" style="background:#fff3cd;padding:10px;border:1px solid #ffeaa7;color:#856404;">
+      <div class="alert alert-warning mb-3">
         <strong>📋 Vista Personal:</strong> Solo puedes ver tus tareas asignadas.
         Para ver todas las tareas del equipo, contacta a Daniel Campos o Andrés Gómez.
       </div>
     {% endif %}
 
-    <!-- Estado -->
-    <label for="estado" class="{% if puede_ver_todo %}ms-3{% endif %} me-1">Estado:</label>
-    <select name="estado" id="estado">
+    <label class="{% if puede_ver_todo %}ms-3{% endif %} me-1 fw-semibold">Estado:</label>
+    <select name="estado" class="form-select d-inline-block w-auto">
       <option value="">-- Todos --</option>
       <option value="abiertas" {% if estado == "abiertas" %}selected{% endif %}>Abiertas</option>
       <option value="cerradas" {% if estado == "cerradas" %}selected{% endif %}>Cerradas</option>
     </select>
 
-    <!-- Agrupar por -->
-    <label class="ms-3 me-1">Agrupar por:</label>
-    <select name="group" onchange="this.form.submit()">
+    <label class="ms-3 me-1 fw-semibold">Agrupar por:</label>
+    <select name="group" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
       <option value="proyecto" {% if group_by == 'proyecto' %}selected{% endif %}>Proyecto</option>
       <option value="epica" {% if group_by == 'epica' %}selected{% endif %}>Épica</option>
       <option value="sprint" {% if group_by == 'sprint' %}selected{% endif %}>Sprint</option>
       <option value="none" {% if group_by == 'none' %}selected{% endif %}>Ninguno</option>
     </select>
 
-    <button type="submit" class="btn btn-secondary ms-3">Filtrar</button>
-    <a href="{% url 'backlog_lista' %}" class="btn btn-danger">❌ Limpiar</a>
+    <button type="submit" class="btn btn-neu-ghost ms-2">Filtrar</button>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-neu-danger ms-1">❌ Limpiar</a>
   </form>
 
+  <!-- Acciones -->
   <div class="mb-2">
     {% if tiene_permisos_admin %}
-      <a href="{% url 'nueva_tarea' %}" class="btn btn-primary">➕ Nueva tarea</a>
+      <a href="{% url 'nueva_tarea' %}" class="btn btn-neu">➕ Nueva tarea</a>
     {% else %}
-      <span class="btn" style="background:#ccc;color:#666;cursor:not-allowed;">➕ Nueva tarea (Sin permisos)</span>
+      <span class="btn btn-neu-ghost" style="opacity:.6;cursor:not-allowed;">➕ Nueva tarea (Sin permisos)</span>
     {% endif %}
-    <a href="{% url 'backlog_matriz' %}" class="btn btn-secondary">📊 Ver Matriz</a>
-    <a href="{% url 'kanban_board' %}" class="btn btn-success">📋 Ver Kanban</a>
-    <a href="{% url 'sprint_list' %}" class="btn btn-info">📅 Sprints</a>
+    <a href="{% url 'backlog_matriz' %}" class="btn btn-neu-ghost">📊 Ver Matriz</a>
+    <a href="{% url 'kanban_board' %}" class="btn btn-neu-ghost">📋 Ver Kanban</a>
+    <a href="{% url 'sprint_list' %}" class="btn btn-neu-ghost">📅 Sprints</a>
     {% if tiene_permisos_admin %}
-      <a href="{% url 'sprint_create' %}" class="btn btn-warning">➕ Nuevo Sprint</a>
-      <a href="{% url 'epica_list' %}" class="btn btn-info">🧱 Épicas</a>
+      <a href="{% url 'sprint_create' %}" class="btn btn-neu-ghost">➕ Nuevo Sprint</a>
+      <a href="{% url 'epica_list' %}" class="btn btn-neu-ghost">🧱 Épicas</a>
     {% endif %}
   </div>
 
@@ -135,7 +147,7 @@
     <div class="accordion" id="accordionBacklog">
       {% for grupo, lista in grouped.items %}
         {% with gid=grupo.id|default:'none' %}
-        <div class="accordion-item">
+        <div class="accordion-item neu-card mb-2">
           <h2 class="accordion-header" id="head-{{ group_by }}-{{ gid }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     data-bs-target="#col-{{ group_by }}-{{ gid }}" aria-expanded="false">
@@ -146,221 +158,229 @@
               {% else %}
                 🗓️ {% if grupo %}Sprint {{ grupo.inicio|date:"d/m" }}–{{ grupo.fin|date:"d/m" }}{% else %}(Sin sprint){% endif %}
               {% endif %}
-              <span class="ms-2 badge bg-secondary">{{ lista|length }}</span>
+              <span class="ms-2 badge bg-dark-subtle text-dark">{{ lista|length }}</span>
             </button>
           </h2>
+
           <div id="col-{{ group_by }}-{{ gid }}" class="accordion-collapse collapse" data-bs-parent="#accordionBacklog">
             <div class="accordion-body">
 
-              {# primeras 10 #}
-              {% for tarea in lista|slice:":10" %}
-                <div class="tarea-card">
-                  <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
+              <!-- Sub-acordeón Abiertas/Cerradas -->
+              <div class="accordion grp-inner" id="grp-inner-{{ gid }}">
 
-                  {% if tarea.epica %}
-                    <div class="tarea-meta">
-                      <span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span>
-                    </div>
-                  {% endif %}
+                <!-- Abiertas -->
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="head-open-{{ gid }}">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#col-open-{{ gid }}" aria-expanded="true">
+                      ⏳ Abiertas
+                    </button>
+                  </h2>
+                  <div id="col-open-{{ gid }}" class="accordion-collapse collapse show" data-bs-parent="#grp-inner-{{ gid }}">
+                    <div class="accordion-body">
+                      {% with has_open=0 %}
+                        {% for tarea in lista %}
+                          {% if not tarea.completada %}
+                            {% with has_open=1 %}{% endwith %}
+                            <div class="tarea-card">
+                              <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
 
-                  <div class="tarea-meta">
-                    <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
-                      {{ tarea.get_categoria_display }}
-                    </span>
-                  </div>
+                              {% if tarea.epica %}
+                                <div class="tarea-meta"><span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span></div>
+                              {% endif %}
 
-                  <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
+                              <div class="tarea-meta">
+                                <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
+                                  {{ tarea.get_categoria_display }}
+                                </span>
+                              </div>
 
-                  <div class="tarea-meta">
-                    <strong>Asignado:</strong>
-                    {% with rs=tarea.asignados.all %}
-                      {% if rs %}
-                        {% for r in rs %}
-                          <span class="chip">{{ r.user.first_name }} {{ r.user.last_name }}</span>
+                              <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
+
+                              <div class="tarea-meta">
+                                <strong>Asignado:</strong>
+                                {% with rs=tarea.asignados.all %}
+                                  {% if rs %}
+                                    {% for r in rs %}
+                                      <span class="chip">{{ r.user.first_name }} {{ r.user.last_name }}</span>
+                                    {% endfor %}
+                                  {% elif tarea.asignado_a %}
+                                    <span class="chip">{{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</span>
+                                  {% else %}
+                                    <span class="text-muted">—</span>
+                                  {% endif %}
+                                {% endwith %}
+                              </div>
+
+                              <div class="tarea-meta"><strong>Estado:</strong> ⏳ Abierta</div>
+
+                              <div class="mt-2">
+                                <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-neu-ghost">👁️ Ver Detalle</a>
+                                {% with yo=request.user.integrante %}
+                                  {% if tiene_permisos_admin or yo and yo in tarea.asignados.all or tarea.asignado_a == yo %}
+                                    <button type="button" class="btn btn-neu-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">
+                                      ✅ Cerrar Tarea
+                                    </button>
+                                  {% endif %}
+                                {% endwith %}
+                                {% if tiene_permisos_admin %}
+                                  <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-neu-danger" style="background:#8B0000;border-color:#8B0000">🗑️ Eliminar</a>
+                                {% endif %}
+                              </div>
+                            </div>
+
+                            <!-- Modal cierre -->
+                            <div class="modal fade" id="cerrarTareaModal{{ tarea.id }}" tabindex="-1" aria-labelledby="cerrarTareaLabel{{ tarea.id }}" aria-hidden="true">
+                              <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                  <form method="post" action="{% url 'cerrar_tarea' tarea.id %}" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="modal-header">
+                                      <h5 class="modal-title" id="cerrarTareaLabel{{ tarea.id }}">📑 Cierre de Tarea: {{ tarea.titulo }}</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                      <p>⚠️ Adjunta el informe para cerrar la tarea.</p>
+                                      <div class="mb-3">
+                                        <label for="informe_cierre_{{ tarea.id }}" class="form-label">📎 Informe de Cierre</label>
+                                        <input type="file" class="form-control" name="informe_cierre" id="informe_cierre_{{ tarea.id }}" required>
+                                      </div>
+                                      <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" name="confirmacion" id="confirmacion_{{ tarea.id }}" value="confirmo" required>
+                                        <label class="form-check-label" for="confirmacion_{{ tarea.id }}">✅ Confirmo que adjunté el informe</label>
+                                      </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-neu-ghost" data-bs-dismiss="modal">❌ Cancelar</button>
+                                      <button type="submit" class="btn btn-neu-danger">✅ Confirmar Cierre</button>
+                                    </div>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                          {% endif %}
                         {% endfor %}
-                      {% elif tarea.asignado_a %}
-                        <span class="chip">{{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</span>
-                      {% else %}
-                        <span class="text-muted">—</span>
-                      {% endif %}
-                    {% endwith %}
-                  </div>
-
-                  <div class="tarea-meta">
-                    <strong>Estado:</strong>
-                    {% if tarea.completada %}
-                      ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
-                    {% else %}
-                      ⏳ Abierta
-                    {% endif %}
-                  </div>
-
-                  <div class="mt-2">
-                    <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
-
-                    {% if not tarea.completada %}
-                      {% with yo=request.user.integrante %}
-                        {% if tiene_permisos_admin or yo and yo in tarea.asignados.all or tarea.asignado_a == yo %}
-                          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">
-                            ✅ Cerrar Tarea
-                          </button>
+                        {% if has_open == 0 %}
+                          <div class="tarea-card">No hay tareas abiertas en este grupo.</div>
                         {% endif %}
                       {% endwith %}
-                    {% endif %}
-
-                    {% if tiene_permisos_admin %}
-                      <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">🗑️ Eliminar</a>
-                    {% endif %}
-                  </div>
-                </div>
-
-                <!-- Modal cierre de tarea -->
-                <div class="modal fade" id="cerrarTareaModal{{ tarea.id }}" tabindex="-1" aria-labelledby="cerrarTareaLabel{{ tarea.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                      <form method="post" action="{% url 'cerrar_tarea' tarea.id %}" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="cerrarTareaLabel{{ tarea.id }}">📑 Cierre de Tarea: {{ tarea.titulo }}</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                        </div>
-                        <div class="modal-body">
-                          <p>⚠️ Para cerrar esta tarea es obligatorio adjuntar un informe. Será evaluado por los administradores.</p>
-                          <div class="mb-3">
-                            <label for="informe_cierre_{{ tarea.id }}" class="form-label">📎 Informe de Cierre</label>
-                            <input type="file" class="form-control" name="informe_cierre" id="informe_cierre_{{ tarea.id }}" required>
-                          </div>
-                          <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" name="confirmacion" id="confirmacion_{{ tarea.id }}" value="confirmo" required>
-                            <label class="form-check-label" for="confirmacion_{{ tarea.id }}">✅ Confirmo que adjunté el informe</label>
-                          </div>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancelar</button>
-                          <button type="submit" class="btn btn-danger">✅ Confirmar Cierre</button>
-                        </div>
-                      </form>
                     </div>
                   </div>
                 </div>
-              {% endfor %}
 
-              {% if lista|length > 10 %}
-                <a class="btn btn-sm btn-outline-primary"
-                   href="?{% for k,v in request.GET.items %}{% if k != 'expand' %}{{k}}={{v|urlencode}}&{% endif %}{% endfor %}expand={{ gid }}">
-                   Ver más ({{ lista|length|add:"-10" }})
-                </a>
+                <!-- Cerradas -->
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="head-closed-{{ gid }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#col-closed-{{ gid }}" aria-expanded="false">
+                      ✅ Cerradas
+                    </button>
+                  </h2>
+                  <div id="col-closed-{{ gid }}" class="accordion-collapse collapse" data-bs-parent="#grp-inner-{{ gid }}">
+                    <div class="accordion-body">
+                      {% with has_closed=0 %}
+                        {% for tarea in lista %}
+                          {% if tarea.completada %}
+                            {% with has_closed=1 %}{% endwith %}
+                            <div class="tarea-card">
+                              <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
 
-                {% if expand_id and expand_id == gid|stringformat:"s" %}
-                  <hr>
-                  {% for tarea in lista|slice:"10:" %}
-                    <div class="tarea-card">
-                      <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
-                      {% if tarea.epica %}
-                        <div class="tarea-meta"><span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span></div>
-                      {% endif %}
-                      <div class="tarea-meta">
-                        <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
-                          {{ tarea.get_categoria_display }}
-                        </span>
-                      </div>
-                      <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
-                      <div class="tarea-meta">
-                        <strong>Asignado:</strong>
-                        {% with rs=tarea.asignados.all %}
-                          {% if rs %}
-                            {% for r in rs %}
-                              <span class="chip">{{ r.user.first_name }} {{ r.user.last_name }}</span>
-                            {% endfor %}
-                          {% elif tarea.asignado_a %}
-                            <span class="chip">{{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</span>
-                          {% else %}<span class="text-muted">—</span>{% endif %}
-                        {% endwith %}
-                      </div>
-                      <div class="tarea-meta">
-                        <strong>Estado:</strong>
-                        {% if tarea.completada %}✅ Cerrada{% else %}⏳ Abierta{% endif %}
-                      </div>
-                      <div class="mt-2">
-                        <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
-                      </div>
+                              {% if tarea.epica %}
+                                <div class="tarea-meta"><span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span></div>
+                              {% endif %}
+
+                              <div class="tarea-meta">
+                                <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
+                                  {{ tarea.get_categoria_display }}
+                                </span>
+                              </div>
+
+                              <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
+
+                              <div class="tarea-meta">
+                                <strong>Asignado:</strong>
+                                {% with rs=tarea.asignados.all %}
+                                  {% if rs %}
+                                    {% for r in rs %}
+                                      <span class="chip">{{ r.user.first_name }} {{ r.user.last_name }}</span>
+                                    {% endfor %}
+                                  {% elif tarea.asignado_a %}
+                                    <span class="chip">{{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</span>
+                                  {% else %}
+                                    <span class="text-muted">—</span>
+                                  {% endif %}
+                                {% endwith %}
+                              </div>
+
+                              <div class="tarea-meta">
+                                <strong>Estado:</strong> ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
+                              </div>
+
+                              <div class="mt-2">
+                                <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-neu-ghost">👁️ Ver Detalle</a>
+                                {% if tiene_permisos_admin %}
+                                  <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-neu-danger" style="background:#8B0000;border-color:#8B0000">🗑️ Eliminar</a>
+                                {% endif %}
+                              </div>
+                            </div>
+                          {% endif %}
+                        {% endfor %}
+                        {% if has_closed == 0 %}
+                          <div class="tarea-card">No hay tareas cerradas en este grupo.</div>
+                        {% endif %}
+                      {% endwith %}
                     </div>
-                  {% endfor %}
-                {% endif %}
-              {% endif %}
+                  </div>
+                </div>
 
+              </div>
+              <!-- /sub-acordeón -->
             </div>
           </div>
         </div>
         {% endwith %}
       {% empty %}
-        <div class="tarea-card">No hay tareas en los grupos.</div>
+        <div class="neu-card">No hay tareas en los grupos.</div>
       {% endfor %}
     </div>
 
   {% else %}
+    {# Vista no agrupada #}
     {% for tarea in tareas %}
       <div class="tarea-card">
         <div class="tarea-titulo">📋 {{ tarea.titulo }}</div>
-
-        {% if tarea.epica %}
-          <div class="tarea-meta">
-            <span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span>
-          </div>
-        {% endif %}
-
+        {% if tarea.epica %}<div class="tarea-meta"><span class="badge badge-epica">Épica: {{ tarea.epica.titulo }}</span></div>{% endif %}
         <div class="tarea-meta">
           <span class="badge {% if tarea.categoria == 'UI' %}badge-ui{% elif tarea.categoria == 'NUI' %}badge-nui{% elif tarea.categoria == 'UNI' %}badge-uni{% else %}badge-nuni{% endif %}">
             {{ tarea.get_categoria_display }}
           </span>
         </div>
-
         <div class="tarea-meta"><strong>Sprint:</strong> {{ tarea.sprint.inicio }} - {{ tarea.sprint.fin }}</div>
-
         <div class="tarea-meta">
           <strong>Asignado:</strong>
           {% with rs=tarea.asignados.all %}
-            {% if rs %}
-              {% for r in rs %}
-                <span class="chip">{{ r.user.first_name }} {{ r.user.last_name }}</span>
-              {% endfor %}
-            {% elif tarea.asignado_a %}
-              <span class="chip">{{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</span>
-            {% else %}
-              <span class="text-muted">—</span>
-            {% endif %}
+            {% if rs %}{% for r in rs %}<span class="chip">{{ r.user.first_name }} {{ r.user.last_name }}</span>{% endfor %}
+            {% elif tarea.asignado_a %}<span class="chip">{{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
           {% endwith %}
         </div>
-
-        <div class="tarea-meta">
-          <strong>Estado:</strong>
-          {% if tarea.completada %}
-            ✅ Cerrada {% if tarea.fecha_cierre %}({{ tarea.fecha_cierre|date:"d/m/Y H:i" }}){% endif %}
-          {% else %}
-            ⏳ Abierta
-          {% endif %}
-        </div>
-
+        <div class="tarea-meta"><strong>Estado:</strong> {% if tarea.completada %}✅ Cerrada{% else %}⏳ Abierta{% endif %}</div>
         <div class="mt-2">
-          <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-info">👁️ Ver Detalle</a>
-
+          <a href="{% url 'detalle_tarea' tarea.id %}" class="btn btn-neu-ghost">👁️ Ver Detalle</a>
           {% if not tarea.completada %}
             {% with yo=request.user.integrante %}
               {% if tiene_permisos_admin or yo and yo in tarea.asignados.all or tarea.asignado_a == yo %}
-                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">
-                  ✅ Cerrar Tarea
-                </button>
+                <button type="button" class="btn btn-neu-danger" data-bs-toggle="modal" data-bs-target="#cerrarTareaModal{{ tarea.id }}">✅ Cerrar Tarea</button>
               {% endif %}
             {% endwith %}
           {% endif %}
-
           {% if tiene_permisos_admin %}
-            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-delete">🗑️ Eliminar</a>
+            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-neu-danger" style="background:#8B0000;border-color:#8B0000">🗑️ Eliminar</a>
           {% endif %}
         </div>
       </div>
 
-      <!-- Modal cierre de tarea -->
+      <!-- Modal cierre no-agrupada -->
       <div class="modal fade" id="cerrarTareaModal{{ tarea.id }}" tabindex="-1" aria-labelledby="cerrarTareaLabel{{ tarea.id }}" aria-hidden="true">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
@@ -371,7 +391,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
               </div>
               <div class="modal-body">
-                <p>⚠️ Para cerrar esta tarea es obligatorio adjuntar un informe. Será evaluado por los administradores.</p>
+                <p>⚠️ Adjunta el informe para cerrar la tarea.</p>
                 <div class="mb-3">
                   <label for="informe_cierre_{{ tarea.id }}" class="form-label">📎 Informe de Cierre</label>
                   <input type="file" class="form-control" name="informe_cierre" id="informe_cierre_{{ tarea.id }}" required>
@@ -382,17 +402,15 @@
                 </div>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancelar</button>
-                <button type="submit" class="btn btn-danger">✅ Confirmar Cierre</button>
+                <button type="button" class="btn btn-neu-ghost" data-bs-dismiss="modal">❌ Cancelar</button>
+                <button type="submit" class="btn btn-neu-danger">✅ Confirmar Cierre</button>
               </div>
             </form>
           </div>
         </div>
       </div>
     {% empty %}
-      <div class="tarea-card">
-        <p>No hay tareas registradas con los filtros seleccionados.</p>
-      </div>
+      <div class="neu-card"><p>No hay tareas registradas con los filtros seleccionados.</p></div>
     {% endfor %}
 
     {% if paginator %}
@@ -403,9 +421,7 @@
               <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{k}}={{v|urlencode}}&{% endif %}{% endfor %}page={{ tareas.previous_page_number }}">Anterior</a>
             </li>
           {% endif %}
-          <li class="page-item active">
-            <span class="page-link">{{ tareas.number }} / {{ tareas.paginator.num_pages }}</span>
-          </li>
+          <li class="page-item active"><span class="page-link">{{ tareas.number }} / {{ tareas.paginator.num_pages }}</span></li>
           {% if tareas.has_next %}
             <li class="page-item">
               <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{k}}={{v|urlencode}}&{% endif %}{% endfor %}page={{ tareas.next_page_number }}">Siguiente</a>
@@ -415,5 +431,5 @@
       </nav>
     {% endif %}
   {% endif %}
-
+</div>
 {% endblock %}

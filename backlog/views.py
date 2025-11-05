@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from functools import wraps
 from datetime import time, datetime, timedelta
 import json
@@ -11,10 +12,15 @@ from django.http import JsonResponse
 from django.utils.timezone import localtime, now
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
+from django.db import transaction
 
-from .models import Tarea, Sprint, Integrante, Daily, Evidencia, Epica, Proyecto
+from .models import (
+    Tarea, Sprint, Integrante, Daily, Evidencia, Epica, Proyecto,
+    BloqueTarea, Subtarea,EvidenciaSubtarea
+)
 from .forms import (
-    TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm, ProyectoForm
+    TareaForm, DailyForm, EvidenciaForm, SprintForm, EpicaForm, ProyectoForm,
+    BloqueFormSet, TareaEstadoForm, SubtareaForm, BloqueTareaForm,
 )
 
 # ==============================
@@ -48,16 +54,23 @@ def _flags_usuario(request):
     puede_ver_todo = bool(puede_admin or es_visualizador)
     return integrante, puede_admin, es_visualizador, puede_ver_todo
 
+
+def _sync_subtareas_fechas(bloque: BloqueTarea):
+    """
+    Alinea todas las subtareas del bloque con las fechas del bloque.
+    """
+    if not bloque:
+        return
+    Subtarea.objects.filter(bloque=bloque).update(
+        fecha_inicio=bloque.fecha_inicio,
+        fecha_fin=bloque.fecha_fin
+    )
+
 # ==============================
 # Scope por proyectos (Visualizador / Product Owner)
 # ==============================
 
 def _proyectos_autorizados_qs(integrante: Integrante):
-    """
-    QS de proyectos visibles para el integrante según PermisoProyecto.
-    Requiere que PermisoProyecto tenga: proyecto(FK)->related_name='permisos_integrantes'
-    y un booleano 'activo'. Ajusta el related_name si usaste otro.
-    """
     if not integrante:
         return Proyecto.objects.none()
     if integrante.es_admin():
@@ -71,7 +84,6 @@ def _proyectos_autorizados_qs(integrante: Integrante):
     return Proyecto.objects.none()
 
 def _filtrar_por_proyectos_autorizados_tareas(qs, integrante: Integrante):
-    """Restringe Tarea por proyectos autorizados (vía epica__proyecto) para visualizadores/PO."""
     if not integrante or not integrante.es_visualizador():
         return qs
     proys = _proyectos_autorizados_qs(integrante)
@@ -80,7 +92,6 @@ def _filtrar_por_proyectos_autorizados_tareas(qs, integrante: Integrante):
     return qs.filter(epica__proyecto__in=proys).distinct()
 
 def _filtrar_por_proyectos_autorizados_epicas(qs, integrante: Integrante):
-    """Restringe Epica por proyecto para visualizadores/PO."""
     if not integrante or not integrante.es_visualizador():
         return qs
     proys = _proyectos_autorizados_qs(integrante)
@@ -93,23 +104,35 @@ def _es_admin(request):
     return bool(integrante and integrante.es_admin())
 
 def _es_responsable(tarea: Tarea, integrante: Integrante) -> bool:
-    """
-    Verdadero si el integrante está asignado a la tarea
-    (ya sea por el M2M `asignados` o por el FK legado `asignado_a`).
-    """
     if not integrante:
         return False
     if tarea.asignado_a_id == getattr(integrante, "id", None):
         return True
     return tarea.asignados.filter(id=integrante.id).exists()
 
+# === Conjunto de roles "administrativos" ===
+ADMIN_ROLES = {
+    "Scrum Master / PO",
+    "Arquitecto de Software y Director General",
+    "Coordinadora de Gestión Humana y Administrativa",
+}
+
+def _es_admin_neusi(integrante: Integrante | None) -> bool:
+    try:
+        nombre_rol = getattr(getattr(integrante, "rol", None), "nombre", None)
+        if nombre_rol in ADMIN_ROLES:
+            return True
+    except Exception:
+        pass
+    try:
+        return bool(integrante and integrante.es_admin())
+    except Exception:
+        return False
+
+def _puede_crud_subtareas(tarea: Tarea, integrante: Integrante | None) -> bool:
+    return bool(_es_admin_neusi(integrante) or _es_responsable(tarea, integrante))
+
 def _queryset_visible_tareas(integrante: Integrante, puede_ver_todo: bool):
-    """
-    Construye el queryset base de tareas según permisos:
-    - Admin: ve todo.
-    - Visualizador/PO: SOLO tareas de sus proyectos autorizados.
-    - Usuario normal: solo tareas que le corresponden (M2M o FK).
-    """
     base = (
         Tarea.objects
         .select_related("asignado_a__user", "sprint", "epica", "epica__proyecto")
@@ -125,7 +148,6 @@ def _queryset_visible_tareas(integrante: Integrante, puede_ver_todo: bool):
     if integrante.es_visualizador():
         return _filtrar_por_proyectos_autorizados_tareas(base, integrante)
 
-    # Miembro normal → solo lo propio
     return base.filter(Q(asignados=integrante) | Q(asignado_a=integrante)).distinct()
 
 # ==============================
@@ -146,8 +168,6 @@ def requiere_permiso_crear_tareas(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-# Nota: mantenemos este decorador pero NO lo usamos en evidencias;
-# los checks se hacen dentro de cada vista para permitir responsable/admin/permisos.
 def requiere_permiso_evidencias(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -163,54 +183,110 @@ def requiere_permiso_evidencias(view_func):
     return _wrapped_view
 
 # ==============================
-# Vistas de Tareas
+# Vistas de Tareas (Tarea = Macro)
 # ==============================
 
 @login_required
 def editar_tarea(request, tarea_id):
-    """Editar una tarea existente (admin o responsable o rol con puede_editar_tareas)."""
+    """
+    Editar Tarea Macro:
+    - Admin NEUSI: pueden editar todo y los BLOQUES.
+    - Responsable (asignado): SOLO puede cambiar el 'estado'.
+    """
     tarea = get_object_or_404(Tarea, id=tarea_id)
-    integrante, es_admin, _, _ = _flags_usuario(request)
+    integrante, _, _, _ = _flags_usuario(request)
 
-    es_responsable = _es_responsable(tarea, integrante)
-    puede_editar_rol = bool(integrante and integrante.puede_editar_tareas())
+    es_admin = _es_admin_neusi(integrante)
+    es_resp  = _es_responsable(tarea, integrante)
 
-    if not (es_admin or es_responsable or puede_editar_rol):
-        messages.error(request, "❌ No tienes permisos para editar tareas.")
-        return redirect("backlog_lista")
+    if not (es_admin or es_resp):
+        messages.error(request, "❌ No tienes permisos para editar esta tarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    FormClass = TareaForm if es_admin else TareaEstadoForm
 
     if request.method == "POST":
-        form = TareaForm(request.POST, request.FILES, instance=tarea)
-        if form.is_valid():
-            tarea_actualizada = form.save()
-            messages.success(request, f"✅ Tarea '{tarea_actualizada.titulo}' actualizada correctamente.")
+        form = FormClass(request.POST, request.FILES, instance=tarea)
+        formset = None
+        if es_admin:
+            formset = BloqueFormSet(
+                request.POST, request.FILES, instance=tarea, prefix="bloques"
+            )
+
+        ok_form = form.is_valid()
+        ok_set  = True if formset is None else formset.is_valid()
+
+        if ok_form and ok_set:
+            form.save()
+            if formset:
+                formset.save()
+                # sincronizar fechas de subtareas con cada bloque actualizado
+                for b in tarea.bloques.all():
+                    _sync_subtareas_fechas(b)
+            messages.success(request, "✅ Cambios guardados correctamente.")
             return redirect("detalle_tarea", tarea_id=tarea.id)
         else:
-            messages.error(request, "⚠️ Revisa los campos del formulario.")
+            if not ok_form:
+                messages.error(request, "⚠️ Revisa el formulario de la tarea.")
+            if formset and not ok_set:
+                messages.error(request, "⚠️ Revisa los bloques: hay errores.")
     else:
-        form = TareaForm(instance=tarea)
+        form = FormClass(instance=tarea)
+        formset = BloqueFormSet(instance=tarea, prefix="bloques") if es_admin else None
 
-    return render(request, "backlog/editar_tarea.html", {"form": form, "tarea": tarea})
+    return render(
+        request,
+        "backlog/editar_tarea.html",
+        {
+            "tarea": tarea,
+            "form": form,
+            "formset": formset,
+            "puede_editar_bloques": es_admin,
+            "solo_estado": (not es_admin),
+        },
+    )
 
 @login_required
 @requiere_permiso_crear_tareas
 def nueva_tarea(request):
-    """Crear una nueva tarea en el backlog"""
+    """
+    ÚNICA forma de crear tareas (macro) con bloques opcionales.
+    """
     if request.method == "POST":
         form = TareaForm(request.POST, request.FILES)
-        if form.is_valid():
-            tarea = form.save()
-            messages.success(request, f"✅ Tarea '{tarea.titulo}' creada correctamente.")
-            return redirect("backlog_lista")
-        else:
-            messages.error(request, "⚠️ Revisa los campos del formulario.")
-    else:
-        form = TareaForm()
-    return render(request, "backlog/nueva_tarea.html", {"form": form})
+        formset = BloqueFormSet(request.POST, prefix="bloques")  # bound
+
+        if not form.is_valid():
+            messages.error(request, "⚠️ Corrige los errores del formulario de la tarea.")
+            return render(request, "backlog/nueva_tarea.html", {"form": form, "formset": formset})
+
+        tarea = form.save(commit=False)
+        if hasattr(tarea, "es_macro"):
+            tarea.es_macro = True
+        if hasattr(tarea, "creada_por") and hasattr(request.user, "integrante"):
+            tarea.creada_por = request.user.integrante
+        tarea.save()
+        form.save_m2m()
+
+        formset = BloqueFormSet(request.POST, prefix="bloques", instance=tarea)
+        all_empty = all(f.empty_permitted and not f.has_changed() for f in formset.forms)
+
+        if formset.is_valid():
+            if not all_empty:
+                formset.save()
+            messages.success(request, "✅ Tarea creada correctamente.")
+            return redirect("detalle_tarea", tarea_id=tarea.id)
+
+        tarea.delete()
+        messages.error(request, "⚠️ Corrige los errores en los bloques.")
+        return render(request, "backlog/nueva_tarea.html", {"form": form, "formset": formset})
+
+    form = TareaForm()
+    formset = BloqueFormSet(prefix="bloques")
+    return render(request, "backlog/nueva_tarea.html", {"form": form, "formset": formset})
 
 @login_required
 def detalle_tarea(request, tarea_id):
-    """Vista detallada de una tarea con evidencias y permisos según rol"""
     tarea = get_object_or_404(
         Tarea.objects.select_related("sprint", "epica").prefetch_related("asignados__user"),
         id=tarea_id
@@ -219,12 +295,10 @@ def detalle_tarea(request, tarea_id):
     evidencias = tarea.evidencias.all().order_by("-creado_en")
     form = EvidenciaForm()
 
-    integrante, es_admin, _, _ = _flags_usuario(request)
-
-    # Es responsable si está en la lista M2M o es el asignado principal
+    integrante, _, _, _ = _flags_usuario(request)
+    es_admin = _es_admin_neusi(integrante)
     es_responsable = _es_responsable(tarea, integrante)
 
-    # Definir permisos efectivos
     puede_editar = bool(es_admin or es_responsable or (integrante and integrante.puede_editar_tareas()))
     puede_cerrar = bool(es_admin or es_responsable)
 
@@ -233,15 +307,16 @@ def detalle_tarea(request, tarea_id):
         "evidencias": evidencias,
         "form": form,
         "tiene_permisos_admin": es_admin,
+        "es_admin": es_admin,                 # <-- para templates que usen esta clave
         "puede_editar": puede_editar,
         "puede_cerrar": puede_cerrar,
+        "es_responsable": es_responsable,
     })
 
-# -------- Evidencias (sin decorador restrictivo) --------
+# -------- Evidencias --------
 
 @login_required
 def agregar_evidencia(request, tarea_id):
-    """Agregar evidencia a una tarea (admin, responsable o rol con permiso)."""
     tarea = get_object_or_404(Tarea, id=tarea_id)
     integrante, es_admin, _, _ = _flags_usuario(request)
 
@@ -263,7 +338,6 @@ def agregar_evidencia(request, tarea_id):
 
 @login_required
 def editar_evidencia(request, tarea_id, evidencia_id):
-    """Editar evidencia (admin, responsable o rol con permiso)."""
     tarea = get_object_or_404(Tarea, id=tarea_id)
     evidencia = get_object_or_404(Evidencia, id=evidencia_id, tarea=tarea)
     integrante, es_admin, _, _ = _flags_usuario(request)
@@ -288,7 +362,6 @@ def editar_evidencia(request, tarea_id, evidencia_id):
 
 @login_required
 def eliminar_evidencia(request, tarea_id, evidencia_id):
-    """Eliminar evidencia (admin, creador, o responsable de la tarea)."""
     tarea = get_object_or_404(Tarea, id=tarea_id)
     evidencia = get_object_or_404(Evidencia, id=evidencia_id, tarea=tarea)
     integrante, es_admin, _, _ = _flags_usuario(request)
@@ -315,7 +388,6 @@ def eliminar_evidencia(request, tarea_id, evidencia_id):
 
 @login_required
 def cerrar_tarea(request, tarea_id):
-    """Cerrar una tarea con informe obligatorio (responsable o admin)"""
     tarea = get_object_or_404(Tarea, id=tarea_id)
     integrante, es_admin, _, _ = _flags_usuario(request)
 
@@ -395,7 +467,6 @@ def home(request):
 
 @login_required
 def daily_view(request, integrante_id=None):
-    # Visualizador no registra dailies
     _, es_admin, es_visualizador, _ = _flags_usuario(request)
     if es_visualizador:
         messages.warning(request, "El rol Visualizador no puede registrar dailies.")
@@ -456,7 +527,6 @@ def daily_view(request, integrante_id=None):
 
 @login_required
 def daily_personal(request):
-    # Visualizador: redirige a resumen directamente
     integrante, _, es_visualizador, _ = _flags_usuario(request)
     if es_visualizador:
         messages.info(request, "Eres Visualizador: solo puedes consultar dailies.")
@@ -473,22 +543,19 @@ def daily_personal(request):
 @login_required
 def daily_resumen(request):
     integrante, es_admin, es_visualizador, _ = _flags_usuario(request)
-    puede_filtrar = es_admin or es_visualizador  # admin y visualizador pueden filtrar/ver
+    puede_filtrar = es_admin or es_visualizador
 
     fecha_limite = datetime.now().date() - timedelta(days=7)
 
     if not puede_filtrar:
-        # Usuario normal: solo sus dailies
         registros = Daily.objects.filter(integrante=integrante, fecha__gte=fecha_limite).order_by("-fecha") if integrante else Daily.objects.none()
         integrantes = []
         persona_id = None
     else:
         if es_admin:
-            # Admin ve todo
             registros = Daily.objects.select_related("integrante__user").filter(fecha__gte=fecha_limite).order_by("-fecha")
             integrantes = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
         else:
-            # Visualizador/PO: restringir por proyectos autorizados
             proyectos = _proyectos_autorizados_qs(integrante)
             if not proyectos.exists():
                 registros = Daily.objects.none()
@@ -511,7 +578,6 @@ def daily_resumen(request):
                     .order_by("user__first_name", "user__last_name")
                 )
 
-        # Filtro por persona (respetando scope)
         persona_id = request.GET.get("persona")
         if persona_id:
             try:
@@ -535,22 +601,18 @@ def daily_resumen(request):
 def backlog_lista(request):
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    # Conmutador de agrupación (proyecto | epica | sprint | none)
     group_by  = request.GET.get("group", "epica")
-    expand_id = request.GET.get("expand")  # id del grupo a expandir (para "ver más")
+    expand_id = request.GET.get("expand")
 
-    # Base visible
     tareas = (
         _queryset_visible_tareas(integrante, puede_ver_todo)
         .select_related("sprint", "epica", "epica__proyecto")
         .prefetch_related("asignados__user")
     )
 
-    # Listas para filtros (acotadas para visualizador)
     sprints = Sprint.objects.all().order_by("inicio")
 
     if puede_ver_todo:
-        # Integrantes visibles: derivados de las tareas visibles (evita ver gente fuera del scope)
         ids_a = tareas.values_list("asignado_a_id", flat=True)
         ids_m = tareas.values_list("asignados__id", flat=True)
         ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
@@ -562,7 +624,6 @@ def backlog_lista(request):
         )
         integrantes = integrantes.order_by("user__first_name", "user__last_name").distinct()
 
-        # Épicas visibles
         epicas = Epica.objects.filter(tareas__isnull=False).distinct().order_by("titulo")
         if es_visualizador:
             epicas = _filtrar_por_proyectos_autorizados_epicas(epicas, integrante)
@@ -575,7 +636,6 @@ def backlog_lista(request):
             .order_by("titulo")
         )
 
-    # Filtros (solo si presiona “Filtrar”)
     aplicar_filtros = request.GET.get("filtrar") == "1"
     persona_id = request.GET.get("persona") if aplicar_filtros else None
     sprint_id  = request.GET.get("sprint")  if aplicar_filtros else None
@@ -604,7 +664,6 @@ def backlog_lista(request):
         elif estado == "cerradas":
             tareas = tareas.filter(completada=True)
 
-    # Orden estable según agrupación
     if group_by == "proyecto":
         tareas = tareas.order_by("epica__proyecto__nombre", "sprint__inicio", "categoria", "titulo")
     elif group_by == "epica":
@@ -614,7 +673,6 @@ def backlog_lista(request):
     else:
         tareas = tareas.order_by("sprint__inicio", "categoria", "titulo")
 
-    # Agrupación / Paginación
     grouped = None
     paginator = None
     PAGE_SIZE = 25
@@ -626,21 +684,20 @@ def backlog_lista(request):
                 k = t.epica.proyecto if (t.epica and hasattr(t.epica, "proyecto")) else None
             elif group_by == "epica":
                 k = t.epica
-            else:  # sprint
+            else:
                 k = t.sprint
             grouped.setdefault(k, []).append(t)
-        # Sin paginación global en modo agrupado (usamos "ver más" por grupo)
     else:
         paginator = Paginator(tareas, PAGE_SIZE)
         page_number = request.GET.get("page")
         tareas = paginator.get_page(page_number)
 
     return render(request, "backlog/backlog_lista.html", {
-        "tareas": tareas,                   # page o queryset
-        "grouped": grouped,                 # dict o None
+        "tareas": tareas,
+        "grouped": grouped,
         "group_by": group_by,
         "expand_id": expand_id,
-        "paginator": paginator,             # solo en modo plano
+        "paginator": paginator,
         "sprints": sprints,
         "integrantes": integrantes,
         "epicas": epicas,
@@ -662,7 +719,6 @@ def backlog_matriz(request):
     persona_id = request.GET.get("persona")
 
     if puede_ver_todo:
-        # Integrantes visibles derivados de tareas visibles si es visualizador
         ids_a = tareas.values_list("asignado_a_id", flat=True)
         ids_m = tareas.values_list("asignados__id", flat=True)
         ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
@@ -700,7 +756,6 @@ def backlog_matriz(request):
 
 @login_required
 def checklist_view(request, integrante_id):
-    """Checklist de tareas pendientes de un integrante"""
     integrante_obj = get_object_or_404(Integrante, id=integrante_id)
 
     try:
@@ -826,7 +881,6 @@ def sprint_delete(request, sprint_id):
 
 @login_required
 def daily_create_admin(request):
-    """Permite a un administrador registrar un Daily para cualquier integrante"""
     try:
         if not request.user.integrante.es_admin():
             messages.error(request, "❌ No tienes permisos para crear dailys de otros integrantes.")
@@ -863,7 +917,6 @@ def daily_create_admin(request):
 
 @login_required
 def eliminar_tarea(request, tarea_id):
-    """Eliminar una tarea - solo para administradores"""
     tarea = get_object_or_404(Tarea, id=tarea_id)
 
     try:
@@ -885,12 +938,11 @@ def eliminar_tarea(request, tarea_id):
     })
 
 # ==============================
-# Kanban (con épicas en contexto)
+# Kanban
 # ==============================
 
 @login_required
 def kanban_board(request):
-    """Vista Kanban con estados de workflow"""
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
     tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
 
@@ -910,7 +962,6 @@ def kanban_board(request):
             pass
 
     if puede_ver_todo:
-        # Integrantes del scope (si es visualizador) o todos (si admin)
         ids_a = tareas.values_list("asignado_a_id", flat=True)
         ids_m = tareas.values_list("asignados__id", flat=True)
         ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
@@ -945,7 +996,6 @@ def kanban_board(request):
         "puede_ver_todo": puede_ver_todo,
     })
 
-# views.py
 @login_required
 def cambiar_estado_tarea(request, tarea_id):
     if request.method != "POST":
@@ -960,30 +1010,26 @@ def cambiar_estado_tarea(request, tarea_id):
     try:
         data = json.loads(request.body)
         nuevo_estado = data.get("estado", "").upper()
-        observacion  = (data.get("observacion") or "").strip()  # ← NUEVO
+        observacion  = (data.get("observacion") or "").strip()
 
         estados_validos = ["NUEVO", "EN_PROGRESO", "COMPLETADO", "BLOQUEADO"]
         if nuevo_estado not in estados_validos:
             return JsonResponse({"error": "Estado no válido"}, status=400)
 
-        estado_anterior = tarea.estado  # ← NUEVO (para bitácora)
+        estado_anterior = tarea.estado
         tarea.estado = nuevo_estado
 
-        # Si pasa a completado: cerrar
         if nuevo_estado == "COMPLETADO":
             tarea.completada = True
             if not tarea.fecha_cierre:
                 tarea.fecha_cierre = now()
         else:
-            # Si sale de COMPLETADO o queremos reabrir explícito
             tarea.completada = False
             tarea.fecha_cierre = None
 
         tarea.save()
 
-        # ===== Bitácora con Evidencia cuando regresan a EN_PROGRESO =====
         if nuevo_estado == "EN_PROGRESO" and observacion:
-            from .models import Evidencia
             Evidencia.objects.create(
                 tarea=tarea,
                 comentario=f"[OBS ESTADO] {observacion}\n(De: {estado_anterior} → EN_PROGRESO)",
@@ -1008,9 +1054,6 @@ def cambiar_estado_tarea(request, tarea_id):
 
 @login_required
 def cambiar_categoria_tarea(request, tarea_id):
-    """
-    API para cambiar la categoría (UI/NUI/UNI/NUNI) desde la matriz de Eisenhower.
-    """
     if request.method != "POST":
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
@@ -1047,13 +1090,6 @@ def cambiar_categoria_tarea(request, tarea_id):
 
 @login_required
 def epica_list(request):
-    """
-    Lista todas las épicas visibles para el usuario actual.
-    - Admin: ve todas
-    - Visualizador/PO: solo proyectos autorizados
-    - Miembros normales: épicas donde participan
-    - Permite filtrar por proyecto (FK normalizado).
-    """
     integrante, admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
     if admin:
@@ -1096,7 +1132,6 @@ def epica_list(request):
         except ValueError:
             pass
 
-    # Proyectos listados en el filtro
     if admin:
         proyectos = Proyecto.objects.filter(activo=True).order_by("codigo")
     elif es_visualizador:
@@ -1112,7 +1147,6 @@ def epica_list(request):
         "proyectos": proyectos,
         "proyecto_id": proyecto_id,
     }
-
     return render(request, "backlog/epica_list.html", context)
 
 @login_required
@@ -1124,7 +1158,7 @@ def epica_create(request):
     if request.method == "POST":
         form = EpicaForm(request.POST)
         if form.is_valid():
-            epica = form.save()  # incluye M2M y owner
+            epica = form.save()
             messages.success(request, "✅ Épica creada correctamente.")
             return redirect("epica_detail", epica_id=epica.id)
         else:
@@ -1177,13 +1211,6 @@ def epica_delete(request, epica_id):
 
 @login_required
 def epica_detail(request, epica_id):
-    """
-    Muestra el detalle de una épica:
-    - Datos de la épica (proyecto, owners, sprints, KPIs)
-    - Tareas asociadas
-    - Avance calculado o manual
-    - Validación de permisos
-    """
     integrante, es_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
     epica = (
@@ -1193,14 +1220,12 @@ def epica_detail(request, epica_id):
         .get(pk=epica_id)
     )
 
-    # Visualizador/PO: validar scope de proyecto
     if es_visualizador and not es_admin:
         proyectos = _proyectos_autorizados_qs(integrante)
         if not proyectos.filter(id=getattr(epica.proyecto, "id", None)).exists():
             messages.error(request, "❌ No tienes permisos para ver esta épica.")
             return redirect("epica_list")
 
-    # Miembro normal: validar si participa
     if not puede_ver_todo and not es_visualizador:
         es_owner = bool(
             integrante and (
@@ -1215,7 +1240,6 @@ def epica_detail(request, epica_id):
             messages.error(request, "❌ No tienes permisos para ver esta épica.")
             return redirect("epica_list")
 
-    # ===== Tareas asociadas =====
     tareas_qs = (
         epica.tareas
         .select_related("asignado_a__user", "sprint")
@@ -1278,3 +1302,260 @@ def proyecto_create(request):
         form = ProyectoForm()
 
     return render(request, "backlog/proyecto_form.html", {"form": form})
+
+# ==============================
+# Bloques y Subtareas (CRUD)
+# ==============================
+
+@login_required
+def bloque_edit(request, bloque_id):
+    bloque = get_object_or_404(BloqueTarea.objects.select_related("tarea"), id=bloque_id)
+    tarea = bloque.tarea
+    integrante, _, _, _ = _flags_usuario(request)
+
+    if not _es_admin_neusi(integrante):
+        messages.error(request, "❌ No tienes permisos para editar bloques.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        form = BloqueTareaForm(request.POST, instance=bloque)
+        if form.is_valid():
+            bloque = form.save()
+            _sync_subtareas_fechas(bloque)  # sincroniza todas las subtareas del bloque
+            messages.success(request, "✏️ Bloque actualizado correctamente.")
+            return redirect("detalle_tarea", tarea_id=tarea.id)
+        messages.error(request, "⚠️ Revisa los campos del bloque.")
+    else:
+        form = BloqueTareaForm(instance=bloque)
+
+    return render(request, "backlog/bloque_form.html", {
+        "form": form,
+        "tarea": tarea,
+        "bloque": bloque,
+        "modo": "editar",
+    })
+@login_required
+def subtarea_create(request, bloque_id):
+    bloque = get_object_or_404(BloqueTarea.objects.select_related("tarea"), id=bloque_id)
+    tarea = bloque.tarea
+    integrante, es_admin, _, _ = _flags_usuario(request)
+
+    if not _puede_crud_subtareas(tarea, integrante):
+        messages.error(request, "❌ No tienes permisos para gestionar subtareas en esta tarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        form = SubtareaForm(
+            request.POST,
+            tarea=tarea,
+            bloque=bloque,
+            es_admin=es_admin,
+            instance=Subtarea(bloque=bloque),  # << clave
+        )
+        if form.is_valid():
+            form.save(commit=True)
+            messages.success(request, "✅ Subtarea creada correctamente.")
+            return redirect("detalle_tarea", tarea_id=tarea.id)
+        messages.error(request, "⚠️ Revisa los campos de la subtarea.")
+    else:
+        form = SubtareaForm(
+            tarea=tarea,
+            bloque=bloque,
+            es_admin=es_admin,
+            instance=Subtarea(bloque=bloque),  # << clave
+        )
+
+    return render(request, "backlog/subtarea_form.html", {
+        "form": form,
+        "tarea": tarea,
+        "bloque": bloque,
+        "modo": "crear",
+    })
+@login_required
+def subtarea_edit(request, subtarea_id):
+    subtarea = get_object_or_404(Subtarea.objects.select_related("bloque__tarea"), id=subtarea_id)
+    bloque = subtarea.bloque
+    tarea = bloque.tarea
+    integrante, _, _, _ = _flags_usuario(request)
+    es_admin = _es_admin_neusi(integrante)
+
+    if not _puede_crud_subtareas(tarea, integrante):
+        messages.error(request, "❌ No tienes permisos para gestionar subtareas en esta tarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        form = SubtareaForm(request.POST, instance=subtarea, tarea=tarea, bloque=bloque, es_admin=es_admin)
+        if form.is_valid():
+            obj = form.save(commit=True)  # fuerza bloque y fechas
+            messages.success(request, "✏️ Subtarea actualizada correctamente.")
+            return redirect("detalle_tarea", tarea_id=tarea.id)
+        messages.error(request, "⚠️ Revisa los campos de la subtarea.")
+    else:
+        form = SubtareaForm(instance=subtarea, tarea=tarea, bloque=bloque, es_admin=es_admin)
+
+    return render(request, "backlog/subtarea_form.html", {
+        "form": form,
+        "tarea": tarea,
+        "bloque": bloque,
+        "subtarea": subtarea,
+        "modo": "editar",
+    })
+
+@login_required
+def subtarea_delete(request, subtarea_id):
+    subtarea = get_object_or_404(Subtarea.objects.select_related("bloque__tarea"), id=subtarea_id)
+    tarea = subtarea.bloque.tarea
+    integrante, _, _, _ = _flags_usuario(request)
+
+    if not _puede_crud_subtareas(tarea, integrante):
+        messages.error(request, "❌ No tienes permisos para eliminar subtareas en esta tarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        subtarea.delete()
+        messages.success(request, "🗑️ Subtarea eliminada correctamente.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    return render(request, "backlog/subtarea_confirm_delete.html", {
+        "tarea": tarea,
+        "subtarea": subtarea,
+    })
+
+# ===== Subtareas: cambiar estado rápido =====
+@login_required
+def subtarea_cambiar_estado(request, subtarea_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    st = get_object_or_404(Subtarea.objects.select_related("bloque__tarea", "responsable"), id=subtarea_id)
+    tarea = st.bloque.tarea
+    integrante, es_admin, _, _ = _flags_usuario(request)
+
+    es_resp_macro = _es_responsable(tarea, integrante)
+    es_resp_st = (st.responsable_id == getattr(integrante, "id", None))
+    if not (es_admin or es_resp_macro or es_resp_st):
+        return JsonResponse({"error": "Sin permisos para cambiar estado."}, status=403)
+
+    try:
+        nuevo = (request.POST.get("estado") or "").upper()
+        validos = {c[0] for c in Subtarea.ESTADO_CHOICES}
+        if nuevo not in validos:
+            return JsonResponse({"error": "Estado no válido."}, status=400)
+        st.estado = nuevo
+        st.save(update_fields=["estado"])
+        return JsonResponse({"success": True, "estado": st.get_estado_display()})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ===== Evidencias por Subtarea =====
+from django.views.decorators.http import require_http_methods
+from django.core.exceptions import PermissionDenied
+
+def _puede_en_subtarea(subtarea, integrante, tarea) -> bool:
+    """Admin, responsable de la Tarea macro o responsable directo de la Subtarea."""
+    if _es_admin_neusi(integrante):
+        return True
+    if _es_responsable(tarea, integrante):
+        return True
+    return bool(integrante and subtarea.responsable_id == getattr(integrante, "id", None))
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def agregar_evidencia_subtarea(request, subtarea_id):
+    subtarea = get_object_or_404(Subtarea.objects.select_related("bloque__tarea"), id=subtarea_id)
+    tarea = subtarea.bloque.tarea
+    integrante, _, _, _ = _flags_usuario(request)
+
+    if not _puede_en_subtarea(subtarea, integrante, tarea):
+        messages.error(request, "❌ No tienes permisos para registrar evidencias en esta subtarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        comentario = (request.POST.get("comentario") or "").strip()
+        archivo = request.FILES.get("archivo")
+        if not comentario and not archivo:
+            messages.error(request, "⚠️ Agrega al menos un comentario o un archivo.")
+            return render(request, "backlog/subtarea_evidencia_form.html", {
+                "modo": "crear",
+                "tarea": tarea,
+                "subtarea": subtarea,
+                "evidencia": None,
+            })
+        EvidenciaSubtarea.objects.create(
+            subtarea=subtarea,
+            comentario=comentario or "",
+            archivo=archivo,
+            creado_por=request.user,
+        )
+        messages.success(request, "✅ Evidencia registrada en la subtarea.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    # GET: mostrar formulario
+    return render(request, "backlog/subtarea_evidencia_form.html", {
+        "modo": "crear",
+        "tarea": tarea,
+        "subtarea": subtarea,
+        "evidencia": None,
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def editar_evidencia_subtarea(request, subtarea_id, evid_id):
+    subtarea = get_object_or_404(Subtarea.objects.select_related("bloque__tarea"), id=subtarea_id)
+    tarea = subtarea.bloque.tarea
+    evidencia = get_object_or_404(EvidenciaSubtarea, id=evid_id, subtarea=subtarea)
+    integrante, _, _, _ = _flags_usuario(request)
+
+    if not _puede_en_subtarea(subtarea, integrante, tarea) and evidencia.creado_por_id != request.user.id:
+        messages.error(request, "❌ No tienes permisos para editar esta evidencia.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        comentario = (request.POST.get("comentario") or "").strip()
+        archivo = request.FILES.get("archivo")
+        if not comentario and not archivo and not evidencia.archivo:
+            messages.error(request, "⚠️ Debes dejar comentario o adjuntar archivo.")
+            return render(request, "backlog/subtarea_evidencia_form.html", {
+                "modo": "editar",
+                "tarea": tarea,
+                "subtarea": subtarea,
+                "evidencia": evidencia,
+            })
+        evidencia.comentario = comentario
+        if archivo:
+            evidencia.archivo = archivo
+        evidencia.save()
+        messages.success(request, "✏️ Evidencia actualizada.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    return render(request, "backlog/subtarea_evidencia_form.html", {
+        "modo": "editar",
+        "tarea": tarea,
+        "subtarea": subtarea,
+        "evidencia": evidencia,
+    })
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def eliminar_evidencia_subtarea(request, subtarea_id, evid_id):
+    subtarea = get_object_or_404(Subtarea.objects.select_related("bloque__tarea"), id=subtarea_id)
+    tarea = subtarea.bloque.tarea
+    evidencia = get_object_or_404(EvidenciaSubtarea, id=evid_id, subtarea=subtarea)
+    integrante, _, _, _ = _flags_usuario(request)
+
+    if not _puede_en_subtarea(subtarea, integrante, tarea) and evidencia.creado_por_id != request.user.id:
+        messages.error(request, "❌ No tienes permisos para eliminar esta evidencia.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    if request.method == "POST":
+        evidencia.delete()
+        messages.success(request, "🗑️ Evidencia eliminada.")
+        return redirect("detalle_tarea", tarea_id=tarea.id)
+
+    return render(request, "backlog/subtarea_evidencia_confirm_delete.html", {
+        "tarea": tarea,
+        "subtarea": subtarea,
+        "evidencia": evidencia,
+    })

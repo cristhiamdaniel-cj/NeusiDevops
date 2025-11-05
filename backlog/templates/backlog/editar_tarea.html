@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-
 {% load static %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'backlog/tarea_edit.css' %}?v=1">
-
+<style>
+  .soft-note{background:#fff7ed;border:1px solid #fde68a;border-radius:12px;padding:12px;margin-bottom:12px}
+  .dash{border:1px dashed #e5e7eb;border-radius:12px;padding:14px}
+</style>
 {% endblock %}
-
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2>✏️ Editar Tarea</h2>
-
   {% if request.user.is_authenticated %}
   <div class="text-end">
     <a href="{% url 'home' %}" class="btn btn-secondary">🏠 Home</a>
@@ -21,47 +21,113 @@
   {% endif %}
 </div>
 
-<div class="alert alert-warning">
-  ⚠️ Estás editando la tarea <strong>"{{ tarea.titulo }}"</strong>.
-  Los cambios serán visibles para todo el equipo.
+{% if solo_estado %}
+<div class="soft-note">
+  ℹ️ Solo puedes modificar el <strong>estado</strong> de esta Tarea Macro.
+  La edición de campos y bloques está restringida a roles administrativos.
 </div>
+{% endif %}
 
 <form method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
   {% csrf_token %}
+
   <div class="row g-3">
-    <div class="col-md-6">{{ form.epica.label_tag }} {{ form.epica }}</div>
-    <div class="col-md-6">{{ form.sprint.label_tag }} {{ form.sprint }}</div>
-
-    <div class="col-md-12">{{ form.titulo.label_tag }} {{ form.titulo }}</div>
-    <div class="col-md-12">{{ form.descripcion.label_tag }} {{ form.descripcion }}</div>
-    <div class="col-md-12">
-      {{ form.criterios_aceptacion.label_tag }} {{ form.criterios_aceptacion }}
-      {% if form.criterios_aceptacion.help_text %}
-        <small class="text-muted">{{ form.criterios_aceptacion.help_text }}</small>
-      {% endif %}
-    </div>
-
-    <div class="col-md-4">{{ form.categoria.label_tag }} {{ form.categoria }}</div>
-
-    <!-- 🔹 NUEVO: Estado (Kanban) -->
-    <div class="col-md-4">
-      {{ form.estado.label_tag }} {{ form.estado }}
-      {% if form.estado.help_text %}
-        <small class="text-muted">{{ form.estado.help_text }}</small>
-      {% endif %}
-    </div>
-
-    <div class="col-md-4">{{ form.esfuerzo_sp.label_tag }} {{ form.esfuerzo_sp }}</div>
-
-    <!-- 🔹 Responsables múltiples -->
-    <div class="col-md-12">
-      {{ form.asignados.label_tag }}
-      {{ form.asignados }}
-      {% if form.asignados.help_text %}
-        <small class="text-muted">{{ form.asignados.help_text }}</small>
-      {% endif %}
-    </div>
+    {# Si eres responsable, el form solo trae 'estado'. Si eres admin, trae todo. #}
+    {% for field in form %}
+      <div class="col-md-{% if field.name == 'estado' %}4{% else %}12{% endif %}">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+        {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+      </div>
+    {% endfor %}
   </div>
+
+  {# Bloques (solo admins NEUSI) #}
+  {% if puede_editar_bloques and formset %}
+    <hr class="my-4">
+    <div class="d-flex align-items-center justify-content-between">
+      <h4>🧱 Bloques de trabajo</h4>
+      <div class="text-muted">Agrega, edita o elimina rangos de fechas (bloques) de esta tarea macro.</div>
+    </div>
+
+    {{ formset.management_form }}
+    <div id="bloques-container" class="mt-3">
+      {% for f in formset.forms %}
+        <div class="dash mb-3" data-form-index="{{ forloop.counter0 }}">
+          {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+          <div class="row g-3">
+            <div class="col-sm-2">
+              <label class="form-label">Índice</label>
+              {{ f.indice }}
+              {% for e in f.indice.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">Nombre</label>
+              {{ f.nombre }}
+              {% for e in f.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-3">
+              <label class="form-label">Inicio</label>
+              {{ f.fecha_inicio }}
+              {% for e in f.fecha_inicio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-3">
+              <label class="form-label">Fin</label>
+              {{ f.fecha_fin }}
+              {% for e in f.fecha_fin.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+          {% if f.DELETE %}
+          <div class="mt-2 form-check">
+            <label class="form-check-label">
+              {{ f.DELETE }} Eliminar este bloque
+            </label>
+          </div>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="text-muted">No hay bloques aún. Puedes crear nuevos si lo requieres.</p>
+      {% endfor %}
+    </div>
+
+    {# plantilla para añadir filas por JS #}
+    <template id="bloque-empty-template">
+      <div class="dash mb-3" data-form-index="__index__">
+        {% for hidden in formset.empty_form.hidden_fields %}{{ hidden.as_widget|safe }}{% endfor %}
+        <div class="row g-3">
+          <div class="col-sm-2">
+            <label class="form-label">Índice</label>
+            {{ formset.empty_form.indice.as_widget|safe }}
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label">Nombre</label>
+            {{ formset.empty_form.nombre.as_widget|safe }}
+          </div>
+          <div class="col-sm-3">
+            <label class="form-label">Inicio</label>
+            {{ formset.empty_form.fecha_inicio.as_widget|safe }}
+          </div>
+          <div class="col-sm-3">
+            <label class="form-label">Fin</label>
+            {{ formset.empty_form.fecha_fin.as_widget|safe }}
+          </div>
+        </div>
+        {% if formset.can_delete %}
+        <div class="mt-2 form-check">
+          <label class="form-check-label">
+            {{ formset.empty_form.DELETE.as_widget|safe }} Eliminar este bloque
+          </label>
+        </div>
+        {% endif %}
+      </div>
+    </template>
+
+    <div class="d-flex gap-2 mt-2">
+      <button type="button" class="btn btn-outline-primary" id="btnAddBloque">➕ Añadir bloque</button>
+      <button type="button" class="btn btn-outline-secondary" id="btnAutoIndices"># Auto-indizar</button>
+    </div>
+  {% endif %}
 
   <div class="mt-4 d-flex gap-2">
     <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
@@ -74,4 +140,44 @@
   <a href="{% url 'backlog_lista' %}" class="btn btn-primary">📋 Backlog</a>
   <a href="{% url 'kanban_board' %}" class="btn btn-success">🧩 Kanban</a>
 </div>
+
+{% if puede_editar_bloques and formset %}
+<script>
+(function(){
+  function qs(s,c){return (c||document).querySelector(s)}
+  function qsa(s,c){return Array.from((c||document).querySelectorAll(s))}
+  const container = qs('#bloques-container');
+  const tmpl = qs('#bloque-empty-template');
+  const addBtn = qs('#btnAddBloque');
+  const autoBtn = qs('#btnAutoIndices');
+  const totalInput = qs('input[name="bloques-TOTAL_FORMS"]');
+  const maxInput = qs('input[name="bloques-MAX_NUM_FORMS"]');
+
+  if(!container || !tmpl || !totalInput) return;
+
+  function count(){ return qsa('.dash', container).length; }
+  function repl(html, i){ return html.replaceAll('__prefix__', i).replaceAll('__index__', i); }
+
+  addBtn.addEventListener('click', function(){
+    const max = maxInput && maxInput.value ? parseInt(maxInput.value,10) : null;
+    const c = count();
+    if(max !== null && c >= max){ alert('Límite de bloques alcanzado.'); return; }
+    const idx = parseInt(totalInput.value||"0",10);
+    const html = repl(tmpl.innerHTML, idx);
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html.trim();
+    container.appendChild(wrap.firstElementChild);
+    totalInput.value = String(idx+1);
+  });
+
+  autoBtn.addEventListener('click', function(){
+    let i = 1;
+    qsa('.dash', container).forEach(row=>{
+      const input = row.querySelector(`input[name^="bloques-"][name$="-indice"]`);
+      if(input) input.value = i++;
+    });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}
