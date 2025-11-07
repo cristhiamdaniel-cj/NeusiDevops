@@ -76,6 +76,16 @@ urlpatterns = [
     path("daily/eliminar/<int:daily_id>/", views.eliminar_daily, name="eliminar_daily"),  # Eliminar daily (solo admin)
     path("daily/nuevo/", views.daily_create_admin, name="daily_create_admin"),
 
+    # 📋 Líneas de Daily (DailyItem)
+    path("daily/<int:daily_id>/items/", views.daily_items_json, name="daily_items_json"),
+    path("daily/<int:daily_id>/items/create/", views.dailyitem_create, name="dailyitem_create"),
+    path("daily/items/<int:item_id>/edit/", views.dailyitem_edit, name="dailyitem_edit"),
+    path("daily/items/<int:item_id>/delete/", views.dailyitem_delete, name="dailyitem_delete"),
+
+    # 📊 Reporte de enlaces Daily (solo Admin)
+    path("reporte/enlaces-daily/", views.reporte_enlaces_daily, name="reporte_enlaces_daily"),
+
+
     # 📅 Sprints
     path("sprints/", views.sprint_list, name="sprint_list"),
     path("sprints/nuevo/", views.sprint_create, name="sprint_create"),
@@ -93,4 +103,10 @@ urlpatterns = [
     path("epicas/<int:epica_id>/editar/", views.epica_edit, name="epica_edit"),
     path("epicas/<int:epica_id>/eliminar/", views.epica_delete, name="epica_delete"),
     path("proyectos/nuevo/", views.proyecto_create, name="proyecto_create"),
+ 
+    # Opciones para combos de Daily
+    path("daily/opciones/tareas/", views.daily_tareas_opciones, name="daily_tareas_opciones"),
+    path("daily/opciones/subtareas/", views.daily_subtareas_opciones, name="daily_subtareas_opciones"),
+
 ]
+

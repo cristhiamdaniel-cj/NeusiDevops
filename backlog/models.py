@@ -2,7 +2,11 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from datetime import time as dtime
 
+def now_local_time():
+    # Evita usar lambda en defaults (no se serializa en migraciones)
+    return timezone.localtime().time()
 # ==============================
 # Validadores
 # ==============================
@@ -435,22 +439,202 @@ class Evidencia(models.Model):
 # Daily
 # ==============================
 class Daily(models.Model):
-    integrante = models.ForeignKey("Integrante", on_delete=models.CASCADE)
-    fecha = models.DateField(default=timezone.now)
-    hora = models.TimeField(default=timezone.now)  # callable OK
-    que_hizo_ayer = models.TextField()
-    que_hara_hoy = models.TextField()
+    """
+    Cabecera del Daily por integrante y fecha.
+    Conserva campos legacy, pero promueve registrar líneas en DailyItem.
+    """
+    integrante = models.ForeignKey("Integrante", on_delete=models.CASCADE, related_name="dailies")
+    fecha = models.DateField(default=timezone.localdate)
+    hora = models.TimeField(default=now_local_time) # hora de registro
+
+    # --- Legacy (compatibilidad). Puedes dejarlos vacíos si usas DailyItem. ---
+    que_hizo_ayer = models.TextField(blank=True, default="")
+    que_hara_hoy = models.TextField(blank=True, default="")
     impedimentos = models.TextField(blank=True, null=True)
 
-    # Marca si el registro fue fuera de ventana 5–9 AM
-    fuera_horario = models.BooleanField(default=False)
+    # Reglas de negocio
+    fuera_horario = models.BooleanField(default=False)  # se recalcula en save()
+
+    # Contexto opcional para filtros/reporte
+    sprint = models.ForeignKey("Sprint", on_delete=models.SET_NULL, null=True, blank=True, related_name="dailies")
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
+        db_table = "backlog_daily"        
+        managed = False                    
+        constraints = [
+            models.UniqueConstraint(fields=("integrante", "fecha"), name="uniq_daily_integrante_fecha"),
+        ]
+        indexes = [
+            models.Index(fields=["fecha"], name="idx_daily_fecha"),
+            models.Index(fields=["integrante", "fecha"], name="idx_daily_int_fec"),
+        ]
 
     def __str__(self):
         return f"Daily {self.integrante} - {self.fecha}"
 
+    # ---- Ventana de registro (5:00 a 9:00 hora local) ----
+    @staticmethod
+    def _en_ventana(hora_local: dtime) -> bool:
+        return dtime(5, 0, 0) <= hora_local <= dtime(9, 0, 0)
+
+    def save(self, *args, **kwargs):
+        # Recalcular fuera_horario automáticamente según hora de registro
+        h = self.hora or timezone.localtime().time()
+        self.fuera_horario = not self._en_ventana(h)
+        super().save(*args, **kwargs)
+
+    # ---- Métricas de alineación calculadas a partir de DailyItem ----
+    @property
+    def total_items(self) -> int:
+        return self.items.count()
+
+    @property
+    def alineacion(self) -> dict:
+        """
+        Retorna métricas de alineación:
+        {
+            'porcentaje': int,
+            'total': int,
+            'alineados': int,
+            'no_alineados': int,
+            'ids_no_alineados': [ids de DailyItem],
+        }
+        Regla:
+        - Item alineado si:
+          a) tiene tarea/subtarea
+          b) el responsable coincide con el integrante del daily
+          c) y (fecha del daily está dentro de [inicio..fin] del bloque/subtarea/tarea
+             o sprint del item == sprint del daily si ambos existen)
+        """
+        total = self.total_items
+        if total == 0:
+            return dict(porcentaje=0, total=0, alineados=0, no_alineados=0, ids_no_alineados=[])
+
+        no_ok = []
+        f = self.fecha
+        s_daily = self.sprint_id
+
+        qs = self.items.select_related("tarea", "subtarea", "subtarea__bloque", "subtarea__responsable", "tarea__asignado_a", "tarea__sprint")
+        for it in qs:
+            objetivo = it.subtarea or it.tarea
+            if not objetivo:
+                no_ok.append(it.id); continue
+
+            # Dueño esperado
+            responsable = getattr(objetivo, "responsable", None) or getattr(objetivo, "asignado_a", None)
+            ok_user = (responsable_id(objetivo) == self.integrante_id)
+
+            # Ventana temporal
+            ini, fin = fechas_objetivo(objetivo)
+            ok_fecha = (ini is not None and fin is not None and ini <= f <= fin)
+
+            # Sprint
+            s_item = getattr(objetivo, "sprint_id", None)
+            ok_sprint = (s_daily is not None and s_item is not None and s_daily == s_item)
+
+            if not (ok_user and (ok_fecha or ok_sprint)):
+                no_ok.append(it.id)
+
+        alineados = total - len(no_ok)
+        pct = round(100 * alineados / total)
+        return dict(
+            porcentaje=pct,
+            total=total,
+            alineados=alineados,
+            no_alineados=len(no_ok),
+            ids_no_alineados=no_ok,
+        )
+
+
+def responsable_id(obj) -> int | None:
+    # Subtarea: responsable_id ; Tarea: asignado_a_id (legacy)
+    rid = getattr(obj, "responsable_id", None)
+    if rid:
+        return rid
+    return getattr(obj, "asignado_a_id", None)
+
+
+def fechas_objetivo(obj):
+    """
+    Devuelve (inicio, fin) para validar la fecha del Daily.
+    - Subtarea: usa fecha_inicio/fecha_fin propios; si no, hereda del Bloque.
+    - Tarea: intenta inferir de bloques (si existen) o None/None.
+    """
+    from datetime import date
+    ini = getattr(obj, "fecha_inicio", None)
+    fin = getattr(obj, "fecha_fin", None)
+
+    # Si es Subtarea y no tiene fechas, usar rango del bloque
+    bloque = getattr(obj, "bloque", None)
+    if bloque is not None:
+        if ini is None and hasattr(bloque, "fecha_inicio"):
+            ini = bloque.fecha_inicio
+        if fin is None and hasattr(bloque, "fecha_fin"):
+            fin = bloque.fecha_fin
+
+    # Si es Tarea y no hay fechas, intentar obtener el min/max de sus bloques
+    if getattr(obj, "bloques", None) is not None and (ini is None or fin is None):
+        qs = obj.bloques.all()
+        if qs.exists():
+            min_ini = min((b.fecha_inicio for b in qs if b.fecha_inicio), default=None)
+            max_fin = max((b.fecha_fin for b in qs if b.fecha_fin), default=None)
+            ini = ini or min_ini
+            fin = fin or max_fin
+
+    # Fallback: sin información temporal
+    return ini, fin
+
+
+TIPO_ITEM = [
+    ("AYER", "Ayer"),
+    ("HOY", "Hoy"),
+]
+
+class DailyItem(models.Model):
+    """
+    Línea del Daily. Puede ser libre o enlazada a Tarea/Subtarea.
+    """
+    daily = models.ForeignKey(Daily, on_delete=models.CASCADE, related_name="items")
+    tipo = models.CharField(max_length=4, choices=TIPO_ITEM)
+    descripcion = models.TextField(blank=True, default="")
+
+    # Enlaces opcionales (mutuamente excluyentes)
+    tarea = models.ForeignKey("Tarea", on_delete=models.SET_NULL, null=True, blank=True, related_name="daily_items")
+    subtarea = models.ForeignKey("Subtarea", on_delete=models.SET_NULL, null=True, blank=True, related_name="daily_items")
+
+    # Esfuerzo/tiempo (opcional)
+    minutos = models.PositiveIntegerField(null=True, blank=True)
+
+    # Evidencia simple (URL) o integra luego tu modelo de Evidencia
+    evidencia_url = models.URLField(blank=True, default="")
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "backlog_dailyitem"     # nueva tabla
+        managed = False
+        indexes = [
+            models.Index(fields=["daily_id"], name="idx_ditem_daily"),
+            models.Index(fields=["tipo"], name="idx_ditem_tipo"),
+            models.Index(fields=["tarea_id"], name="idx_ditem_tarea"),
+            models.Index(fields=["subtarea_id"], name="idx_ditem_subtarea"),
+        ]
+
+    def __str__(self):
+        ref = self.subtarea or self.tarea or "Libre"
+        return f"[{self.tipo}] {ref} — {self.descripcion[:40]}"
+
+    def clean(self):
+        # Validación de exclusión: tarea XOR subtarea (o ninguna)
+        if self.tarea_id and self.subtarea_id:
+            raise ValidationError("Seleccione solo Tarea o Subtarea (no ambas).")
+
+    @property
+    def es_libre(self) -> bool:
+        return not (self.tarea_id or self.subtarea_id)
 # =====================================================================
 # Bloques y Subtareas dentro de Tarea (macro)
 # =====================================================================
@@ -476,7 +660,7 @@ class BloqueTarea(models.Model):
     class Meta:
         ordering = ['indice', 'id']
         unique_together = (('tarea', 'indice'),)
-        managed = True
+        managed = False
         db_table = "backlog_bloquetarea"
 
     def __str__(self):

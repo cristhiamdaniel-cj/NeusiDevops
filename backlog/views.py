@@ -13,7 +13,10 @@ from django.utils.timezone import localtime, now
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from django.db import transaction
-
+from django.views.decorators.http import require_http_methods, require_POST
+from django.forms.models import model_to_dict
+from django.utils.timezone import localtime
+from django.db import transaction
 from .models import (
     Tarea, Sprint, Integrante, Daily, Evidencia, Epica, Proyecto,
     BloqueTarea, Subtarea,EvidenciaSubtarea
@@ -464,6 +467,33 @@ def home(request):
 # ==============================
 # Daily
 # ==============================
+from datetime import datetime, timedelta
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.timezone import localtime
+from django.views.decorators.http import require_http_methods, require_POST
+
+# Modelos usados en este bloque
+from .models import Daily, DailyItem, Integrante, Tarea
+# Nota: este bloque usa helpers definidos en tu archivo:
+#   - en_ventana_daily(hora)
+#   - _flags_usuario(request)
+#   - _proyectos_autorizados_qs(integrante)
+
+
+# === Helper: obtener o crear el Daily del día actual ===
+def _get_or_create_today_daily(integrante):
+    """Devuelve el Daily de hoy (creándolo si no existe) respetando la unicidad."""
+    f_hoy = localtime().date()
+    daily, _ = Daily.objects.get_or_create(
+        integrante=integrante,
+        fecha=f_hoy,
+        defaults={}
+    )
+    return daily
+
 
 @login_required
 def daily_view(request, integrante_id=None):
@@ -487,6 +517,7 @@ def daily_view(request, integrante_id=None):
     fecha_actual = localtime().date()
     hora_actual = localtime().time()
 
+    # === Crear o actualizar cabecera del Daily ===
     if request.method == "POST":
         form = DailyForm(request.POST)
         if form.is_valid():
@@ -499,6 +530,7 @@ def daily_view(request, integrante_id=None):
                 for field, value in form.cleaned_data.items():
                     setattr(daily, field, value)
 
+            # Marcar fuera de horario
             if not en_ventana_daily(hora_actual):
                 daily.fuera_horario = True
                 messages.warning(
@@ -519,11 +551,15 @@ def daily_view(request, integrante_id=None):
         except Daily.DoesNotExist:
             form = DailyForm()
 
+    daily_actual = _get_or_create_today_daily(integrante)
+
     return render(request, "backlog/daily_form.html", {
         "form": form,
         "integrante": integrante,
+        "daily": daily_actual,
         "fecha_actual": localtime().strftime("%Y-%m-%d %H:%M"),
     })
+
 
 @login_required
 def daily_personal(request):
@@ -540,20 +576,24 @@ def daily_personal(request):
         messages.info(request, "Se creó tu perfil de integrante automáticamente.")
     return daily_view(request, integrante.id)
 
+
 @login_required
 def daily_resumen(request):
     integrante, es_admin, es_visualizador, _ = _flags_usuario(request)
     puede_filtrar = es_admin or es_visualizador
-
     fecha_limite = datetime.now().date() - timedelta(days=7)
 
     if not puede_filtrar:
-        registros = Daily.objects.filter(integrante=integrante, fecha__gte=fecha_limite).order_by("-fecha") if integrante else Daily.objects.none()
+        registros = Daily.objects.filter(
+            integrante=integrante, fecha__gte=fecha_limite
+        ).select_related("integrante__user", "sprint").order_by("-fecha") if integrante else Daily.objects.none()
         integrantes = []
         persona_id = None
     else:
         if es_admin:
-            registros = Daily.objects.select_related("integrante__user").filter(fecha__gte=fecha_limite).order_by("-fecha")
+            registros = Daily.objects.select_related(
+                "integrante__user", "sprint"
+            ).filter(fecha__gte=fecha_limite).order_by("-fecha")
             integrantes = Integrante.objects.select_related("user").all().order_by("user__first_name", "user__last_name")
         else:
             proyectos = _proyectos_autorizados_qs(integrante)
@@ -565,18 +605,12 @@ def daily_resumen(request):
                 ids_m2m = Tarea.objects.filter(epica__proyecto__in=proyectos).values_list("asignados__id", flat=True)
                 ids_integrantes = {i for i in list(ids_legacy) + list(ids_m2m) if i is not None}
 
-                registros = (
-                    Daily.objects
-                    .select_related("integrante__user")
-                    .filter(integrante_id__in=ids_integrantes, fecha__gte=fecha_limite)
-                    .order_by("-fecha")
-                )
-                integrantes = (
-                    Integrante.objects
-                    .select_related("user")
-                    .filter(id__in=ids_integrantes)
-                    .order_by("user__first_name", "user__last_name")
-                )
+                registros = Daily.objects.select_related(
+                    "integrante__user", "sprint"
+                ).filter(integrante_id__in=ids_integrantes, fecha__gte=fecha_limite).order_by("-fecha")
+                integrantes = Integrante.objects.select_related("user").filter(
+                    id__in=ids_integrantes
+                ).order_by("user__first_name", "user__last_name")
 
         persona_id = request.GET.get("persona")
         if persona_id:
@@ -586,6 +620,13 @@ def daily_resumen(request):
             except (ValueError, Integrante.DoesNotExist):
                 pass
 
+    # === Añadir métricas de alineación para visualización ===
+    for d in registros:
+        try:
+            d.metricas = d.alineacion
+        except Exception:
+            d.metricas = {'porcentaje': 0, 'alineados': 0, 'no_alineados': 0, 'total': 0, 'ids_no_alineados': []}
+
     return render(request, "backlog/daily_resumen.html", {
         "registros": registros,
         "integrantes": integrantes,
@@ -593,6 +634,316 @@ def daily_resumen(request):
         "puede_filtrar": puede_filtrar,
         "persona_id": persona_id if puede_filtrar else None,
     })
+
+
+# === CRUD de DailyItem (líneas) ===
+
+@login_required
+@require_POST
+def dailyitem_create(request, daily_id):
+    daily = get_object_or_404(Daily.objects.select_related("integrante"), id=daily_id)
+    owner = getattr(request.user, "integrante", None)
+    if not owner or (owner.id != daily.integrante_id and not owner.es_admin()):
+        return JsonResponse({"error": "Sin permisos para agregar líneas a este daily."}, status=403)
+
+    tipo = (request.POST.get("tipo") or "").upper()
+    descripcion = (request.POST.get("descripcion") or "").strip()
+    minutos = request.POST.get("minutos")
+    evidencia_url = (request.POST.get("evidencia_url") or "").strip()
+    tarea_id = request.POST.get("tarea_id")
+    subtarea_id = request.POST.get("subtarea_id")
+
+    if tipo not in {"AYER", "HOY"}:
+        return JsonResponse({"error": "Tipo inválido (debe ser AYER u HOY)."}, status=400)
+
+    if not descripcion and not tarea_id and not subtarea_id:
+        return JsonResponse({"error": "Debe indicar descripción o asociar una tarea/subtarea."}, status=400)
+
+    if tarea_id and subtarea_id:
+        return JsonResponse({"error": "Seleccione solo Tarea o Subtarea (no ambas)."}, status=400)
+
+    kwargs = dict(daily=daily, tipo=tipo, descripcion=descripcion, evidencia_url=evidencia_url or "")
+    if minutos:
+        try:
+            kwargs["minutos"] = int(minutos)
+        except ValueError:
+            return JsonResponse({"error": "Minutos debe ser numérico."}, status=400)
+
+    if tarea_id:
+        kwargs["tarea_id"] = tarea_id
+    if subtarea_id:
+        kwargs["subtarea_id"] = subtarea_id
+
+    item = DailyItem.objects.create(**kwargs)
+    return JsonResponse({"success": True, "item": {"id": item.id, "tipo": item.tipo, "descripcion": item.descripcion}})
+
+
+@login_required
+@require_http_methods(["POST"])
+def dailyitem_edit(request, item_id):
+    item = get_object_or_404(DailyItem.objects.select_related("daily__integrante"), id=item_id)
+    owner = getattr(request.user, "integrante", None)
+    if not owner or (owner.id != item.daily.integrante_id and not owner.es_admin()):
+        return JsonResponse({"error": "Sin permisos para editar esta línea."}, status=403)
+
+    tipo = (request.POST.get("tipo") or item.tipo).upper()
+    descripcion = (request.POST.get("descripcion") or item.descripcion).strip()
+    evidencia_url = (request.POST.get("evidencia_url") or item.evidencia_url).strip()
+    tarea_id = request.POST.get("tarea_id")
+    subtarea_id = request.POST.get("subtarea_id")
+    minutos_raw = request.POST.get("minutos")
+
+    if tipo not in {"AYER", "HOY"}:
+        return JsonResponse({"error": "Tipo inválido."}, status=400)
+
+    if tarea_id and subtarea_id:
+        return JsonResponse({"error": "Seleccione solo Tarea o Subtarea (no ambas)."}, status=400)
+
+    item.tipo = tipo
+    item.descripcion = descripcion
+    item.evidencia_url = evidencia_url
+
+    if minutos_raw is not None:
+        if minutos_raw == "":
+            item.minutos = None
+        else:
+            try:
+                item.minutos = int(minutos_raw)
+            except ValueError:
+                return JsonResponse({"error": "Minutos debe ser numérico."}, status=400)
+
+    if tarea_id is not None:
+        item.tarea_id = tarea_id or None
+    if subtarea_id is not None:
+        item.subtarea_id = subtarea_id or None
+
+    if item.tarea_id and item.subtarea_id:
+        return JsonResponse({"error": "Seleccione solo Tarea o Subtarea (no ambas)."}, status=400)
+
+    item.save()
+    return JsonResponse({"success": True})
+
+
+@login_required
+@require_POST
+def dailyitem_delete(request, item_id):
+    item = get_object_or_404(DailyItem.objects.select_related("daily__integrante"), id=item_id)
+    owner = getattr(request.user, "integrante", None)
+    if not owner or (owner.id != item.daily.integrante_id and not owner.es_admin()):
+        return JsonResponse({"error": "Sin permisos para eliminar esta línea."}, status=403)
+
+    item.delete()
+    return JsonResponse({"success": True})
+
+
+@login_required
+def daily_items_json(request, daily_id):
+    daily = get_object_or_404(Daily.objects.select_related("integrante__user"), id=daily_id)
+    owner = getattr(request.user, "integrante", None)
+    if not owner:
+        return JsonResponse({"error": "No autenticado."}, status=401)
+    if owner.id != daily.integrante_id and not (owner.es_admin() or owner.es_visualizador()):
+        return JsonResponse({"error": "Sin permisos para ver estas líneas."}, status=403)
+
+    items = (
+        DailyItem.objects
+        .filter(daily=daily)
+        .select_related("tarea", "subtarea")
+        .order_by("tipo", "id")
+        .values("id", "tipo", "descripcion", "minutos", "evidencia_url", "tarea_id", "subtarea_id")
+    )
+    return JsonResponse({"daily": daily.id, "integrante": str(daily.integrante), "items": list(items)})
+
+# backlog/views.py
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db.models import Q
+from django.shortcuts import render, redirect
+from datetime import datetime, timedelta
+
+@login_required
+def reporte_enlaces_daily(request):
+    """
+    Panel maestro (solo admins): lista Tareas/Subtareas y los dailies en los que se enlazaron.
+    Filtros:
+      - date_from, date_to (YYYY-MM-DD) | por defecto últimos 30 días
+      - integrante (id)
+      - include_closed=1 (incluye COMPLETADO/cerrada)
+    Muestra la descripción escrita para HOY con fallback:
+      DailyItem.descripcion  ->  si vacío, usa Daily.que_hara_hoy
+    """
+    integrante = getattr(request.user, "integrante", None)
+    if not integrante or not integrante.es_admin():
+        return redirect("home")
+
+    # ---- Filtros de fecha ----
+    today = timezone.localdate()
+    default_from = today - timedelta(days=30)
+    date_from_str = request.GET.get("date_from") or default_from.isoformat()
+    date_to_str   = request.GET.get("date_to")   or today.isoformat()
+    integrante_id = request.GET.get("integrante") or ""
+    include_closed = request.GET.get("include_closed") == "1"
+
+    def parse_date(s, fb):
+        try: return datetime.strptime(s, "%Y-%m-%d").date()
+        except Exception: return fb
+
+    date_from = parse_date(date_from_str, default_from)
+    date_to   = parse_date(date_to_str, today)
+
+    # ---- Base: solo líneas de HOY con enlace a tarea o subtarea en el rango ----
+    base = (
+        DailyItem.objects
+        .select_related(
+            "daily", "daily__integrante", "daily__sprint",
+            "tarea", "tarea__epica", "tarea__sprint", "tarea__asignado_a",
+            "subtarea", "subtarea__bloque", "subtarea__bloque__tarea", "subtarea__responsable",
+        )
+        .filter(
+            daily__fecha__gte=date_from,
+            daily__fecha__lte=date_to,
+            tipo="HOY",
+        )
+        .exclude(tarea__isnull=True, subtarea__isnull=True)
+    )
+
+    if integrante_id:
+        try:
+            base = base.filter(daily__integrante_id=int(integrante_id))
+        except ValueError:
+            pass
+
+    if not include_closed:
+        base = base.exclude(Q(tarea__estado="COMPLETADO") | Q(tarea__completada=True))
+        base = base.exclude(Q(subtarea__estado="cerrada") | Q(subtarea__estado="COMPLETADO"))
+
+    # ---- Agrupación por objetivo (tarea/subtarea) ----
+    grupos = {}
+
+    def add_enlace(clave, row, it):
+        bucket = grupos.setdefault(clave, {
+            "tipo": row["tipo"],                 # "TAREA" | "SUBTAREA"
+            "tarea_id": row.get("tarea_id"),
+            "tarea_titulo": row.get("tarea_titulo"),
+            "tarea_estado": row.get("tarea_estado"),
+            "tarea_sprint": row.get("tarea_sprint"),
+            "asignado": row.get("asignado"),
+            "subtarea_id": row.get("subtarea_id"),
+            "subtarea_titulo": row.get("subtarea_titulo"),
+            "subtarea_estado": row.get("subtarea_estado"),
+            "subtarea_bloque": row.get("subtarea_bloque"),
+            "enlaces": [],  # [{fecha, integrante, descripcion}]
+        })
+        # Fallback de descripción: DailyItem.descripcion -> Daily.que_hara_hoy
+        desc = (it.descripcion or it.daily.que_hara_hoy or "").strip()
+        bucket["enlaces"].append({
+            "fecha": it.daily.fecha.strftime("%b. %-d, %Y") if hasattr(it.daily.fecha, "strftime") else str(it.daily.fecha),
+            "integrante": str(it.daily.integrante),
+            "descripcion": desc,
+        })
+
+    for it in base.order_by("id"):
+        if it.subtarea_id:
+            st = it.subtarea
+            tarea_padre = getattr(st, "tarea", None)  # property en tu modelo Subtarea
+            row = {
+                "tipo": "SUBTAREA",
+                "subtarea_id": it.subtarea_id,
+                "subtarea_titulo": st.titulo if st else "",
+                "subtarea_estado": (st.estado if st else ""),
+                "subtarea_bloque": (st.bloque.etiqueta() if st and st.bloque else ""),
+                "tarea_id": getattr(tarea_padre, "id", None),
+                "tarea_titulo": getattr(tarea_padre, "titulo", ""),
+                "tarea_estado": getattr(tarea_padre, "estado", ""),
+                "tarea_sprint": str(getattr(tarea_padre, "sprint", "")) if tarea_padre else "",
+                "asignado": str(getattr(st, "responsable", "") or "—"),
+            }
+            add_enlace(("SUBTAREA", it.subtarea_id), row, it)
+
+        elif it.tarea_id:
+            t = it.tarea
+            row = {
+                "tipo": "TAREA",
+                "tarea_id": it.tarea_id,
+                "tarea_titulo": t.titulo if t else "",
+                "tarea_estado": (t.estado if t else ""),
+                "tarea_sprint": str(getattr(t, "sprint", "")) if t else "",
+                "asignado": (t.responsables_list if hasattr(t, "responsables_list") else (str(t.asignado_a) if t and t.asignado_a_id else "—")),
+                "subtarea_id": None,
+                "subtarea_titulo": "",
+                "subtarea_estado": "",
+                "subtarea_bloque": "",
+            }
+            add_enlace(("TAREA", it.tarea_id), row, it)
+
+    resultados = list(grupos.values())
+    resultados.sort(key=lambda r: (r["tipo"], (r.get("subtarea_titulo") or r.get("tarea_titulo") or "").lower()))
+
+    integrantes_opts = Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name")
+
+    return render(request, "backlog/reporte_enlaces_daily.html", {
+        "resultados": resultados,
+        "integrantes": integrantes_opts,
+        "date_from": date_from_str,
+        "date_to": date_to_str,
+        "sel_integrante": integrante_id,
+        "include_closed": include_closed,
+        "es_admin": True,
+    })
+
+# ==============================
+# Opciones para Daily (Tareas/Subtareas asignadas)
+# ==============================
+from django.views.decorators.http import require_GET
+
+@login_required
+@require_GET
+def daily_tareas_opciones(request):
+    """
+    Devuelve en JSON las Tareas asignadas al integrante actual
+    que NO están completadas (estado != COMPLETADO y completada=False).
+    """
+    integrante = getattr(request.user, "integrante", None)
+    if not integrante:
+        return JsonResponse({"results": []})
+
+    qs = (
+        Tarea.objects
+        .filter(
+            Q(asignado_a=integrante) | Q(asignados=integrante),
+            completada=False
+        )
+        .exclude(estado="COMPLETADO")
+        .select_related("sprint", "epica")
+        .distinct()
+        .order_by("sprint__inicio", "titulo")
+        .values("id", "titulo")
+    )
+    # Formato simple: [{id, titulo}]
+    return JsonResponse(list(qs), safe=False)
+
+
+@login_required
+@require_GET
+def daily_subtareas_opciones(request):
+    """
+    Devuelve en JSON las Subtareas asignadas al integrante actual
+    que NO están cerradas (estado != 'cerrada').
+    """
+    integrante = getattr(request.user, "integrante", None)
+    if not integrante:
+        return JsonResponse({"results": []})
+
+    qs = (
+        Subtarea.objects
+        .filter(responsable=integrante)
+        .exclude(estado="cerrada")  # estados definidos en ESTADO_SUBTAREA
+        .select_related("bloque__tarea")
+        .order_by("bloque__tarea__sprint__inicio", "bloque__indice", "id")
+        .values("id", "titulo")
+    )
+    # Formato simple: [{id, titulo}]
+    return JsonResponse(list(qs), safe=False)
 
 # ==============================
 # Backlog
@@ -710,45 +1061,99 @@ def backlog_lista(request):
         "epica_id": epica_id if aplicar_filtros else "",
     })
 
+#===========MATRIZ HZ================
+from django.utils import timezone
+from django.db.models import Q
+from django.shortcuts import render
+
+def _activos_por_defecto(qs, include_closed: bool, show_old: bool, sprint_id: str | None):
+    """
+    Aplica:
+      - ocultar COMPLETADO/completada salvo include_closed=1
+      - ocultar sprints viejos (fin < hoy-2d) salvo show_old=1
+      - filtrar por sprint si viene sprint_id
+    """
+    today = timezone.localdate()
+    limite = today - timezone.timedelta(days=2)
+
+    if not include_closed:
+        qs = qs.exclude(estado="COMPLETADO").exclude(completada=True)
+
+    if sprint_id:
+        qs = qs.filter(sprint_id=sprint_id)
+    else:
+        if not show_old:
+            qs = qs.filter(Q(sprint__fin__gte=limite) | Q(sprint__fin__isnull=True))
+
+    return qs.select_related("epica", "asignado_a", "sprint").order_by("-id")
+
+
 @login_required
 def backlog_matriz(request):
-    integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
+    """
+    Matriz Eisenhower (UI / NUI / UNI / NUNI).
+    - Usuarios no admin: solo ven sus tareas (asignado_a o en M2M asignados).
+    - Visualizadores: ven lo autorizado por proyecto.
+    - Admin: ven todo y pueden filtrar por persona.
+    """
+    integrante, es_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
 
-    tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
-    integrantes = []
-    persona_id = request.GET.get("persona")
+    include_closed = request.GET.get("include_closed") == "1"
+    show_old       = request.GET.get("show_old") == "1"
+    sprint_id      = request.GET.get("sprint") or ""
+    persona_id     = request.GET.get("persona") or ""
 
+    # Base según permisos (reusa la lógica central de visibilidad)
+    base = _queryset_visible_tareas(integrante, puede_ver_todo)
+
+    # Filtros por defecto (oculta cerradas y sprints viejos) + sprint específico
+    base = _activos_por_defecto(base, include_closed, show_old, sprint_id)
+
+    # Filtro por persona: habilitado para admin o visualizador
+    if (es_admin or es_visualizador) and persona_id:
+        try:
+            pid = int(persona_id)
+            base = base.filter(Q(asignado_a_id=pid) | Q(asignados__id=pid)).distinct()
+        except ValueError:
+            pass
+
+    # Cuadrantes
+    ui   = base.filter(categoria="UI")
+    nui  = base.filter(categoria="NUI")
+    uni  = base.filter(categoria="UNI")
+    nuni = base.filter(categoria="NUNI")
+
+    # Combos
+    sprints = Sprint.objects.order_by("-inicio", "-fin")
     if puede_ver_todo:
-        ids_a = tareas.values_list("asignado_a_id", flat=True)
-        ids_m = tareas.values_list("asignados__id", flat=True)
+        # Solo muestra integrantes que aparecen en las tareas visibles (reduce lista)
+        ids_a = base.values_list("asignado_a_id", flat=True)
+        ids_m = base.values_list("asignados__id", flat=True)
         ids_set = {i for i in list(ids_a) + list(ids_m) if i is not None}
-        integrantes = (
-            Integrante.objects.select_related("user")
-            .filter(id__in=ids_set) if es_visualizador else
-            Integrante.objects.select_related("user").all()
-        ).order_by("user__first_name", "user__last_name")
+        integrantes_opts = (
+            Integrante.objects
+            .select_related("user")
+            .filter(id__in=ids_set)
+            .order_by("user__first_name", "user__last_name")
+            .distinct()
+        )
+    else:
+        integrantes_opts = []
 
-        if persona_id:
-            try:
-                pid = int(persona_id)
-                tareas = tareas.filter(Q(asignados__id=pid) | Q(asignado_a__id=pid)).distinct()
-            except ValueError:
-                pass
-
-    cuadrantes = {
-        "ui":   tareas.filter(categoria__iexact="UI"),
-        "nui":  tareas.filter(categoria__iexact="NUI"),
-        "uni":  tareas.filter(categoria__iexact="UNI"),
-        "nuni": tareas.filter(categoria__iexact="NUNI"),
+    ctx = {
+        "ui": ui,
+        "nui": nui,
+        "uni": uni,
+        "nuni": nuni,
+        "tiene_permisos_admin": es_admin,
+        "integrantes": integrantes_opts,
+        "persona_id": persona_id if (es_admin or es_visualizador) else "",
+        "sprints": sprints,
+        "sprint_id": sprint_id,
+        "include_closed": include_closed,
+        "show_old": show_old,
     }
-
-    return render(request, "backlog/backlog_matriz.html", {
-        **cuadrantes,
-        "integrantes": integrantes,
-        "tiene_permisos_admin": tiene_permisos_admin,
-        "puede_ver_todo": puede_ver_todo,
-        "persona_id": persona_id,
-    })
+    return render(request, "backlog/backlog_matriz.html", ctx)
 
 # ==============================
 # Checklist de tareas
@@ -940,27 +1345,51 @@ def eliminar_tarea(request, tarea_id):
 # ==============================
 # Kanban
 # ==============================
-
 @login_required
 def kanban_board(request):
     integrante, tiene_permisos_admin, es_visualizador, puede_ver_todo = _flags_usuario(request)
     tareas = _queryset_visible_tareas(integrante, puede_ver_todo)
 
-    persona_id = request.GET.get("persona") if puede_ver_todo else None
-    epica_id = request.GET.get("epica") if puede_ver_todo else None
+    # ---- Filtros GET ----
+    persona_id     = request.GET.get("persona") if puede_ver_todo else None
+    epica_id       = request.GET.get("epica")   if puede_ver_todo else None
+    sprint_id      = request.GET.get("sprint") or ""
+    include_closed = request.GET.get("include_closed") == "1"   # por defecto NO ver cerradas
+    show_old       = request.GET.get("show_old") == "1"         # por defecto NO ver sprints viejos
 
+    # Persona (solo admin/visualizador)
     if persona_id and puede_ver_todo:
         try:
             pid = int(persona_id)
             tareas = tareas.filter(Q(asignados__id=pid) | Q(asignado_a__id=pid)).distinct()
         except ValueError:
             pass
+
+    # Épica (solo admin/visualizador)
     if epica_id and puede_ver_todo:
         try:
             tareas = tareas.filter(epica__id=int(epica_id))
         except ValueError:
             pass
 
+    # Sprint específico
+    if sprint_id:
+        try:
+            tareas = tareas.filter(sprint__id=int(sprint_id))
+        except ValueError:
+            pass
+    else:
+        # Ocultar sprints “viejos” si no se marca show_old
+        if not show_old:
+            hoy = timezone.localdate()
+            limite = hoy - timedelta(days=2)
+            tareas = tareas.filter(Q(sprint__fin__isnull=True) | Q(sprint__fin__gte=limite))
+
+    # Ocultar cerradas (COMPLETADO/completada) por defecto
+    if not include_closed:
+        tareas = tareas.exclude(estado__iexact="COMPLETADO").exclude(completada=True)
+
+    # ---- Combos ----
     if puede_ver_todo:
         ids_a = tareas.values_list("asignado_a_id", flat=True)
         ids_m = tareas.values_list("asignados__id", flat=True)
@@ -978,24 +1407,31 @@ def kanban_board(request):
         integrantes = []
         epicas = Epica.objects.filter(
             Q(tareas__asignados=integrante) | Q(tareas__asignado_a=integrante)
-        ).distinct()
+        ).distinct().order_by("titulo")
 
+    sprints = Sprint.objects.all().order_by("-inicio")
+
+    # ---- Columnas ----
     estados = {
-        "nuevo":        tareas.filter(estado__iexact="NUEVO"),
-        "en_progreso":  tareas.filter(estado__iexact="EN_PROGRESO"),
-        "completado":   tareas.filter(estado__iexact="COMPLETADO"),
-        "bloqueado":    tareas.filter(estado__iexact="BLOQUEADO"),
+        "nuevo":        tareas.filter(estado__iexact="NUEVO").order_by("-id"),
+        "en_progreso":  tareas.filter(estado__iexact="EN_PROGRESO").order_by("-id"),
+        "completado":   tareas.filter(estado__iexact="COMPLETADO").order_by("-id"),
+        "bloqueado":    tareas.filter(estado__iexact="BLOQUEADO").order_by("-id"),
     }
 
     return render(request, "backlog/kanban_board.html", {
         **estados,
         "integrantes": integrantes,
         "epicas": epicas,
+        "sprints": sprints,
         "persona_id": persona_id if puede_ver_todo else None,
         "tiene_permisos_admin": tiene_permisos_admin,
         "puede_ver_todo": puede_ver_todo,
+        "include_closed": include_closed,
+        "show_old": show_old,
+        "sprint_id": sprint_id,
     })
-
+    
 @login_required
 def cambiar_estado_tarea(request, tarea_id):
     if request.method != "POST":

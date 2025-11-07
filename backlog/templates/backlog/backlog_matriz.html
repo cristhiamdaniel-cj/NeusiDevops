@@ -56,32 +56,57 @@
   <div class="mb-3">
     <a href="{% url 'daily_personal' %}" class="btn btn-primary">📅 Mi Daily</a>
     <a href="{% url 'backlog_lista' %}" class="btn btn-secondary">📋 Ver en Lista</a>
+  </div>
 
-    {% if tiene_permisos_admin %}
-      <div style="margin-top: 15px; padding: 15px; background: #e9ecef; border-radius: 5px;">
-        <form method="get" style="display: inline-flex; align-items: center; gap: 15px;">
-          <label for="persona">Filtrar por persona:</label>
-          <select name="persona" id="persona" onchange="this.form.submit()">
-            <option value="">-- Todas las personas --</option>
+  <!-- ======= Filtros (por defecto oculta cerradas y sprints viejos) ======= -->
+  <div class="p-3 mb-3" style="background:#eef2ff;border-radius:10px;border:1px solid #dde3ff;">
+    <form method="get" class="row g-3 align-items-end">
+      {% if tiene_permisos_admin %}
+        <div class="col-12 col-md-3">
+          <label class="form-label">👤 Persona</label>
+          <select name="persona" class="form-select" onchange="this.form.submit()">
+            <option value="">— Todas —</option>
             {% for i in integrantes %}
               <option value="{{ i.id }}" {% if persona_id == i.id|stringformat:"s" %}selected{% endif %}>
                 {{ i.user.first_name }} {{ i.user.last_name }}
               </option>
             {% endfor %}
           </select>
-          {% if persona_id %}
-            <a href="{% url 'backlog_matriz' %}" class="btn btn-danger btn-sm">❌ Limpiar</a>
-          {% endif %}
-        </form>
+        </div>
+      {% endif %}
+
+      <div class="col-12 col-md-3">
+        <label class="form-label">🗓 Sprint</label>
+        <select name="sprint" class="form-select" onchange="this.form.submit()">
+          <option value="">— Actuales por defecto —</option>
+          {% for s in sprints %}
+            <option value="{{ s.id }}" {% if sprint_id == s.id|stringformat:"s" %}selected{% endif %}>
+              {{ s.nombre }} ({{ s.inicio }} — {{ s.fin }})
+            </option>
+          {% endfor %}
+        </select>
+        <div class="form-text">Por defecto se muestran sprints vigentes o con fin ≤ 2 días.</div>
       </div>
-    {% else %}
-      <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
-        <strong style="color: #856404;">📊 Vista Personal:</strong>
-        <span style="color: #856404;">Solo puedes ver tus tareas asignadas en la matriz.</span>
+
+      <div class="col-6 col-md-3 form-check mt-4">
+        <input class="form-check-input" type="checkbox" id="inc" name="include_closed" value="1" {% if include_closed %}checked{% endif %} onchange="this.form.submit()">
+        <label class="form-check-label" for="inc">Incluir tareas cerradas</label>
       </div>
-    {% endif %}
+
+      <div class="col-6 col-md-3 form-check mt-4">
+        <input class="form-check-input" type="checkbox" id="old" name="show_old" value="1" {% if show_old %}checked{% endif %} onchange="this.form.submit()">
+        <label class="form-check-label" for="old">Mostrar sprints antiguos</label>
+      </div>
+
+      {% if persona_id or sprint_id or include_closed or show_old %}
+        <div class="col-12">
+          <a href="{% url 'backlog_matriz' %}" class="btn btn-danger btn-sm">❌ Limpiar filtros</a>
+        </div>
+      {% endif %}
+    </form>
   </div>
 
+  <!-- ======= Cuadrantes ======= -->
   <div class="row g-3">
     <!-- UI -->
     <div class="col-md-6">
@@ -91,11 +116,9 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-
               {% if tarea.epica %}
                 <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
               {% endif %}
-
               👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
@@ -121,11 +144,9 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-
               {% if tarea.epica %}
                 <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
               {% endif %}
-
               👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
@@ -151,11 +172,9 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-
               {% if tarea.epica %}
                 <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
               {% endif %}
-
               👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
@@ -181,11 +200,9 @@
           <div class="card p-2 bg-white shadow-sm" draggable="true" data-id="{{ tarea.id }}">
             <div class="task-content">
               <strong>{{ tarea.titulo }}</strong><br>
-
               {% if tarea.epica %}
                 <a href="{% url 'epica_detail' tarea.epica.id %}" class="badge-epica">{{ tarea.epica.titulo }}</a><br>
               {% endif %}
-
               👤 {% if tarea.asignado_a %}{{ tarea.asignado_a }}{% else %}—{% endif %}<br>
               🗓 Sprint: {{ tarea.sprint }}
             </div>
@@ -232,7 +249,6 @@
         const nuevaCategoria = quad.id.toUpperCase(); // UI, NUI, UNI, NUNI
 
         // 🔹 Server: cambiar categoría (no estado)
-        // Crea la vista/URL: path("tarea/<int:tarea_id>/cambiar-categoria/", views.cambiar_categoria_tarea, name="cambiar_categoria_tarea")
         fetch(`/tarea/${tareaId}/cambiar-categoria/`, {
           method: 'POST',
           headers: {

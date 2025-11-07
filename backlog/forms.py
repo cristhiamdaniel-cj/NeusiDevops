@@ -10,6 +10,9 @@ from .models import (
 # ==============================
 # Daily
 # ==============================
+from django import forms
+from .models import Daily, DailyItem
+
 class DailyForm(forms.ModelForm):
     class Meta:
         model = Daily
@@ -21,19 +24,74 @@ class DailyForm(forms.ModelForm):
         }
         widgets = {
             "que_hizo_ayer": forms.Textarea(attrs={
-                "rows": 2, "class": "form-control",
+                "rows": 2,
+                "class": "form-control",
                 "placeholder": "Describe brevemente lo que completaste ayer..."
             }),
             "que_hara_hoy": forms.Textarea(attrs={
-                "rows": 2, "class": "form-control",
+                "rows": 2,
+                "class": "form-control",
                 "placeholder": "Indica lo que planeas trabajar hoy..."
             }),
             "impedimentos": forms.Textarea(attrs={
-                "rows": 2, "class": "form-control",
-                "placeholder": "Menciona si tienes bloqueos o impedimentos..."
+                "rows": 2,
+                "class": "form-control",
+                "placeholder": "Menciona si tienes bloqueos o impedimentos...(si no tienes, deja este campo en blanco)"
             }),
         }
 
+
+# ==============================
+# DailyItem (línea de daily)
+# ==============================
+class DailyItemForm(forms.ModelForm):
+    class Meta:
+        model = DailyItem
+        fields = [
+            "tipo",
+            "descripcion",
+            "tarea",
+            "subtarea",
+            "minutos",
+            "evidencia_url",
+        ]
+        labels = {
+            "tipo": "Tipo de actividad",
+            "descripcion": "Descripción o comentario",
+            "tarea": "Asociar a Tarea",
+            "subtarea": "Asociar a Subtarea",
+            "minutos": "Minutos dedicados",
+            "evidencia_url": "URL de evidencia (opcional)",
+        }
+        widgets = {
+            "tipo": forms.Select(
+                choices=[("AYER", "Ayer"), ("HOY", "Hoy")],
+                attrs={"class": "form-select"}
+            ),
+            "descripcion": forms.Textarea(attrs={
+                "rows": 2,
+                "class": "form-control",
+                "placeholder": "Describe brevemente la actividad realizada o planificada..."
+            }),
+            "tarea": forms.Select(attrs={"class": "form-select"}),
+            "subtarea": forms.Select(attrs={"class": "form-select"}),
+            "minutos": forms.NumberInput(attrs={
+                "class": "form-control", "min": 0, "placeholder": "Ej. 30"
+            }),
+            "evidencia_url": forms.URLInput(attrs={
+                "class": "form-control", "placeholder": "https://..."
+            }),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        tarea = cleaned.get("tarea")
+        subtarea = cleaned.get("subtarea")
+        if tarea and subtarea:
+            raise forms.ValidationError("Seleccione solo Tarea o Subtarea (no ambas).")
+        if not cleaned.get("descripcion") and not tarea and not subtarea:
+            raise forms.ValidationError("Debe indicar una descripción o asociar tarea/subtarea.")
+        return cleaned
 
 # ==============================
 # Tarea (macro)

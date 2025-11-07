@@ -8,401 +8,369 @@
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <link rel="stylesheet" href="{% static 'backlog/tarea_detail.css' %}?v=10">
-
   <style>
+    /* Fondo NEUSI */
+    body{
+      background: linear-gradient(180deg, #ede3ff 0%, #f9f7ff 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    }
+
+    /* Paleta */
     :root{
-      --neu-primary:#6C2BD9;
-      --neu-deep:#3B1D82;
-      --neu-pink:#E14D8B;
-      --neu-orange:#FF6A3D;
-      --neu-ink:#0f172a;
-      --neu-soft:#f6f7fb;
-      --neu-border:#e5e7eb;
-    }
-    body{background: linear-gradient(180deg, #5c23d6 0%, #6C2BD9 15%, #ffffff 15% 100%);}
-    .container-page{max-width:1160px;margin:32px auto;}
-    .neu-card{background:#fff;border:1px solid var(--neu-border);border-radius:16px;padding:20px}
-    .neu-section-title{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}
-    .neu-section-desc{color:#6b7280;font-size:.95rem;margin-bottom:1.2rem}
-    .neu-pill{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .7rem;border-radius:999px;background:#f3f4f6;border:1px solid var(--neu-border);font-size:.9rem}
-    .neu-badge{border:none;border-radius:999px;padding:.25rem .6rem}
-    .state-NUEVO{background:#EEF2FF;color:#3730a3}
-    .state-EN_PROGRESO{background:#DBEAFE;color:#1e40af}
-    .state-BLOQUEADO{background:#FEE2E2;color:#b91c1c}
-    .state-COMPLETADO{background:#DCFCE7;color:#166534}
-    .semaforo{font-weight:700;border-radius:999px;padding:.25rem .6rem}
-    .sem-verde{background:#DCFCE7;color:#14532d}
-    .sem-amarillo{background:#FEF9C3;color:#92400e}
-    .sem-rojo{background:#FEE2E2;color:#991b1b}
-    .btn-neu{--bs-btn-bg:var(--neu-primary);--bs-btn-border-color:var(--neu-primary);--bs-btn-hover-bg:#5a23c5;--bs-btn-hover-border-color:#5a23c5;--bs-btn-color:#fff}
-    .btn-neu-ghost{--bs-btn-color:var(--neu-primary);--bs-btn-border-color:var(--neu-primary);--bs-btn-hover-bg:rgba(108,43,217,.08);--bs-btn-hover-border-color:var(--neu-primary)}
-    .btn-neu-danger{--bs-btn-bg:#dc2626;--bs-btn-border-color:#dc2626;--bs-btn-hover-bg:#b91c1c;--bs-btn-hover-border-color:#b91c1c;--bs-btn-color:#fff}
-    .btn-neu-dark{--bs-btn-bg:#111827;--bs-btn-border-color:#111827;--bs-btn-hover-bg:#0b1220;--bs-btn-hover-border-color:#0b1220;--bs-btn-color:#fff}
-    .soft-block{background:#f9fafb;border:1px solid #eef2f7;border-radius:12px;padding:12px}
-    .muted{color:#64748b}
-    .grid{display:grid;gap:12px}
-    @media(min-width:992px){.grid.cols-2{grid-template-columns:1fr 1fr}}
-    .chip-ui{background:#fee2e2;border:1px solid #fecaca}
-    .chip-nui{background:#dcfce7;border:1px solid #bbf7d0}
-    .chip-uni{background:#fef9c3;border:1px solid #fde68a}
-    .chip-nuni{background:#e5e7eb;border:1px solid #d1d5db}
-
-    /* Acordeón de Subtareas */
-    .st-accordion .accordion-item{
-      border:1px dashed var(--neu-border);
-      border-radius:14px; overflow:hidden; background:#fff;
-    }
-    .st-accordion .accordion-button{
-      gap:.6rem; background:#ffffff; box-shadow:none !important;
-    }
-    .st-accordion .accordion-button:not(.collapsed){
-      background:linear-gradient(180deg,#faf5ff 0%, #ffffff 70%);
-      color:#111;
-    }
-    .st-accordion .st-head-line{
-      display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;
-    }
-    .st-accordion .st-meta{
-      margin-left:auto; font-size:.9rem; color:#64748b;
-      display:flex; gap:.55rem; align-items:center;
+      --neusi-purple: #5B3985;
+      --neusi-coral:  #FF6B6B;
+      --neusi-green:  #00C48C;
+      --neusi-blue:   #4BA3FF;
+      --border-soft:  #e9e9ef;
     }
 
-    /* Panel de evidencias dentro de la subtarea */
-    .ev-panel{border:1px solid var(--neu-border);border-left:6px solid var(--neu-primary);
-      background:linear-gradient(180deg,#faf5ff 0%, #ffffff 60%);border-radius:14px;overflow:hidden;}
-    .ev-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;
-      padding:.65rem .9rem;background:rgba(108,43,217,.08);border-bottom:1px solid var(--neu-border);}
-    .ev-title{display:flex;align-items:center;gap:.5rem;font-weight:700;color:var(--neu-deep)}
-    .ev-count{background:#fff;border:1px solid var(--neu-border);border-radius:999px;padding:.15rem .55rem;font-size:.85rem}
-    .ev-list{list-style:none;margin:0;padding:10px 14px}
-    .ev-item{position:relative;padding-left:18px;margin:10px 0 0}
-    .ev-item::before{content:"";position:absolute;left:6px;top:6px;bottom:-10px;width:2px;background:linear-gradient(#c4b5fd,#6C2BD9);opacity:.5;}
-    .ev-bullet{width:10px;height:10px;border-radius:999px;background:#6C2BD9;position:absolute;left:2px;top:6px;box-shadow:0 0 0 3px rgba(108,43,217,.15);}
-    .ev-card{background:#fff;border:1px solid var(--neu-border);border-radius:10px;padding:.6rem .75rem;margin-left:8px;}
-    .ev-meta{font-size:.85rem;color:#64748b}
+    /* Botones */
+    .btn-neusi      { background: var(--neusi-purple); color:#fff !important; border:none; border-radius:10px; font-weight:600; }
+    .btn-neusi:hover{ background: #4a2f6d; }
+    .btn-coral      { background: var(--neusi-coral);  color:#fff !important; border:none; border-radius:10px; font-weight:600; }
+    .btn-coral:hover{ background: #ff5252; }
+    .btn-green      { background: var(--neusi-green);  color:#fff !important; border:none; border-radius:10px; font-weight:600; }
+    .btn-green:hover{ background: #00a97b; }
+    .btn-blue       { background: var(--neusi-blue);   color:#fff !important; border:none; border-radius:10px; font-weight:600; }
+    .btn-blue:hover { background: #318ff0; }
+
+    /* Tarjetas */
+    .card{ border:none; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .soft-block{ background:#fff; border:1px solid var(--border-soft); border-radius:12px; padding:12px; }
+
+    /* Chips / badges */
+    .pill{ display:inline-flex; align-items:center; gap:.35rem; padding:.35rem .6rem; border-radius:999px; background:#f6f6fb; border:1px solid var(--border-soft); font-size:.92rem; }
+    .state{ border:none; border-radius:999px; padding:.25rem .6rem; font-weight:600; }
+    .state-nuevo{ background:#EEF2FF; color:#3730a3; }
+    .state-prog { background:#DBEAFE; color:#1e40af; }
+    .state-bloq { background:#FEE2E2; color:#b91c1c; }
+    .state-done { background:#DCFCE7; color:#166534; }
+
+    /* Métricas de alineación */
+    .align-badge{
+      display:inline-block; min-width:44px; text-align:center;
+      background:#efeaff; color:#3d2fb0; border-radius:999px; padding:.15rem .5rem; font-weight:700;
+    }
+    .mini-metric{ font-size:.9rem; color:#6c757d; }
+
+    /* Encabezados de secciones */
+    .section-title{ color:#3d2fb0; font-weight:700; }
   </style>
 </head>
 <body>
 
-  <div class="container-page px-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h1 class="text-dark fw-bold">📋 Detalle de Tarea</h1>
+  <div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title m-0">Detalle de Tarea</h2>
       {% if request.user.is_authenticated %}
       <div class="d-flex align-items-center gap-2">
-        <a href="{% url 'home' %}" class="btn btn-neu-dark">🏠 Home</a>
-        <span class="text-white px-2 py-1 rounded-3" style="background:rgba(0,0,0,.25)">{{ request.user.first_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn btn-neu-danger">🚪 Cerrar Sesión</a>
+        <a href="{% url 'home' %}" class="btn btn-neusi">Home</a>
+        <span class="fw-semibold ms-2 me-1">{{ request.user.first_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-coral">Cerrar sesión</a>
       </div>
       {% endif %}
     </div>
 
     {% for message in messages %}
-      <div class="alert alert-info neu-card py-2 mb-3">{{ message }}</div>
+      <div class="alert alert-info mb-3">{{ message }}</div>
     {% endfor %}
 
     <!-- =====================
-         🧾 CABECERA DE TAREA
+         CABECERA DE TAREA
          ===================== -->
-    <div class="neu-card mb-3">
-      <h2 class="mb-2">{{ tarea.titulo }}</h2>
-      <p class="neu-section-desc">Aquí puedes ver la información general, responsables y estado de la tarea principal. Desde esta sección puedes editar o cerrar la tarea macro cuando todo su flujo esté completado.</p>
+    <div class="card mb-4">
+      <div class="card-body">
+        <h3 class="mb-1">{{ tarea.titulo }}</h3>
+        <p class="text-muted mb-3">Información general, responsables y estado de la tarea macro.</p>
 
-      {% if tarea.epica %}
-        <p><strong>Épica:</strong>
-          <a href="{% url 'epica_detail' tarea.epica.id %}" class="neu-pill" style="background:#f3e8ff;border-color:#e9d5ff;color:#6b21a8">
-            {{ tarea.epica.titulo }}
-          </a>
+        {% if tarea.epica %}
+          <p class="mb-2">
+            <strong>Épica:</strong>
+            <a href="{% url 'epica_detail' tarea.epica.id %}" class="pill" style="background:#f3e8ff;border-color:#e9d5ff;color:#6b21a8">
+              {{ tarea.epica.titulo }}
+            </a>
+          </p>
+        {% endif %}
+
+        <p class="mb-2">
+          <strong>Categoría:</strong>
+          <span class="pill">
+            {{ tarea.get_categoria_display }}
+          </span>
         </p>
-      {% endif %}
 
-      <p><strong>Categoría:</strong>
-        <span class="neu-pill
-          {% if tarea.categoria == 'UI' %}chip-ui
-          {% elif tarea.categoria == 'NUI' %}chip-nui
-          {% elif tarea.categoria == 'UNI' %}chip-uni
-          {% else %}chip-nuni{% endif %}">
-          {{ tarea.get_categoria_display }}
-        </span>
-      </p>
+        <p class="mb-2">
+          <strong>Sprint:</strong>
+          {% if tarea.sprint %}
+            {{ tarea.sprint.inicio|date:"M d, Y" }} – {{ tarea.sprint.fin|date:"M d, Y" }}
+          {% else %}<span class="text-muted">—</span>{% endif %}
+        </p>
 
-      <p><strong>Sprint:</strong>
-        {% if tarea.sprint %}
-          {{ tarea.sprint.inicio|date:"M d, Y" }} – {{ tarea.sprint.fin|date:"M d, Y" }}
-        {% else %}
-          <span class="muted">—</span>
+        <!-- RESPONSABLES (único o varios) -->
+        <p class="mb-2">
+          <strong>Responsables:</strong>
+          {{ tarea.responsables_list|default:"—" }}
+        </p>
+
+        <p class="mb-3">
+          <strong>Estado:</strong>
+          <span class="state
+            {% if tarea.estado == 'NUEVO' %}state-nuevo
+            {% elif tarea.estado == 'EN_PROGRESO' %}state-prog
+            {% elif tarea.estado == 'BLOQUEADO' %}state-bloq
+            {% elif tarea.estado == 'COMPLETADO' %}state-done
+            {% endif %}">
+            {{ tarea.get_estado_display }}
+          </span>
+        </p>
+
+        {% if tarea.descripcion %}
+          <h6 class="fw-semibold mt-2 mb-1">Descripción</h6>
+          <div class="soft-block mb-2">{{ tarea.descripcion|linebreaks }}</div>
         {% endif %}
-      </p>
 
-      <p><strong>Responsables:</strong>
-        {% if tarea.asignados.all %}
-          {% for r in tarea.asignados.all %}
-            {{ r.user.first_name }} {{ r.user.last_name }}{% if not forloop.last %}, {% endif %}
-          {% endfor %}
-        {% elif tarea.asignado_a %}
-          {{ tarea.asignado_a.user.first_name }} {{ tarea.asignado_a.user.last_name }}
-        {% else %}
-          <span class="muted">—</span>
+        {% if tarea.criterios_aceptacion %}
+          <h6 class="fw-semibold mt-2 mb-1">Criterios de aceptación</h6>
+          <div class="soft-block mb-2">{{ tarea.criterios_aceptacion|linebreaks }}</div>
         {% endif %}
-      </p>
 
-      <p><strong>Estado workflow:</strong> {{ tarea.get_estado_display }}</p>
-      <p><strong>Completada:</strong> {% if tarea.completada %}✅ Sí{% else %}⏳ No{% endif %}</p>
-
-      {% if tarea.descripcion %}
-        <h5 class="fw-semibold mt-3">📝 Descripción</h5>
-        <div class="soft-block">{{ tarea.descripcion|linebreaks }}</div>
-      {% endif %}
-
-      {% if tarea.criterios_aceptacion %}
-        <h5 class="fw-semibold mt-3">✅ Criterios de Aceptación</h5>
-        <div class="soft-block">{{ tarea.criterios_aceptacion|linebreaks }}</div>
-      {% endif %}
-
-      {% if tarea.informe_cierre %}
-        <h5 class="fw-semibold mt-3">📄 Informe de Cierre</h5>
-        <a href="{{ tarea.informe_cierre.url }}" target="_blank" class="btn btn-neu">📥 Descargar Informe</a>
-      {% endif %}
-
-      <div class="d-flex gap-2 mt-3">
-        {% if puede_editar %}
-          <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-neu">✏️ Editar Tarea</a>
+        <!-- Métrica de alineación a nivel Tarea -->
+        {% if metricas_tarea %}
+          <div class="alert alert-info d-flex align-items-center justify-content-between mt-3">
+            <div>
+              <strong>Alineación Daily (tarea):</strong>
+              <span class="align-badge">{{ metricas_tarea.porcentaje }}%</span>
+              <span class="mini-metric ms-1">({{ metricas_tarea.alineados }}/{{ metricas_tarea.total }})</span>
+            </div>
+            <div class="text-muted mini-metric">Mide dailies vinculados a esta tarea o a sus subtareas.</div>
+          </div>
         {% endif %}
-        {% if not tarea.completada and puede_cerrar %}
-          <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-neu-ghost">✅ Cerrar Tarea</a>
-        {% endif %}
-        <a href="{% url 'backlog_lista' %}" class="btn btn-outline-secondary">📋 Volver al Backlog</a>
+
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          {% if puede_editar %}
+            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-neusi">Editar tarea</a>
+          {% endif %}
+          {% if not tarea.completada and puede_cerrar %}
+            <a href="{% url 'cerrar_tarea' tarea.id %}" class="btn btn-blue">Cerrar tarea</a>
+          {% endif %}
+          <a href="{% url 'backlog_lista' %}" class="btn btn-outline-secondary">Volver al Backlog</a>
+        </div>
       </div>
     </div>
 
     <!-- =====================
-         🧱 BLOQUES Y SUBTAREAS (con acordeón)
+         BLOQUES Y SUBTAREAS
          ===================== -->
-    <div class="neu-card mb-3">
-      <div class="neu-section-title">
-        <h3 class="mb-0">🧱 Bloques y Subtareas</h3>
-      </div>
-      <p class="neu-section-desc">Cada bloque representa una semana o fase del trabajo. Las subtareas aparecen colapsadas; despliega solo las que necesites para ver su detalle, evidencias y acciones.</p>
+    <div class="card mb-4">
+      <div class="card-body">
+        <h4 class="section-title mb-1">Bloques y Subtareas</h4>
+        <p class="text-muted">Cada bloque representa una fase. Despliega subtareas para ver detalle, evidencias y acciones.</p>
 
-      {% with bloques=tarea.bloques.all|dictsort:"indice" %}
-        {% if bloques %}
-          <div class="grid cols-2">
-            {% for bloque in bloques %}
-              <div class="soft-block">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <div>
-                    <strong>#{{ bloque.indice }}</strong> ·
-                    <span>{{ bloque.nombre|default:"Bloque" }}</span>
-                  </div>
-                  {% with s=bloque.semaforo %}
-                    <span class="semaforo {% if s == 'verde' %}sem-verde{% elif s == 'amarillo' %}sem-amarillo{% else %}sem-rojo{% endif %}">
-                      {{ s|title }}
-                    </span>
-                  {% endwith %}
-                </div>
+        {% with bloques=tarea.bloques.all|dictsort:"indice" %}
+          {% if bloques %}
+            <div class="row g-3">
+              {% for bloque in bloques %}
+                <div class="col-lg-6">
+                  <div class="soft-block h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div><strong>#{{ bloque.indice }}</strong> · {{ bloque.nombre|default:"Bloque" }}</div>
+                      {% with s=bloque.semaforo %}
+                        <span class="pill {% if s == 'verde' %}text-success{% elif s == 'amarillo' %}text-warning{% else %}text-danger{% endif %} fw-semibold" style="background:#f8f9fa;">
+                          {{ s|title }}
+                        </span>
+                      {% endwith %}
+                    </div>
 
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                  <span class="neu-pill">🗓️ {{ bloque.fecha_inicio|date:"d/m/Y" }} → {{ bloque.fecha_fin|date:"d/m/Y" }}</span>
-                  <span class="neu-pill">⏳ {{ bloque.dias_restantes }} día(s) restantes</span>
-                  <span class="neu-pill">📦 {{ bloque.subtareas.count }} subtarea(s)</span>
-                </div>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                      <span class="pill">Del {{ bloque.fecha_inicio|date:"d/m/Y" }} al {{ bloque.fecha_fin|date:"d/m/Y" }}</span>
+                      <span class="pill">{{ bloque.subtareas.count }} subtarea(s)</span>
+                    </div>
 
-                {% with qs=bloque.subtareas.all %}
-                  {% if qs %}
-                    <div class="accordion st-accordion" id="acc-bloque-{{ bloque.id }}">
-                      {% for st in qs %}
-                        <div class="accordion-item mb-2">
-                          <h2 class="accordion-header" id="st-h-{{ st.id }}">
-                            <button class="accordion-button collapsed" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#st-c-{{ st.id }}"
-                                    aria-expanded="false"
-                                    aria-controls="st-c-{{ st.id }}">
-                              <div class="st-head-line">
-                                <strong>{{ st.titulo }}</strong>
-                                <span class="neu-badge state-{{ st.estado }}">{{ st.get_estado_display }}</span>
-                                {% with evcount=st.evidencias.all|length %}
-                                  <span class="neu-pill">📎 {{ evcount }} evidencia(s)</span>
-                                {% endwith %}
-                              </div>
-                              <div class="st-meta">
-                                {% if st.responsable %}👤 {{ st.responsable.user.first_name }} {{ st.responsable.user.last_name }}{% endif %}
-                                {% if st.fecha_inicio or st.fecha_fin %}
-                                  <span>· 🗓️
-                                  {% if st.fecha_inicio %}{{ st.fecha_inicio|date:"d/m" }}{% endif %}
-                                  {% if st.fecha_fin %} → {{ st.fecha_fin|date:"d/m" }}{% endif %}
+                    {% with qs=bloque.subtareas.all %}
+                      {% if qs %}
+                        <div class="accordion" id="acc-bloque-{{ bloque.id }}">
+                          {% for st in qs %}
+                            <div class="accordion-item mb-2 border-0">
+                              <h2 class="accordion-header" id="st-h-{{ st.id }}">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#st-c-{{ st.id }}"
+                                        aria-expanded="false"
+                                        aria-controls="st-c-{{ st.id }}">
+                                  <div class="me-auto">
+                                    <div class="fw-semibold">{{ st.titulo }}</div>
+                                    <!-- Alineación por Subtarea (si viene desde la vista) -->
+                                    {% if st.metricas %}
+                                      <div class="mini-metric">
+                                        <span class="align-badge">{{ st.metricas.porcentaje }}%</span>
+                                        <span class="ms-1">Alineación ({{ st.metricas.alineados }}/{{ st.metricas.total }})</span>
+                                      </div>
+                                    {% endif %}
+                                  </div>
+                                  <span class="state
+                                    {% if st.estado == 'pendiente' %}state-nuevo
+                                    {% elif st.estado == 'en_progreso' %}state-prog
+                                    {% elif st.estado == 'entregada' %}state-prog
+                                    {% elif st.estado == 'cerrada' %}state-done
+                                    {% endif %}">
+                                    {{ st.get_estado_display }}
                                   </span>
-                                {% endif %}
-                              </div>
-                            </button>
-                          </h2>
-
-                          <div id="st-c-{{ st.id }}" class="accordion-collapse collapse" aria-labelledby="st-h-{{ st.id }}" data-bs-parent="#acc-bloque-{{ bloque.id }}">
-                            <div class="accordion-body">
-                              {% if st.fecha_inicio or st.fecha_fin %}
-                                <div class="muted mb-1">
-                                  <strong>Rango dentro del bloque:</strong>
-                                  {% if st.fecha_inicio %}{{ st.fecha_inicio|date:"d/m/Y" }}{% else %}—{% endif %} →
-                                  {% if st.fecha_fin %}{{ st.fecha_fin|date:"d/m/Y" }}{% else %}—{% endif %}
-                                </div>
-                              {% endif %}
-
-                              <div class="mb-1">
-                                {% if st.esfuerzo_sp %}<strong>SP:</strong> {{ st.esfuerzo_sp }} · {% endif %}
-                                <strong>Estado:</strong> {{ st.get_estado_display }}
-                              </div>
-
-                              {% if st.descripcion %}
-                                <div class="soft-block mb-2">{{ st.descripcion|linebreaks }}</div>
-                              {% endif %}
-
-                              {# Evidencias de la Subtarea #}
-                              {% with evs=st.evidencias.all %}
-                                <div class="ev-panel mb-2">
-                                  <div class="ev-header">
-                                    <div class="ev-title">📎 Evidencias de esta subtarea</div>
-                                    <span class="ev-count">{{ evs|length }} ítem(s)</span>
+                                </button>
+                              </h2>
+                              <div id="st-c-{{ st.id }}" class="accordion-collapse collapse" aria-labelledby="st-h-{{ st.id }}" data-bs-parent="#acc-bloque-{{ bloque.id }}">
+                                <div class="accordion-body">
+                                  <div class="text-muted mb-2">
+                                    {% if st.responsable %}<strong>Responsable:</strong> {{ st.responsable.user.first_name }} {{ st.responsable.user.last_name }} · {% endif %}
+                                    {% if st.fecha_inicio or st.fecha_fin %}
+                                      <strong>Rango:</strong>
+                                      {% if st.fecha_inicio %}{{ st.fecha_inicio|date:"d/m/Y" }}{% else %}—{% endif %} →
+                                      {% if st.fecha_fin %}{{ st.fecha_fin|date:"d/m/Y" }}{% else %}—{% endif %}
+                                    {% endif %}
                                   </div>
 
-                                  {% if evs %}
-                                    <ul class="ev-list">
-                                      {% for ev in evs|dictsortreversed:"creado_en" %}
-                                        <li class="ev-item">
-                                          <span class="ev-bullet"></span>
-                                          <div class="ev-card">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                              <div>
-                                                <div class="ev-meta">
-                                                  👤 {{ ev.creado_por.first_name|default:ev.creado_por.username }}
-                                                  · 📅 {{ ev.creado_en|date:"d/m/Y H:i" }}
+                                  {% if st.descripcion %}
+                                    <div class="soft-block mb-2">{{ st.descripcion|linebreaks }}</div>
+                                  {% endif %}
+
+                                  <!-- Evidencias de Subtarea -->
+                                  {% with evs=st.evidencias.all %}
+                                    <div class="soft-block mb-2">
+                                      <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-semibold">Evidencias</div>
+                                        <span class="pill bg-white">{{ evs|length }} ítem(s)</span>
+                                      </div>
+
+                                      {% if evs %}
+                                        <ul class="list-group list-group-flush">
+                                          {% for ev in evs|dictsortreversed:"creado_en" %}
+                                            <li class="list-group-item px-0">
+                                              <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                  <div class="text-muted small mb-1">
+                                                    {{ ev.creado_por.first_name|default:ev.creado_por.username }} · {{ ev.creado_en|date:"d/m/Y H:i" }}
+                                                  </div>
+                                                  {% if ev.comentario %}<div>{{ ev.comentario|linebreaks }}</div>{% endif %}
+                                                  {% if ev.archivo %}
+                                                    <div class="mt-2">
+                                                      <a href="{{ ev.archivo.url }}" target="_blank" class="btn btn-neusi btn-sm">Descargar</a>
+                                                    </div>
+                                                  {% endif %}
                                                 </div>
-                                                {% if ev.comentario %}
-                                                  <div class="mt-1">{{ ev.comentario|linebreaks }}</div>
-                                                {% endif %}
-                                                {% if ev.archivo %}
-                                                  <div class="mt-2">
-                                                    <a href="{{ ev.archivo.url }}" target="_blank" class="btn btn-neu btn-sm">📥 Descargar</a>
+                                                {% if tiene_permisos_admin or es_responsable or ev.creado_por_id == request.user.id %}
+                                                  <div class="d-flex gap-2">
+                                                    <a href="{% url 'editar_evidencia_subtarea' st.id ev.id %}" class="btn btn-outline-secondary btn-sm">Editar</a>
+                                                    <form method="post" action="{% url 'eliminar_evidencia_subtarea' st.id ev.id %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta evidencia?')">
+                                                      {% csrf_token %}
+                                                      <button type="submit" class="btn btn-coral btn-sm">Eliminar</button>
+                                                    </form>
                                                   </div>
                                                 {% endif %}
                                               </div>
-                                              {% if tiene_permisos_admin or es_responsable or ev.creado_por_id == request.user.id %}
-                                                <div class="d-flex gap-2">
-                                                  <a href="{% url 'editar_evidencia_subtarea' st.id ev.id %}" class="btn btn-outline-secondary btn-sm">✏️ Editar</a>
-                                                  <form method="post" action="{% url 'eliminar_evidencia_subtarea' st.id ev.id %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta evidencia?')">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-neu-danger btn-sm">🗑️ Eliminar</button>
-                                                  </form>
-                                                </div>
-                                              {% endif %}
-                                            </div>
-                                          </div>
-                                        </li>
-                                      {% endfor %}
-                                    </ul>
-                                  {% else %}
-                                    <div class="p-3"><span class="muted">No hay evidencias en esta subtarea.</span></div>
-                                  {% endif %}
+                                            </li>
+                                          {% endfor %}
+                                        </ul>
+                                      {% else %}
+                                        <div class="text-muted">No hay evidencias en esta subtarea.</div>
+                                      {% endif %}
 
-                                  {% if tiene_permisos_admin or es_responsable %}
-                                    <div class="px-3 pb-3">
-                                      <a class="btn btn-neu btn-sm" href="{% url 'agregar_evidencia_subtarea' st.id %}">➕ Agregar evidencia</a>
+                                      {% if tiene_permisos_admin or es_responsable %}
+                                        <div class="pt-2">
+                                          <a class="btn btn-neusi btn-sm" href="{% url 'agregar_evidencia_subtarea' st.id %}">Agregar evidencia</a>
+                                        </div>
+                                      {% endif %}
                                     </div>
-                                  {% endif %}
-                                </div>
-                              {% endwith %}
+                                  {% endwith %}
 
-                              <div class="d-flex flex-wrap gap-2">
-                                {% if tiene_permisos_admin or es_responsable %}
-                                  <a class="btn btn-outline-secondary" href="{% url 'subtarea_edit' st.id %}">✏️ Editar subtarea</a>
-                                  <form method="post" action="{% url 'subtarea_delete' st.id %}" onsubmit="return confirm('¿Eliminar subtarea?')" class="d-inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-neu-danger">🗑️ Eliminar</button>
-                                  </form>
-                                {% endif %}
+                                  <div class="d-flex flex-wrap gap-2">
+                                    {% if tiene_permisos_admin or es_responsable %}
+                                      <a class="btn btn-outline-secondary" href="{% url 'subtarea_edit' st.id %}">Editar subtarea</a>
+                                      <form method="post" action="{% url 'subtarea_delete' st.id %}" onsubmit="return confirm('¿Eliminar subtarea?')" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-coral">Eliminar</button>
+                                      </form>
+                                    {% endif %}
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          {% endfor %}
                         </div>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <div class="muted">No hay subtareas en este bloque.</div>
-                  {% endif %}
-                {% endwith %}
+                      {% else %}
+                        <div class="text-muted">No hay subtareas en este bloque.</div>
+                      {% endif %}
+                    {% endwith %}
 
-                <div class="mt-2 d-flex gap-2">
-                  {% if tiene_permisos_admin or es_responsable %}
-                    <a href="{% url 'subtarea_create' bloque.id %}" class="btn btn-outline-secondary">➕ Añadir subtarea</a>
-                  {% endif %}
-                  {% if tiene_permisos_admin %}
-                    <a href="{% url 'bloque_edit' bloque.id %}" class="btn btn-outline-secondary">✏️ Editar bloque</a>
-                  {% endif %}
+                    <div class="mt-2 d-flex gap-2">
+                      {% if tiene_permisos_admin or es_responsable %}
+                        <a href="{% url 'subtarea_create' bloque.id %}" class="btn btn-outline-secondary">Añadir subtarea</a>
+                      {% endif %}
+                      {% if tiene_permisos_admin %}
+                        <a href="{% url 'bloque_edit' bloque.id %}" class="btn btn-outline-secondary">Editar bloque</a>
+                      {% endif %}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p class="muted fst-italic mb-0">Esta tarea macro aún no tiene bloques configurados.</p>
-        {% endif %}
-      {% endwith %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted fst-italic mb-0">Esta tarea macro aún no tiene bloques configurados.</p>
+          {% endif %}
+        {% endwith %}
+      </div>
     </div>
 
     <!-- =====================
-         📎 EVIDENCIAS (MACRO)
+         EVIDENCIAS (MACRO)
          ===================== -->
-    <div class="neu-card">
-      <div class="neu-section-title">
-        <h3 class="mb-0">📎 Evidencias</h3>
-      </div>
-      <p class="neu-section-desc">Estas evidencias corresponden a entregables finales o soportes que validan el cumplimiento de la tarea completa. Se deben registrar una vez todas las subtareas estén completadas o al cierre del proceso.</p>
+    <div class="card">
+      <div class="card-body">
+        <h4 class="section-title mb-1">Evidencias de la Tarea</h4>
+        <p class="text-muted">Soportes finales que validan el cumplimiento de la tarea macro.</p>
 
-      {% if not tarea.completada %}
-        {% if tiene_permisos_admin or puede_editar %}
-          <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data" class="row g-2">
-            {% csrf_token %}
-            <div class="col-12">
-              {{ form.comentario.label_tag }}
-              {{ form.comentario }}
-            </div>
-            <div class="col-12 col-md-6">
-              {{ form.archivo.label_tag }}
-              {{ form.archivo }}
-            </div>
-            <div class="col-12">
-              <button type="submit" class="btn btn-neu mt-1">📎 Agregar Evidencia</button>
-            </div>
-          </form>
-        {% else %}
-          <p class="muted mb-2">No tienes permisos para agregar evidencias en esta tarea.</p>
-        {% endif %}
-      {% else %}
-        <p class="muted mb-2">La tarea está completada; no se pueden agregar nuevas evidencias.</p>
-      {% endif %}
-
-      {% for evidencia in evidencias %}
-        <div class="soft-block mt-2">
-          <div class="d-flex justify-content-between align-items-start">
-            <p class="mb-1">
-              <strong>👤 {{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</strong> ·
-              📅 {{ evidencia.creado_en|date:"d/m/Y H:i" }}
-            </p>
-            {% if tiene_permisos_admin or es_responsable or evidencia.creado_por_id == request.user.id %}
-              <div class="d-flex gap-2">
-                <a href="{% url 'editar_evidencia' tarea.id evidencia.id %}" class="btn btn-outline-secondary btn-sm">✏️ Editar</a>
-                <form method="post" action="{% url 'eliminar_evidencia' tarea.id evidencia.id %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta evidencia?')">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-neu-danger btn-sm">🗑️ Eliminar</button>
-                </form>
+        {% if not tarea.completada %}
+          {% if tiene_permisos_admin or puede_editar %}
+            <form method="post" action="{% url 'agregar_evidencia' tarea.id %}" enctype="multipart/form-data" class="row g-2 mb-3">
+              {% csrf_token %}
+              <div class="col-12">{{ form.comentario.label_tag }}{{ form.comentario }}</div>
+              <div class="col-12 col-md-6">{{ form.archivo.label_tag }}{{ form.archivo }}</div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-neusi mt-1">Agregar evidencia</button>
               </div>
-            {% endif %}
+            </form>
+          {% else %}
+            <p class="text-muted mb-2">No tienes permisos para agregar evidencias en esta tarea.</p>
+          {% endif %}
+        {% else %}
+          <p class="text-muted mb-2">La tarea está completada; no se pueden agregar nuevas evidencias.</p>
+        {% endif %}
+
+        {% for evidencia in evidencias %}
+          <div class="soft-block mt-2">
+            <div class="d-flex justify-content-between align-items-start">
+              <p class="mb-1">
+                <strong>{{ evidencia.creado_por.first_name|default:evidencia.creado_por.username }}</strong> · {{ evidencia.creado_en|date:"d/m/Y H:i" }}
+              </p>
+              {% if tiene_permisos_admin or es_responsable or evidencia.creado_por_id == request.user.id %}
+                <div class="d-flex gap-2">
+                  <a href="{% url 'editar_evidencia' tarea.id evidencia.id %}" class="btn btn-outline-secondary btn-sm">Editar</a>
+                  <form method="post" action="{% url 'eliminar_evidencia' tarea.id evidencia.id %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta evidencia?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-coral btn-sm">Eliminar</button>
+                  </form>
+                </div>
+              {% endif %}
+            </div>
+            {% if evidencia.comentario %}<p class="mb-1">{{ evidencia.comentario|linebreaks }}</p>{% endif %}
+            {% if evidencia.archivo %}<a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-neusi btn-sm">Descargar archivo</a>{% endif %}
           </div>
-          {% if evidencia.comentario %}<p class="mb-1">{{ evidencia.comentario|linebreaks }}</p>{% endif %}
-          {% if evidencia.archivo %}<a href="{{ evidencia.archivo.url }}" target="_blank" class="btn btn-neu btn-sm">📥 Descargar Archivo</a>{% endif %}
-        </div>
-      {% empty %}
-        <p class="muted fst-italic mb-0">No hay evidencias registradas.</p>
-      {% endfor %}
+        {% empty %}
+          <p class="text-muted fst-italic mb-0">No hay evidencias registradas.</p>
+        {% endfor %}
+      </div>
     </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
