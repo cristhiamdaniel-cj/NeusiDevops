@@ -11,7 +11,7 @@
       --neusi-purple:#6B4EFF; --neusi-purple-700:#5b40e0;
       --neusi-coral:#FF6B6B;  --neusi-coral-700:#ff5252;
       --neusi-blue:#00B3FF;   --neusi-blue-700:#009de0;
-      --chip:#efeaff; --chip-t:#3d2fb0;
+      --chip:#efeaff; --chip-t:#3d2fb0; --muted:#6c757d;
     }
     .btn-neusi{ background:var(--neusi-purple); color:#fff!important; border:none; border-radius:10px; font-weight:600; }
     .btn-neusi:hover{ background:var(--neusi-purple-700); }
@@ -19,8 +19,9 @@
     .btn-coral:hover{ background:var(--neusi-coral-700); }
     .btn-blue{ background:var(--neusi-blue); color:#fff!important; border:none; border-radius:10px; font-weight:600; }
     .btn-blue:hover{ background:var(--neusi-blue-700); }
+    .btn-icon{ display:inline-flex; align-items:center; gap:.45rem; }
     .card{ border:none; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .muted{ color:#6c757d; }
+    .muted{ color:var(--muted); }
     .table thead th{ background:#f4f0ff; color:#3d2fb0; border-bottom:0; }
     .chip{ display:inline-block; background:var(--chip); color:var(--chip-t); padding:.15rem .55rem; border-radius:999px; font-weight:700; font-size:.8rem; }
   </style>
@@ -32,9 +33,9 @@
     <h2 class="fw-bold">📅 Daily de {{ integrante.user.first_name }} <span class="muted" style="font-size:.9rem">({{ fecha_actual }})</span></h2>
     {% if request.user.is_authenticated %}
       <div class="text-end">
-        <a href="{% url 'home' %}" class="btn btn-neusi me-2">🏠 Home</a>
+        <a href="{% url 'home' %}" class="btn btn-neusi me-2 btn-icon">🏠 <span>Home</span></a>
         <span class="fw-semibold me-2">👤 {{ request.user.first_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn btn-coral">🚪 Cerrar Sesión</a>
+        <a href="{% url 'logout' %}" class="btn btn-coral btn-icon">🚪 <span>Cerrar Sesión</span></a>
       </div>
     {% endif %}
   </div>
@@ -52,7 +53,7 @@
     </div>
   {% endif %}
 
-  <!-- Cabecera (Ayer/Hoy/Impedimentos) -->
+  <!-- Formulario único (header + enlace opcional) -->
   <div class="card mb-4">
     <div class="card-body">
       <form method="post">
@@ -69,12 +70,12 @@
           {{ form.que_hara_hoy.errors }}
         </div>
 
-        <!-- Enlace rápido para HOY (solo Tarea/Subtarea, sin minutos ni evidencia) -->
+        <!-- Enlace rápido (viaja en el mismo POST) -->
         <div class="p-3 rounded mb-3" style="background:#f7f7ff;border:1px solid #ecebff;">
-          <div class="row g-2">
+          <div class="row g-2 align-items-end">
             <div class="col-12 col-md-3">
               <label class="form-label">Enlazar con</label>
-              <select id="link-tipo" class="form-select">
+              <select id="link-tipo" name="link_tipo" class="form-select">
                 <option value="">— Sin enlace —</option>
                 <option value="tarea">Tarea</option>
                 <option value="subtarea">Subtarea</option>
@@ -82,22 +83,19 @@
             </div>
             <div class="col-12 col-md-5">
               <label class="form-label">Tarea (asignadas a ti)</label>
-              <select id="sel-tarea" class="form-select" disabled>
+              <select id="sel-tarea" name="tarea_id" class="form-select" disabled>
                 <option value="">— Selecciona —</option>
               </select>
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label">Subtarea (asignadas a ti)</label>
-              <select id="sel-subtarea" class="form-select" disabled>
+              <select id="sel-subtarea" name="subtarea_id" class="form-select" disabled>
                 <option value="">— Selecciona —</option>
               </select>
             </div>
           </div>
-          <div class="d-flex justify-content-end mt-3">
-            <button id="btn-add-hoy" type="button" class="btn btn-blue">➕ Guardar línea de HOY</button>
-          </div>
           <div class="form-text mt-2">
-            Puedes dejar “Sin enlace” para registrar una línea libre. Cuando existan endpoints de opciones, las listas se llenarán automáticamente.
+            Si eliges “Tarea” o “Subtarea”, al guardar se creará automáticamente la <strong>línea de HOY</strong> enlazada con tu descripción.
           </div>
         </div>
 
@@ -108,19 +106,19 @@
           {{ form.impedimentos.errors }}
         </div>
 
-        <button type="submit" class="btn btn-blue">💾 Guardar encabezado</button>
+        <button type="submit" class="btn btn-blue btn-icon">💾 <span>Guardar</span></button>
       </form>
     </div>
   </div>
 
-  <!-- Líneas de Daily (listado) -->
+  <!-- Si ya existe Daily, muestra líneas actuales -->
+  {% if daily %}
   <div class="card mb-4">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h4 class="mb-0">Líneas del Daily</h4>
         <small class="muted">Cada línea de HOY puede estar enlazada con una Tarea/Subtarea.</small>
       </div>
-
       <div class="table-responsive">
         <table class="table align-middle mb-0">
           <thead>
@@ -128,165 +126,77 @@
               <th style="width:90px;">Tipo</th>
               <th>Descripción</th>
               <th style="width:260px;">Tarea/Subtarea</th>
-              <th style="width:110px;" class="text-end">Acciones</th>
             </tr>
           </thead>
-          <tbody id="items-body">
-            <tr><td colspan="4" class="text-center text-muted py-4">Cargando…</td></tr>
+          <tbody>
+            {% with items=daily.items.all %}
+              {% if items %}
+                {% for i in items %}
+                  <tr>
+                    <td>{{ i.tipo }}</td>
+                    <td>{{ i.descripcion|default:"—" }}</td>
+                    <td>
+                      {% if i.tarea_id %}Tarea #{{ i.tarea_id }}{% elif i.subtarea_id %}Subtarea #{{ i.subtarea_id }}{% else %}—{% endif %}
+                      {% if i.tarea_id or i.subtarea_id %}<span class="chip ms-1">OK</span>{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="3" class="text-center text-muted py-4">Sin líneas aún.</td></tr>
+              {% endif %}
+            {% endwith %}
           </tbody>
         </table>
       </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Navegación inferior -->
   <div class="d-flex gap-2">
-    <a href="{% url 'backlog_lista' %}" class="btn btn-neusi">📋 Ver Backlog</a>
-    <a href="{% url 'daily_resumen' %}" class="btn btn-blue">📝 Ver Resumen Daily</a>
+    <a href="{% url 'backlog_lista' %}" class="btn btn-neusi btn-icon">📋 <span>Ver Backlog</span></a>
+    <a href="{% url 'daily_resumen' %}" class="btn btn-blue btn-icon">📝 <span>Ver Resumen Daily</span></a>
   </div>
-
-  <!-- Config para JS (evitamos NoReverseMatch en endpoints inexistentes) -->
-<div id="cfg"
-     data-daily="{{ daily.id }}"
-     data-url-list="{% url 'daily_items_json' daily.id %}"
-     data-url-create="{% url 'dailyitem_create' daily.id %}"
-     data-url-edit-template="{% url 'dailyitem_edit' 999999 %}"
-     data-url-del-template="{% url 'dailyitem_delete' 999999 %}"
-     data-url-tareas="{% url 'daily_tareas_opciones' %}"
-     data-url-subtareas="{% url 'daily_subtareas_opciones' %}">
-</div>
-
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+  // Poblar combos de tareas/subtareas (no dependen del daily_id)
   (function(){
-    // --------- Config ---------
-    const cfg = document.getElementById('cfg').dataset;
-    const DAILY_ID   = Number(cfg.daily);
-    const URL_LIST   = cfg.urlList;
-    const URL_CREATE = cfg.urlCreate;
-    const urlEdit    = (id)=> cfg.urlEditTemplate.replace("999999", id);
-    const urlDel     = (id)=> cfg.urlDelTemplate.replace("999999", id);
+    const $tipo = document.getElementById('link-tipo');
+    const $tSel = document.getElementById('sel-tarea');
+    const $sSel = document.getElementById('sel-subtarea');
 
-    // si aún no has creado endpoints, quedarán como '' y no se intentará cargar
-    const URL_TAREAS_OPTS    = cfg.urlTareas || "";
-    const URL_SUBTAREAS_OPTS = cfg.urlSubtareas || "";
-
-    // --------- DOM ---------
-    const $tbody      = document.getElementById('items-body');
-    const $queHaras   = document.getElementById('{{ form.que_hara_hoy.id_for_label }}')?.closest('form')
-                        ?.querySelector('[name="{{ form.que_hara_hoy.name }}"]');
-    const $linkTipo   = document.getElementById('link-tipo');
-    const $selTarea   = document.getElementById('sel-tarea');
-    const $selSubt    = document.getElementById('sel-subtarea');
-    const $btnAddHoy  = document.getElementById('btn-add-hoy');
-
-    // --------- Helpers ---------
-    function getCsrf(){
-      const name='csrftoken';
-      const match = document.cookie.split('; ').find(row=>row.startsWith(name+'='));
-      return match ? decodeURIComponent(match.split('=')[1]) : '';
+    function toggle(){
+      const v = $tipo.value;
+      $tSel.disabled = v !== 'tarea';
+      $sSel.disabled = v !== 'subtarea';
+      if(v === 'tarea'){ $sSel.value=''; }
+      if(v === 'subtarea'){ $tSel.value=''; }
+      if(!v){ $tSel.value=''; $sSel.value=''; }
     }
-    function escapeHtml(s){
-      return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-    }
-    function fillSelect(sel, data){
+    $tipo.addEventListener('change', toggle); toggle();
+
+    function fill(sel, data){
       sel.innerHTML = '<option value="">— Selecciona —</option>';
       (data||[]).forEach(o=>{
-        const opt = document.createElement('option');
-        opt.value = o.id;
-        opt.textContent = o.titulo || o.nombre || ('#'+o.id);
-        sel.appendChild(opt);
+        const op = document.createElement('option');
+        op.value = o.id;
+        op.textContent = o.titulo || o.nombre || ('#'+o.id);
+        sel.appendChild(op);
       });
     }
 
-    function refreshLinkInputs(){
-      const v = $linkTipo.value;
-      $selTarea.disabled = v !== 'tarea';
-      $selSubt.disabled  = v !== 'subtarea';
-      if(v==='tarea'){ $selSubt.value=''; }
-      if(v==='subtarea'){ $selTarea.value=''; }
-      if(!v){ $selTarea.value=''; $selSubt.value=''; }
-    }
-    $linkTipo.addEventListener('change', refreshLinkInputs);
+    // Cargar opciones
+    fetch("{% url 'daily_tareas_opciones' %}", {credentials:'same-origin'})
+      .then(r => r.ok ? r.json() : [])
+      .then(j => fill($tSel, j))
+      .catch(()=>{});
 
-    // --------- Cargar opciones (tareas/subtareas asignadas) ---------
-    async function loadOptions(){
-      try{
-        if(URL_TAREAS_OPTS){
-          const rt = await fetch(URL_TAREAS_OPTS, {credentials:'same-origin'});
-          if(rt.ok){ fillSelect($selTarea, await rt.json()); }
-        }
-        if(URL_SUBTAREAS_OPTS){
-          const rs = await fetch(URL_SUBTAREAS_OPTS, {credentials:'same-origin'});
-          if(rs.ok){ fillSelect($selSubt, await rs.json()); }
-        }
-      }catch(_e){ /* silencioso */ }
-    }
-
-    // --------- Listado ---------
-    async function renderItems(){
-      $tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Cargando…</td></tr>';
-      const r = await fetch(URL_LIST, {credentials:'same-origin'});
-      if(!r.ok){ $tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">Error cargando líneas.</td></tr>'; return; }
-      const data = await r.json();
-      const rows = (data.items||[]).map(i=>{
-        const linkTxt = i.tarea_id ? `Tarea #${i.tarea_id}` : (i.subtarea_id ? `Subtarea #${i.subtarea_id}` : '—');
-        return `
-          <tr>
-            <td>${i.tipo}</td>
-            <td>${escapeHtml(i.descripcion||'')}</td>
-            <td>${linkTxt} ${(i.tarea_id||i.subtarea_id)?'<span class="chip ms-1">OK</span>':''}</td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-coral" data-del="${i.id}">Eliminar</button>
-            </td>
-          </tr>`;
-      }).join('');
-      $tbody.innerHTML = rows || '<tr><td colspan="4" class="text-center text-muted py-4">Sin líneas aún.</td></tr>';
-
-      // eliminar
-      $tbody.querySelectorAll('[data-del]').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          if(!confirm('¿Eliminar esta línea?')) return;
-          const id = btn.getAttribute('data-del');
-          await fetch(urlDel(id), {method:'POST', headers:{'X-CSRFToken':getCsrf()}, credentials:'same-origin'});
-          renderItems();
-        });
-      });
-    }
-
-    // --------- Crear línea de HOY ---------
-    $btnAddHoy.addEventListener('click', async ()=>{
-      const payload = new URLSearchParams();
-      payload.append('tipo','HOY');
-      // descripción: si escribieron plan del día, lo usamos; si no, se puede dejar vacío cuando hay enlace
-      const desc = ($queHaras && $queHaras.value || '').trim();
-      if(desc) payload.append('descripcion', desc);
-
-      if($linkTipo.value==='tarea' && $selTarea.value){ payload.append('tarea_id', $selTarea.value); }
-      if($linkTipo.value==='subtarea' && $selSubt.value){ payload.append('subtarea_id', $selSubt.value); }
-
-      const r = await fetch(URL_CREATE, {
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':getCsrf()},
-        body:payload.toString(),
-        credentials:'same-origin'
-      });
-      const j = await r.json().catch(()=>({}));
-      if(r.ok){
-        // limpiar solo el enlace; no borramos “qué harás hoy”
-        $linkTipo.value=''; refreshLinkInputs();
-        renderItems();
-      }else{
-        alert(j.error || 'No se pudo crear la línea.');
-      }
-    });
-
-    // --------- Init ---------
-    refreshLinkInputs();
-    loadOptions();
-    renderItems();
+    fetch("{% url 'daily_subtareas_opciones' %}", {credentials:'same-origin'})
+      .then(r => r.ok ? r.json() : [])
+      .then(j => fill($sSel, j))
+      .catch(()=>{});
   })();
   </script>
 </body>

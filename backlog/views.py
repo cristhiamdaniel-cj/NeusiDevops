@@ -502,6 +502,7 @@ def daily_view(request, integrante_id=None):
         messages.warning(request, "El rol Visualizador no puede registrar dailies.")
         return redirect("daily_resumen")
 
+    # integrante actual
     if integrante_id is None:
         try:
             integrante = request.user.integrante
@@ -515,34 +516,56 @@ def daily_view(request, integrante_id=None):
             return redirect("daily_personal")
 
     fecha_actual = localtime().date()
-    hora_actual = localtime().time()
+    hora_actual  = localtime().time()
 
-    # === Crear o actualizar cabecera del Daily ===
     if request.method == "POST":
         form = DailyForm(request.POST)
         if form.is_valid():
+            # 1) crear/actualizar cabecera
             daily, created = Daily.objects.get_or_create(
                 integrante=integrante,
                 fecha=fecha_actual,
                 defaults=form.cleaned_data
             )
             if not created:
-                for field, value in form.cleaned_data.items():
-                    setattr(daily, field, value)
+                for f, v in form.cleaned_data.items():
+                    setattr(daily, f, v)
 
-            # Marcar fuera de horario
-            if not en_ventana_daily(hora_actual):
-                daily.fuera_horario = True
-                messages.warning(
-                    request,
-                    "⚠️ Daily registrado fuera del horario (5:00–9:00 AM). "
-                    "Se notificará a los administradores y se tomará como evidencia."
-                )
-            else:
-                daily.fuera_horario = False
-                messages.success(request, "✅ Daily registrado correctamente en horario.")
-
+            # fuera de horario
+            daily.fuera_horario = not en_ventana_daily(hora_actual)
             daily.save()
+
+            # 2) si enviaron enlace de tarea/subtarea, crear la línea HOY
+            link_tipo   = (request.POST.get("link_tipo") or "").lower()
+            tarea_id    = request.POST.get("tarea_id") or ""
+            subtarea_id = request.POST.get("subtarea_id") or ""
+
+            # Validación simple: no ambas
+            if tarea_id and subtarea_id:
+                messages.error(request, "Selecciona solo Tarea o Subtarea (no ambas).")
+                return redirect("daily_personal")
+
+            descripcion_hoy = (form.cleaned_data.get("que_hara_hoy") or "").strip()
+
+            try:
+                if link_tipo == "tarea" and tarea_id:
+                    DailyItem.objects.create(
+                        daily=daily, tipo="HOY",
+                        descripcion=descripcion_hoy,
+                        tarea_id=int(tarea_id)
+                    )
+                elif link_tipo == "subtarea" and subtarea_id:
+                    DailyItem.objects.create(
+                        daily=daily, tipo="HOY",
+                        descripcion=descripcion_hoy,
+                        subtarea_id=int(subtarea_id)
+                    )
+                # si no eligió enlace, no se crea línea (solo header)
+            except ValueError:
+                messages.error(request, "IDs de enlace inválidos.")
+                return redirect("daily_personal")
+
+            messages.success(request, "✅ Daily guardado" + (" y línea de HOY enlazada." if (tarea_id or subtarea_id) else "."))
             return redirect("daily_resumen")
     else:
         try:
@@ -551,15 +574,14 @@ def daily_view(request, integrante_id=None):
         except Daily.DoesNotExist:
             form = DailyForm()
 
-    daily_actual = _get_or_create_today_daily(integrante)
+    daily_actual = Daily.objects.filter(integrante=integrante, fecha=fecha_actual).first()
 
     return render(request, "backlog/daily_form.html", {
         "form": form,
         "integrante": integrante,
-        "daily": daily_actual,
+        "daily": daily_actual,              # puede ser None en primer ingreso
         "fecha_actual": localtime().strftime("%Y-%m-%d %H:%M"),
     })
-
 
 @login_required
 def daily_personal(request):
