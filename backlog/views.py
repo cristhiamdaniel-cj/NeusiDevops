@@ -2,7 +2,7 @@
 from functools import wraps
 from datetime import time, datetime, timedelta
 import json
-
+from django.views.decorators.cache import cache_page
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -2049,8 +2049,9 @@ def _business_days(d1: date, d2: date) -> int:
     return days
 
 # ===============================
-# DASHBOARD PRINCIPAL
+# DASHBOARD PRINCIPAL (cache 45s)
 # ===============================
+@cache_page(45, key_prefix="dashboard_neusi")
 def dashboard_neusi(request):
     # ------- Filtros -------
     sprint_actual = _sprint_actual()
@@ -2072,12 +2073,11 @@ def dashboard_neusi(request):
         tareas = tareas.filter(Q(asignado_a_id=integrante_id) | Q(asignados__id=integrante_id)).distinct()
 
     # ===== Normalización de estado para TAREA (HU) =====
-    # Combinamos variantes: 'Completada', 'COMPLETADO' -> COMPLETADO
     tareas_u = tareas.annotate(estado_u=Upper("estado"))
 
     cards = tareas_u.aggregate(
         hu_total=Count("id"),
-        hu_new=Count("id", filter=Q(estado_u="NUEVO")),                         # HU NUEVO
+        hu_new=Count("id", filter=Q(estado_u="NUEVO")),
         hu_inprog=Count("id", filter=Q(estado_u="EN_PROGRESO")),
         hu_blocked=Count("id", filter=Q(estado_u="BLOQUEADO")),
         hu_done=Count("id", filter=Q(estado_u__in=["COMPLETADO", "COMPLETADA"])),
@@ -2094,7 +2094,7 @@ def dashboard_neusi(request):
         cards.get("hu_done") or 0,
     ]
 
-    # ------- HU con progreso por subtareas (entregada/completado/cerrada = done) -------
+    # ------- HU con progreso por subtareas -------
     tareas_con_metricas = (
         tareas
         .annotate(
@@ -2114,7 +2114,7 @@ def dashboard_neusi(request):
         .order_by("-id")
     )
 
-    # ------- HU por responsable (estado normalizado) -------
+    # ------- HU por responsable -------
     hu_por_resp = (
         tareas_u
         .values("asignado_a__user__first_name", "asignado_a__user__last_name", "asignado_a_id")
@@ -2128,13 +2128,7 @@ def dashboard_neusi(request):
         .order_by("-total")
     )
 
-    # ------- Subtareas: normalizamos estado -------
-    # En tu BD hay 'NUEVO' (mayúsculas) y estados en minúsculas ('en_progreso', 'entregada').
-    # Reglas de conteo:
-    # - "Nuevo" = NUEVO o PENDIENTE
-    # - "En progreso" = EN_PROGRESO
-    # - "Bloqueado" = BLOQUEADO
-    # - "Completado" = ENTREGADA o COMPLETADO o CERRADA
+    # ------- Subtareas: normalización de estado -------
     subtareas_qs = Subtarea.objects.all()
     if sprint_id:
         subtareas_qs = subtareas_qs.filter(bloque__tarea__sprint_id=sprint_id)
@@ -2153,41 +2147,19 @@ def dashboard_neusi(request):
         st_comp=Count("id", filter=Q(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"])),
     )
 
-    # ------- Subtareas por responsable (sumas por categoría normalizada) -------
     subtareas_por_responsable = (
         st_u
         .values("responsable__user__first_name", "responsable__user__last_name")
         .annotate(
-            nuevo=Sum(
-                Case(
-                    When(estado_u__in=["NUEVO", "PENDIENTE"], then=1),
-                    default=0, output_field=IntegerField()
-                )
-            ),
-            prog=Sum(
-                Case(
-                    When(estado_u="EN_PROGRESO", then=1),
-                    default=0, output_field=IntegerField()
-                )
-            ),
-            bloq=Sum(
-                Case(
-                    When(estado_u="BLOQUEADO", then=1),
-                    default=0, output_field=IntegerField()
-                )
-            ),
-            comp=Sum(
-                Case(
-                    When(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"], then=1),
-                    default=0, output_field=IntegerField()
-                )
-            ),
+            nuevo=Sum(Case(When(estado_u__in=["NUEVO", "PENDIENTE"], then=1), default=0, output_field=IntegerField())),
+            prog=Sum(Case(When(estado_u="EN_PROGRESO", then=1), default=0, output_field=IntegerField())),
+            bloq=Sum(Case(When(estado_u="BLOQUEADO", then=1), default=0, output_field=IntegerField())),
+            comp=Sum(Case(When(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"], then=1), default=0, output_field=IntegerField())),
             total=Count("id"),
         )
         .order_by("responsable__user__first_name", "responsable__user__last_name")
     )
 
-    # Totales fila final de la tabla de subtareas por responsable
     st_res_tot = st_u.aggregate(
         nuevo=Count("id", filter=Q(estado_u__in=["NUEVO", "PENDIENTE"])),
         prog=Count("id", filter=Q(estado_u="EN_PROGRESO")),
@@ -2263,7 +2235,6 @@ def dashboard_neusi(request):
         ))
     tabla_daily.sort(key=lambda r: r["integrante"])
 
-    # ------- Contexto -------
     ctx = {
         "proyectos": Proyecto.objects.filter(activo=True).order_by("codigo"),
         "sprints": Sprint.objects.order_by("-inicio"),
@@ -2292,7 +2263,6 @@ def dashboard_neusi(request):
         "tabla_daily": tabla_daily,
     }
     return render(request, "backlog/dashboard_neusi.html", ctx)
-# --- KPI pages sin API, todo server-side ---
 
 # --- KPI VIEWS (macro vs subtareas, sin doble conteo) ---
 from django.shortcuts import render
@@ -2350,9 +2320,9 @@ def _q_done_subtarea():
 
 
 # ============================
-# KPI INDIVIDUAL: Planned (macro) vs Done (por subtareas)
+# KPI INDIVIDUAL (cache 60s)
 # ============================
-
+@cache_page(60, key_prefix="kpi_individual")
 def kpi_individual_page(request):
     user_id     = request.GET.get("user_id") or None
     sprint_id   = request.GET.get("sprint_id") or None
@@ -2371,7 +2341,6 @@ def kpi_individual_page(request):
     if proyecto_id:
         tareas = tareas.filter(epica__proyecto_id=proyecto_id)
 
-    # Planned = SP de Tarea macro (no se suman subtareas)
     sp_macro_planned = tareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"] or 0
 
     # ===== SUBTAREAS =====
@@ -2387,23 +2356,19 @@ def kpi_individual_page(request):
     if proyecto_id:
         subtareas = subtareas.filter(bloque__tarea__epica__proyecto_id=proyecto_id)
 
-    # Done = SP de subtareas completadas (ENTREGADA/COMPLETADO/CERRADA)
     st_done_q = subtareas.filter(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"])
     sp_by_sub_done = st_done_q.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"] or 0
 
-    # ===== Tasa de cumplimiento por SUBTAREAS =====
     total_subtareas = subtareas.count()
     done_subtareas  = st_done_q.count()
     tasa_cumplimiento_sub = round(100 * (done_subtareas / total_subtareas), 1) if total_subtareas else 0.0
 
-    # ===== Velocidad (SP logrados por subtareas por sprint) =====
     vel_map = {}
     for r in st_done_q.values("bloque__tarea__sprint_id").annotate(sp=Coalesce(Sum("esfuerzo_sp"), 0)):
         sid = r["bloque__tarea__sprint_id"]
         vel_map[sid] = vel_map.get(sid, 0) + (r["sp"] or 0)
     velocidad_prom = round(sum(vel_map.values()) / (len(vel_map) or 1), 2)
 
-    # ===== Tiempo promedio de cierre (macro): min(fecha_inicio subtareas) → fecha_cierre HU =====
     st_inicio = (
         Subtarea.objects
         .filter(bloque__tarea__in=tareas, fecha_inicio__isnull=False)
@@ -2413,7 +2378,6 @@ def kpi_individual_page(request):
     inicio_map = {r["bloque__tarea_id"]: r["min_inicio"] for r in st_inicio}
 
     deltas = []
-    # Evitamos conflicto select_related + only usando values_list:
     for tid, f_cierre in tareas.filter(estado_u__in=["COMPLETADO", "COMPLETADA"]).values_list("id", "fecha_cierre"):
         ini = inicio_map.get(tid)
         if ini and f_cierre:
@@ -2421,7 +2385,6 @@ def kpi_individual_page(request):
             deltas.append((f_cierre - ini_dt).days)
     tiempo_prom_cierre = round(sum(deltas) / len(deltas), 2) if deltas else None
 
-    # ===== Dataset comparativo (macro planned vs sub done) =====
     bars_labels = ["Planned (macro)", "Done (por Subtareas)"]
     bars_data   = [sp_macro_planned, sp_by_sub_done]
 
@@ -2432,7 +2395,6 @@ def kpi_individual_page(request):
     resumen_tot = dict(planned=sp_macro_planned, done=sp_by_sub_done)
 
     ctx = {
-        # filtros
         "users": Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name"),
         "sprints": Sprint.objects.order_by("-inicio"),
         "proyectos": Proyecto.objects.order_by("codigo"),
@@ -2440,23 +2402,25 @@ def kpi_individual_page(request):
         "sprint_id": int(sprint_id) if sprint_id else None,
         "proyecto_id": int(proyecto_id) if proyecto_id else None,
 
-        # KPIs (subtareas)
         "tasa_cumplimiento_sub": tasa_cumplimiento_sub,
         "total_subtareas": total_subtareas,
         "done_subtareas": done_subtareas,
 
-        # otros KPIs
         "velocidad_prom": velocidad_prom,
         "tiempo_prom_cierre": tiempo_prom_cierre,
 
-        # comparativo
         "bars_labels": bars_labels,
         "bars_data": bars_data,
         "resumen_rows": resumen_rows,
         "resumen_tot": resumen_tot,
     }
     return render(request, "backlog/kpi/individual.html", ctx)
-# ====== BURNDOWN PERSONAL (sin doble conteo) ======
+
+# ============================
+# BURNDOWN PERSONAL (cache 60s)
+# ============================
+from datetime import timedelta  # si no lo tienes ya
+
 def _daterange(start_date, end_date):
     cur = start_date
     while cur <= end_date:
@@ -2464,6 +2428,7 @@ def _daterange(start_date, end_date):
         cur += timedelta(days=1)
 
 
+@cache_page(60, key_prefix="kpi_burndown")
 def kpi_burndown_page(request):
     uid, sid, pid = _get_filters(request)
 
@@ -2475,7 +2440,6 @@ def kpi_burndown_page(request):
         cur = Sprint.objects.filter(id=sid).first()
 
     if not cur:
-        # Sin sprint: devolvemos vacío pero con filtros
         ctx = dict(
             users=list(Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name")
                       .values("id", "user__first_name", "user__last_name")),
@@ -2488,14 +2452,12 @@ def kpi_burndown_page(request):
         )
         return render(request, "backlog/kpi/burndown.html", ctx)
 
-    # Qs filtrados
     tareas = _qs_tareas(uid, cur.id, pid).annotate(estado_u=Upper("estado"))
     subtareas = _qs_subtareas(uid, cur.id, pid).annotate(estado_u=Upper("estado"))
 
     planned_total = (tareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"]
                      + subtareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"])
 
-    # Done por día: macro usa fecha_cierre; subtarea usa fecha_fin
     done_by_day = {}
     for t in tareas.filter(_q_done_tarea()):
         d = getattr(t, "fecha_cierre", None)
@@ -2515,7 +2477,7 @@ def kpi_burndown_page(request):
         labels.append(d.strftime("%d-%b"))
         cum_done += done_by_day.get(d, 0)
         done.append(cum_done)
-        planned.append(planned_total)  # línea de referencia
+        planned.append(planned_total)
         remain_val = max(planned_total - cum_done, 0)
         remain.append(remain_val)
 
@@ -2532,10 +2494,11 @@ def kpi_burndown_page(request):
     return render(request, "backlog/kpi/burndown.html", ctx)
 
 
-# ============================
-# DISTRIBUCIÓN DE ESFUERZO
-# Planned = SP macro ; Done = SP de subtareas completadas
-# ============================
+
+# ==================================
+# DISTRIBUCIÓN DE ESFUERZO (cache 60s)
+# ==================================
+@cache_page(60, key_prefix="kpi_esfuerzo")
 def kpi_esfuerzo_page(request):
     user_id     = request.GET.get("user_id") or None
     sprint_id   = request.GET.get("sprint_id") or None

@@ -83,6 +83,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'neusi_tasks.wsgi.application'
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "neusi-local-cache",
+        "TIMEOUT": 300,  # fallback (seg.)
+    }
+}   
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
