@@ -2017,3 +2017,571 @@ def eliminar_evidencia_subtarea(request, subtarea_id, evid_id):
         "subtarea": subtarea,
         "evidencia": evidencia,
     })
+
+# views.py
+from django.shortcuts import render
+from django.db.models import (
+    Count, Sum, Q, Case, When, F, FloatField, IntegerField
+)
+from django.db.models.functions import Upper
+from django.utils import timezone
+from datetime import timedelta, date
+
+from .models import Proyecto, Sprint, Epica, Tarea, Subtarea, Daily, Integrante
+
+# ===============================
+# Helpers internos
+# ===============================
+def _sprint_actual():
+    hoy = timezone.localdate()
+    return Sprint.objects.filter(inicio__lte=hoy, fin__gte=hoy).order_by("-inicio").first()
+
+def _business_days(d1: date, d2: date) -> int:
+    """Cuenta días hábiles inclusive entre d1 y d2."""
+    if not d1 or not d2 or d2 < d1:
+        return 0
+    days = 0
+    cur = d1
+    while cur <= d2:
+        if cur.weekday() < 5:  # lunes–viernes
+            days += 1
+        cur += timedelta(days=1)
+    return days
+
+# ===============================
+# DASHBOARD PRINCIPAL
+# ===============================
+def dashboard_neusi(request):
+    # ------- Filtros -------
+    sprint_actual = _sprint_actual()
+    sprint_id = request.GET.get("sprint") or (sprint_actual.id if sprint_actual else None)
+    proyecto_id = request.GET.get("proyecto")
+    integrante_id = request.GET.get("integrante")
+    scope = request.GET.get("scope", "sprint")  # sprint | global
+
+    tareas = (
+        Tarea.objects
+        .select_related("epica", "sprint", "asignado_a", "epica__proyecto")
+        .prefetch_related("asignados", "bloques__subtareas")
+    )
+    if sprint_id:
+        tareas = tareas.filter(sprint_id=sprint_id)
+    if proyecto_id:
+        tareas = tareas.filter(epica__proyecto_id=proyecto_id)
+    if integrante_id:
+        tareas = tareas.filter(Q(asignado_a_id=integrante_id) | Q(asignados__id=integrante_id)).distinct()
+
+    # ===== Normalización de estado para TAREA (HU) =====
+    # Combinamos variantes: 'Completada', 'COMPLETADO' -> COMPLETADO
+    tareas_u = tareas.annotate(estado_u=Upper("estado"))
+
+    cards = tareas_u.aggregate(
+        hu_total=Count("id"),
+        hu_new=Count("id", filter=Q(estado_u="NUEVO")),                         # HU NUEVO
+        hu_inprog=Count("id", filter=Q(estado_u="EN_PROGRESO")),
+        hu_blocked=Count("id", filter=Q(estado_u="BLOQUEADO")),
+        hu_done=Count("id", filter=Q(estado_u__in=["COMPLETADO", "COMPLETADA"])),
+        sp_planned=Sum("esfuerzo_sp"),
+        sp_completed=Sum("esfuerzo_sp", filter=Q(estado_u__in=["COMPLETADO", "COMPLETADA"])),
+    )
+
+    # Datos para gráfica de HU por estado (doughnut)
+    hu_labels = ["Nuevo", "En progreso", "Bloqueado", "Completado"]
+    hu_data = [
+        cards.get("hu_new") or 0,
+        cards.get("hu_inprog") or 0,
+        cards.get("hu_blocked") or 0,
+        cards.get("hu_done") or 0,
+    ]
+
+    # ------- HU con progreso por subtareas (entregada/completado/cerrada = done) -------
+    tareas_con_metricas = (
+        tareas
+        .annotate(
+            total_st=Count("bloques__subtareas", distinct=True),
+            cerradas_st=Count(
+                "bloques__subtareas",
+                filter=Q(bloques__subtareas__estado__in=["entregada", "cerrada", "COMPLETADO", "completado"]),
+                distinct=True,
+            ),
+        )
+        .annotate(
+            progreso=Case(
+                When(total_st__gt=0, then=100.0 * F("cerradas_st") / F("total_st")),
+                default=0.0, output_field=FloatField()
+            )
+        )
+        .order_by("-id")
+    )
+
+    # ------- HU por responsable (estado normalizado) -------
+    hu_por_resp = (
+        tareas_u
+        .values("asignado_a__user__first_name", "asignado_a__user__last_name", "asignado_a_id")
+        .annotate(
+            total=Count("id", distinct=True),
+            new=Count("id", filter=Q(estado_u="NUEVO"), distinct=True),
+            inprog=Count("id", filter=Q(estado_u="EN_PROGRESO"), distinct=True),
+            blocked=Count("id", filter=Q(estado_u="BLOQUEADO"), distinct=True),
+            done=Count("id", filter=Q(estado_u__in=["COMPLETADO", "COMPLETADA"]), distinct=True),
+        )
+        .order_by("-total")
+    )
+
+    # ------- Subtareas: normalizamos estado -------
+    # En tu BD hay 'NUEVO' (mayúsculas) y estados en minúsculas ('en_progreso', 'entregada').
+    # Reglas de conteo:
+    # - "Nuevo" = NUEVO o PENDIENTE
+    # - "En progreso" = EN_PROGRESO
+    # - "Bloqueado" = BLOQUEADO
+    # - "Completado" = ENTREGADA o COMPLETADO o CERRADA
+    subtareas_qs = Subtarea.objects.all()
+    if sprint_id:
+        subtareas_qs = subtareas_qs.filter(bloque__tarea__sprint_id=sprint_id)
+    if proyecto_id:
+        subtareas_qs = subtareas_qs.filter(bloque__tarea__epica__proyecto_id=proyecto_id)
+    if integrante_id:
+        subtareas_qs = subtareas_qs.filter(responsable_id=integrante_id)
+
+    st_u = subtareas_qs.annotate(estado_u=Upper("estado"))
+
+    subtareas_stats = st_u.aggregate(
+        st_total=Count("id"),
+        st_nuevo=Count("id", filter=Q(estado_u__in=["NUEVO", "PENDIENTE"])),
+        st_prog=Count("id", filter=Q(estado_u="EN_PROGRESO")),
+        st_bloq=Count("id", filter=Q(estado_u="BLOQUEADO")),
+        st_comp=Count("id", filter=Q(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"])),
+    )
+
+    # ------- Subtareas por responsable (sumas por categoría normalizada) -------
+    subtareas_por_responsable = (
+        st_u
+        .values("responsable__user__first_name", "responsable__user__last_name")
+        .annotate(
+            nuevo=Sum(
+                Case(
+                    When(estado_u__in=["NUEVO", "PENDIENTE"], then=1),
+                    default=0, output_field=IntegerField()
+                )
+            ),
+            prog=Sum(
+                Case(
+                    When(estado_u="EN_PROGRESO", then=1),
+                    default=0, output_field=IntegerField()
+                )
+            ),
+            bloq=Sum(
+                Case(
+                    When(estado_u="BLOQUEADO", then=1),
+                    default=0, output_field=IntegerField()
+                )
+            ),
+            comp=Sum(
+                Case(
+                    When(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"], then=1),
+                    default=0, output_field=IntegerField()
+                )
+            ),
+            total=Count("id"),
+        )
+        .order_by("responsable__user__first_name", "responsable__user__last_name")
+    )
+
+    # Totales fila final de la tabla de subtareas por responsable
+    st_res_tot = st_u.aggregate(
+        nuevo=Count("id", filter=Q(estado_u__in=["NUEVO", "PENDIENTE"])),
+        prog=Count("id", filter=Q(estado_u="EN_PROGRESO")),
+        bloq=Count("id", filter=Q(estado_u="BLOQUEADO")),
+        comp=Count("id", filter=Q(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"])),
+        total=Count("id"),
+    )
+
+    # ------- Velocidad por sprint (SP) -------
+    ultimos_sprints = list(Sprint.objects.order_by("-inicio")[:5])[::-1]
+    vel_labels, vel_planned, vel_done = [], [], []
+    for sp in ultimos_sprints:
+        qs_sp = Tarea.objects.filter(sprint=sp).annotate(estado_u=Upper("estado"))
+        if proyecto_id:
+            qs_sp = qs_sp.filter(epica__proyecto_id=proyecto_id)
+        vel_labels.append(sp.nombre)
+        vel_planned.append(qs_sp.aggregate(Sum("esfuerzo_sp"))["esfuerzo_sp__sum"] or 0)
+        vel_done.append(qs_sp.filter(estado_u__in=["COMPLETADO", "COMPLETADA"]).aggregate(Sum("esfuerzo_sp"))["esfuerzo_sp__sum"] or 0)
+
+    # ===============================
+    # MÉTRICAS DE DAILY POR INTEGRANTE
+    # ===============================
+    if scope == "global" or not sprint_id:
+        fin_rango = timezone.localdate()
+        ini_rango = fin_rango - timedelta(days=29)
+    else:
+        sp = Sprint.objects.filter(id=sprint_id).first()
+        ini_rango = sp.inicio if sp else None
+        fin_rango = sp.fin if sp else None
+
+    integrantes = list(Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name"))
+    if proyecto_id:
+        integ_ids_en_proyecto = (
+            Tarea.objects.filter(epica__proyecto_id=proyecto_id)
+            .values_list("asignado_a_id", flat=True)
+        )
+        integrantes = [i for i in integrantes if i.id in set(integ_ids_en_proyecto)]
+
+    total_habiles = _business_days(ini_rango, fin_rango) if (ini_rango and fin_rango) else 0
+    tabla_daily = []
+
+    for integ in integrantes:
+        dails = Daily.objects.filter(integrante=integ)
+        if ini_rango and fin_rango:
+            dails = dails.filter(fecha__range=(ini_rango, fin_rango))
+
+        present = dails.count()
+        on_time = dails.filter(fuera_horario=False).count()
+        delayed = dails.filter(fuera_horario=True).count()
+        no_done = max(total_habiles - present, 0)
+
+        alin_ok = 0
+        alin_tot = 0
+        for d in dails.prefetch_related("items"):
+            met = d.alineacion
+            alin_ok += met.get("alineados", 0)
+            alin_tot += met.get("total", 0)
+        efectividad = (100.0 * alin_ok / alin_tot) if alin_tot else 0.0
+
+        participacion = (100.0 * present / total_habiles) if total_habiles else 0.0
+        cumplimiento = (100.0 * on_time / total_habiles) if total_habiles else 0.0
+        retrasos = (100.0 * delayed / total_habiles) if total_habiles else 0.0
+        no_completado = (100.0 * no_done / total_habiles) if total_habiles else 0.0
+
+        nombre = integ.user.get_full_name() or integ.user.username
+        tabla_daily.append(dict(
+            integrante=nombre.title(),
+            cumplimiento=cumplimiento,
+            retrasos=retrasos,
+            no_completado=no_completado,
+            efectividad=efectividad,
+            participacion=participacion,
+        ))
+    tabla_daily.sort(key=lambda r: r["integrante"])
+
+    # ------- Contexto -------
+    ctx = {
+        "proyectos": Proyecto.objects.filter(activo=True).order_by("codigo"),
+        "sprints": Sprint.objects.order_by("-inicio"),
+        "sprint_id": int(sprint_id) if sprint_id else None,
+        "proyecto_id": int(proyecto_id) if proyecto_id else None,
+        "scope": scope,
+        "ini_rango": ini_rango,
+        "fin_rango": fin_rango,
+        "dias_habiles": total_habiles,
+
+        "cards": cards,
+        "hu_labels": hu_labels,
+        "hu_data": hu_data,
+        "hu_por_resp": list(hu_por_resp),
+
+        "tareas": tareas_con_metricas[:25],
+
+        "subtareas_stats": subtareas_stats,
+        "subtareas_por_responsable": list(subtareas_por_responsable),
+        "st_res_tot": st_res_tot,
+
+        "vel_labels": vel_labels,
+        "vel_planned": vel_planned,
+        "vel_done": vel_done,
+
+        "tabla_daily": tabla_daily,
+    }
+    return render(request, "backlog/dashboard_neusi.html", ctx)
+# --- KPI pages sin API, todo server-side ---
+
+# --- KPI VIEWS (macro vs subtareas, sin doble conteo) ---
+from django.shortcuts import render
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import Upper, Coalesce
+from django.utils import timezone
+from datetime import timedelta, date
+from django.db.models.functions import Coalesce
+from django.db.models import Min
+from .models import Proyecto, Sprint, Epica, Tarea, Subtarea, Integrante
+from django.contrib.auth.models import User
+
+
+# ====== Helpers para filtros ======
+def _get_filters(request):
+    uid = request.GET.get("user_id") or None
+    sid = request.GET.get("sprint_id") or None
+    pid = request.GET.get("proyecto_id") or None
+    return uid, sid, pid
+
+
+def _qs_tareas(uid, sid, pid):
+    qs = (Tarea.objects
+          .select_related("sprint", "epica__proyecto", "asignado_a")
+          .all())
+    if sid:
+        qs = qs.filter(sprint_id=sid)
+    if pid:
+        qs = qs.filter(epica__proyecto_id=pid)
+    if uid:
+        qs = qs.filter(Q(asignado_a_id=uid) | Q(asignados__id=uid)).distinct()
+    return qs
+
+
+def _qs_subtareas(uid, sid, pid):
+    qs = (Subtarea.objects
+          .select_related("bloque__tarea__sprint", "responsable", "bloque__tarea__epica__proyecto")
+          .all())
+    if sid:
+        qs = qs.filter(bloque__tarea__sprint_id=sid)
+    if pid:
+        qs = qs.filter(bloque__tarea__epica__proyecto_id=pid)
+    if uid:
+        qs = qs.filter(responsable_id=uid)
+    return qs
+
+
+def _q_done_tarea():
+    return Q(estado__isnull=False) & Q(estado__iregex=r"^(completad[oa])$")
+
+
+def _q_done_subtarea():
+    # ENTREGADA / COMPLETADO / CERRADA
+    return Q(estado__isnull=False) & Q(estado__iregex=r"^(entregada|completado|cerrada)$")
+
+
+# ============================
+# KPI INDIVIDUAL: Planned (macro) vs Done (por subtareas)
+# ============================
+
+def kpi_individual_page(request):
+    user_id     = request.GET.get("user_id") or None
+    sprint_id   = request.GET.get("sprint_id") or None
+    proyecto_id = request.GET.get("proyecto_id") or None
+
+    # ===== TAREAS (HU macro) =====
+    tareas = (
+        Tarea.objects
+        .select_related("epica", "epica__proyecto", "sprint", "asignado_a")
+        .annotate(estado_u=Upper("estado"))
+    )
+    if user_id:
+        tareas = tareas.filter(Q(asignado_a_id=user_id) | Q(asignados__id=user_id)).distinct()
+    if sprint_id:
+        tareas = tareas.filter(sprint_id=sprint_id)
+    if proyecto_id:
+        tareas = tareas.filter(epica__proyecto_id=proyecto_id)
+
+    # Planned = SP de Tarea macro (no se suman subtareas)
+    sp_macro_planned = tareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"] or 0
+
+    # ===== SUBTAREAS =====
+    subtareas = (
+        Subtarea.objects
+        .select_related("bloque", "bloque__tarea", "bloque__tarea__epica", "bloque__tarea__sprint")
+        .annotate(estado_u=Upper("estado"))
+    )
+    if user_id:
+        subtareas = subtareas.filter(responsable_id=user_id)
+    if sprint_id:
+        subtareas = subtareas.filter(bloque__tarea__sprint_id=sprint_id)
+    if proyecto_id:
+        subtareas = subtareas.filter(bloque__tarea__epica__proyecto_id=proyecto_id)
+
+    # Done = SP de subtareas completadas (ENTREGADA/COMPLETADO/CERRADA)
+    st_done_q = subtareas.filter(estado_u__in=["ENTREGADA", "COMPLETADO", "CERRADA"])
+    sp_by_sub_done = st_done_q.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"] or 0
+
+    # ===== Tasa de cumplimiento por SUBTAREAS =====
+    total_subtareas = subtareas.count()
+    done_subtareas  = st_done_q.count()
+    tasa_cumplimiento_sub = round(100 * (done_subtareas / total_subtareas), 1) if total_subtareas else 0.0
+
+    # ===== Velocidad (SP logrados por subtareas por sprint) =====
+    vel_map = {}
+    for r in st_done_q.values("bloque__tarea__sprint_id").annotate(sp=Coalesce(Sum("esfuerzo_sp"), 0)):
+        sid = r["bloque__tarea__sprint_id"]
+        vel_map[sid] = vel_map.get(sid, 0) + (r["sp"] or 0)
+    velocidad_prom = round(sum(vel_map.values()) / (len(vel_map) or 1), 2)
+
+    # ===== Tiempo promedio de cierre (macro): min(fecha_inicio subtareas) → fecha_cierre HU =====
+    st_inicio = (
+        Subtarea.objects
+        .filter(bloque__tarea__in=tareas, fecha_inicio__isnull=False)
+        .values("bloque__tarea_id")
+        .annotate(min_inicio=Min("fecha_inicio"))
+    )
+    inicio_map = {r["bloque__tarea_id"]: r["min_inicio"] for r in st_inicio}
+
+    deltas = []
+    # Evitamos conflicto select_related + only usando values_list:
+    for tid, f_cierre in tareas.filter(estado_u__in=["COMPLETADO", "COMPLETADA"]).values_list("id", "fecha_cierre"):
+        ini = inicio_map.get(tid)
+        if ini and f_cierre:
+            ini_dt = timezone.make_aware(timezone.datetime.combine(ini, timezone.datetime.min.time()))
+            deltas.append((f_cierre - ini_dt).days)
+    tiempo_prom_cierre = round(sum(deltas) / len(deltas), 2) if deltas else None
+
+    # ===== Dataset comparativo (macro planned vs sub done) =====
+    bars_labels = ["Planned (macro)", "Done (por Subtareas)"]
+    bars_data   = [sp_macro_planned, sp_by_sub_done]
+
+    resumen_rows = [
+        ("Tareas (macro) — Planned", sp_macro_planned, ""),
+        ("Subtareas — Done",         "",               sp_by_sub_done),
+    ]
+    resumen_tot = dict(planned=sp_macro_planned, done=sp_by_sub_done)
+
+    ctx = {
+        # filtros
+        "users": Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name"),
+        "sprints": Sprint.objects.order_by("-inicio"),
+        "proyectos": Proyecto.objects.order_by("codigo"),
+        "user_id": int(user_id) if user_id else None,
+        "sprint_id": int(sprint_id) if sprint_id else None,
+        "proyecto_id": int(proyecto_id) if proyecto_id else None,
+
+        # KPIs (subtareas)
+        "tasa_cumplimiento_sub": tasa_cumplimiento_sub,
+        "total_subtareas": total_subtareas,
+        "done_subtareas": done_subtareas,
+
+        # otros KPIs
+        "velocidad_prom": velocidad_prom,
+        "tiempo_prom_cierre": tiempo_prom_cierre,
+
+        # comparativo
+        "bars_labels": bars_labels,
+        "bars_data": bars_data,
+        "resumen_rows": resumen_rows,
+        "resumen_tot": resumen_tot,
+    }
+    return render(request, "backlog/kpi/individual.html", ctx)
+# ====== BURNDOWN PERSONAL (sin doble conteo) ======
+def _daterange(start_date, end_date):
+    cur = start_date
+    while cur <= end_date:
+        yield cur
+        cur += timedelta(days=1)
+
+
+def kpi_burndown_page(request):
+    uid, sid, pid = _get_filters(request)
+
+    # Sprint actual por defecto si no llega sid
+    today = timezone.localdate()
+    if not sid:
+        cur = Sprint.objects.filter(inicio__lte=today, fin__gte=today).order_by("-inicio").first()
+    else:
+        cur = Sprint.objects.filter(id=sid).first()
+
+    if not cur:
+        # Sin sprint: devolvemos vacío pero con filtros
+        ctx = dict(
+            users=list(Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name")
+                      .values("id", "user__first_name", "user__last_name")),
+            sprints=Sprint.objects.order_by("-inicio"),
+            proyectos=Proyecto.objects.filter(activo=True).order_by("codigo"),
+            user_id=int(uid) if uid else None,
+            sprint_id=int(sid) if sid else None,
+            proyecto_id=int(pid) if pid else None,
+            labels=[], planned=[], done=[], remain=[]
+        )
+        return render(request, "backlog/kpi/burndown.html", ctx)
+
+    # Qs filtrados
+    tareas = _qs_tareas(uid, cur.id, pid).annotate(estado_u=Upper("estado"))
+    subtareas = _qs_subtareas(uid, cur.id, pid).annotate(estado_u=Upper("estado"))
+
+    planned_total = (tareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"]
+                     + subtareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"])
+
+    # Done por día: macro usa fecha_cierre; subtarea usa fecha_fin
+    done_by_day = {}
+    for t in tareas.filter(_q_done_tarea()):
+        d = getattr(t, "fecha_cierre", None)
+        if d:
+            d = timezone.localdate(d)
+            if cur.inicio <= d <= cur.fin:
+                done_by_day[d] = done_by_day.get(d, 0) + (t.esfuerzo_sp or 0)
+
+    for s in subtareas.filter(_q_done_subtarea()):
+        d = getattr(s, "fecha_fin", None)
+        if d and cur.inicio <= d <= cur.fin:
+            done_by_day[d] = done_by_day.get(d, 0) + (s.esfuerzo_sp or 0)
+
+    labels, planned, done, remain = [], [], [], []
+    cum_done = 0
+    for d in _daterange(cur.inicio, cur.fin):
+        labels.append(d.strftime("%d-%b"))
+        cum_done += done_by_day.get(d, 0)
+        done.append(cum_done)
+        planned.append(planned_total)  # línea de referencia
+        remain_val = max(planned_total - cum_done, 0)
+        remain.append(remain_val)
+
+    ctx = dict(
+        users=list(Integrante.objects.select_related("user").order_by("user__first_name", "user__last_name")
+                  .values("id", "user__first_name", "user__last_name")),
+        sprints=Sprint.objects.order_by("-inicio"),
+        proyectos=Proyecto.objects.filter(activo=True).order_by("codigo"),
+        user_id=int(uid) if uid else None,
+        sprint_id=cur.id,
+        proyecto_id=int(pid) if pid else None,
+        labels=labels, planned=planned, done=done, remain=remain,
+    )
+    return render(request, "backlog/kpi/burndown.html", ctx)
+
+
+# ============================
+# DISTRIBUCIÓN DE ESFUERZO
+# Planned = SP macro ; Done = SP de subtareas completadas
+# ============================
+def kpi_esfuerzo_page(request):
+    user_id     = request.GET.get("user_id") or None
+    sprint_id   = request.GET.get("sprint_id") or None
+    proyecto_id = request.GET.get("proyecto_id") or None
+
+    tareas = Tarea.objects.annotate(estado_u=Upper("estado"))
+    if user_id:
+        tareas = tareas.filter(Q(asignado_a_id=user_id) | Q(asignados__id=user_id)).distinct()
+    if sprint_id:
+        tareas = tareas.filter(sprint_id=sprint_id)
+    if proyecto_id:
+        tareas = tareas.filter(epica__proyecto_id=proyecto_id)
+
+    subtareas = Subtarea.objects.annotate(estado_u=Upper("estado"))
+    if user_id:
+        subtareas = subtareas.filter(responsable_id=user_id)
+    if sprint_id:
+        subtareas = subtareas.filter(bloque__tarea__sprint_id=sprint_id)
+    if proyecto_id:
+        subtareas = subtareas.filter(bloque__tarea__epica__proyecto_id=proyecto_id)
+
+    planned_macro = tareas.aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"] or 0
+    done_by_sub   = subtareas.filter(estado_u__in=["ENTREGADA","COMPLETADO","CERRADA"])\
+                             .aggregate(v=Coalesce(Sum("esfuerzo_sp"), 0))["v"] or 0
+
+    labels = ["Planned (macro)", "Done por Subtareas"]
+    data   = [planned_macro, done_by_sub]
+
+    rows = [
+        ("Tareas (macro) — Planned", planned_macro, ""),
+        ("Subtareas — Done", "", done_by_sub),
+        ("TOTAL (comparativo)", planned_macro, done_by_sub),
+    ]
+
+    ctx = {
+        "users": Integrante.objects.select_related("user").order_by("user__first_name","user__last_name"),
+        "sprints": Sprint.objects.order_by("-inicio"),
+        "proyectos": Proyecto.objects.order_by("codigo"),
+        "user_id": int(user_id) if user_id else None,
+        "sprint_id": int(sprint_id) if sprint_id else None,
+        "proyecto_id": int(proyecto_id) if proyecto_id else None,
+
+        "labels": labels,
+        "data": data,
+        "rows": rows,
+        "planned_macro": planned_macro,
+        "done_by_sub": done_by_sub,
+    }
+    return render(request, "backlog/kpi/esfuerzo.html", ctx)

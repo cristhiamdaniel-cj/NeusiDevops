@@ -1,6 +1,6 @@
-# backlog/urls.py - Rutas del módulo backlog (NEUSI Task Manager)
 from django.urls import path
 from . import views
+from .views import dashboard_neusi
 
 urlpatterns = [
     # 🔑 Autenticación
@@ -84,8 +84,19 @@ urlpatterns = [
 
     # 📊 Reporte de enlaces Daily (solo Admin)
     path("reporte/enlaces-daily/", views.reporte_enlaces_daily, name="reporte_enlaces_daily"),
-
-
+     #DASHBOARD
+    path("dashboard/", dashboard_neusi, name="dashboard_neusi"),
+    
+    # Páginas HTML (con selects por NOMBRE)
+    path("kpis/individual/page/", views.kpi_individual_page, name="kpi_individual_page"),
+    path("kpis/individual/burndown/page/", views.kpi_burndown_page, name="kpi_burndown_page"),
+    path("kpis/individual/esfuerzo/page/", views.kpi_esfuerzo_page, name="kpi_esfuerzo_page"),
+        # Alias para lo que ya tienes en los botones (evita 404)
+    path(
+        "kpis/individual/distribucion-esfuerzo/page/",
+        views.kpi_esfuerzo_page,
+        name="kpi_esfuerzo_alias",
+    ),
     # 📅 Sprints
     path("sprints/", views.sprint_list, name="sprint_list"),
     path("sprints/nuevo/", views.sprint_create, name="sprint_create"),

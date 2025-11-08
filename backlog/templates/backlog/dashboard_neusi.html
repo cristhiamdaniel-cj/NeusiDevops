@@ -1,0 +1,516 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard NEUSI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Chart.js + DataLabels -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+  <style>
+    :root{
+      --neu-primary:#6C2BD9;
+      --neu-deep:#3B1D82;
+      --neu-pink:#E14D8B;
+      --neu-sky:#00A3FF;
+      --neu-amber:#FFC857;
+      --neu-green:#22C55E;
+      --neu-bg:#f6f3ff;
+      --neu-card:#ffffff;
+      --neu-border:#e9e6ff;
+    }
+    body{ background: linear-gradient(180deg,#ede3ff 0%,#f9f7ff 100%); }
+    .page-header{
+      border-bottom:1px solid var(--neu-border);
+      padding-bottom:.5rem;
+      margin-bottom:1rem;
+    }
+    .card{
+      border:1px solid var(--neu-border);
+      border-radius:14px;
+      background:var(--neu-card);
+    }
+    .card-title{
+      font-weight:600;
+      color:var(--neu-deep);
+    }
+    .card-kpi{
+      border:none;
+      border-radius:14px;
+      padding:16px;
+      color:#fff;
+      box-shadow:0 6px 18px rgba(108,43,217,.15);
+    }
+    .kpi-total{ background: linear-gradient(135deg,#0EA5E9,#2563EB); }
+    .kpi-new{   background: linear-gradient(135deg,#6C2BD9,#7C3AED); }
+    .kpi-prog{  background: linear-gradient(135deg,#00A3FF,#3B82F6); }
+    .kpi-block{ background: linear-gradient(135deg,#FF7A59,#F97316); }
+    .kpi-done{  background: linear-gradient(135deg,#16A34A,#22C55E); }
+    .mini{opacity:.9;font-size:.9rem}
+    .table thead th{
+      background:#f2f2ff;
+      color:#3b1d82;
+      font-weight:600;
+      border-top-left-radius:8px;
+      border-top-right-radius:8px;
+    }
+    .table tbody tr{
+      border-color:var(--neu-border);
+    }
+    .table tfoot th{
+      background:#f7f6ff;
+      font-weight:700;
+    }
+    .chart-equal{ max-width:660px; margin:0 auto; }
+    .btn-outline-secondary{
+      border-color:#d7d2ff;
+      color:#3b1d82;
+    }
+    .btn-outline-secondary:hover{
+      background:#efeaff;
+      border-color:#c9c2ff;
+      color:#2d1a70;
+    }
+    .footer-note{ color:#6b6b85; font-size:.875rem; }
+  </style>
+</head>
+
+<body class="p-3 p-md-4">
+  <div class="container-fluid">
+
+    <!-- Top bar -->
+    <div class="d-flex justify-content-between align-items-center page-header">
+      <a href="/" class="btn btn-outline-secondary">Volver al Home</a>
+      <div class="text-muted small">NEUSI Task Manager · Dashboard</div>
+    </div>
+
+    <!-- Filtros -->
+    <form class="row g-2 align-items-end mb-3">
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Proyecto</label>
+        <select name="proyecto" class="form-select">
+          <option value="">Todos</option>
+          {% for p in proyectos %}
+            <option value="{{p.id}}" {% if p.id == proyecto_id %}selected{% endif %}>{{p.codigo}} — {{p.nombre}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Sprint</label>
+        <select name="sprint" class="form-select">
+          <option value="">Todos</option>
+          {% for s in sprints %}
+            <option value="{{s.id}}" {% if s.id == sprint_id %}selected{% endif %}>{{s.nombre}} ({{s.inicio}} → {{s.fin}})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Ámbito</label>
+        <select name="scope" class="form-select">
+          <option value="sprint" {% if scope == 'sprint' %}selected{% endif %}>Sprint seleccionado</option>
+          <option value="global" {% if scope == 'global' %}selected{% endif %}>Global (últimos 30 días)</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex">
+        <button class="btn btn-primary me-2 flex-fill" type="submit">Aplicar</button>
+        <a class="btn btn-outline-secondary flex-fill" href="{% url 'dashboard_neusi' %}">Limpiar</a>
+      </div>
+    </form>
+<div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+  <a id="btnKpiIndividual" class="btn btn-dark" target="_blank" href="/kpis/individual/page/">
+    KPIs individuales
+  </a>
+  <a id="btnKpiBurndown" class="btn btn-outline-dark" target="_blank" href="/kpis/individual/burndown/page/">
+    Burndown personal
+  </a>
+  <a id="btnKpiEsfuerzo" class="btn btn-outline-secondary" target="_blank" href="/kpis/individual/esfuerzo/page/">
+    Distribución de esfuerzo
+  </a>
+</div>
+    <!-- KPIs -->
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md"><div class="card-kpi kpi-total"><div class="mini">HU Totales</div><div class="display-6 fw-bold">{{cards.hu_total|default:0}}</div></div></div>
+      <div class="col-6 col-md"><div class="card-kpi kpi-new"><div class="mini">HU Nuevo</div><div class="display-6 fw-bold">{{cards.hu_new|default:0}}</div></div></div>
+      <div class="col-6 col-md"><div class="card-kpi kpi-prog"><div class="mini">HU En progreso</div><div class="display-6 fw-bold">{{cards.hu_inprog|default:0}}</div></div></div>
+      <div class="col-6 col-md"><div class="card-kpi kpi-block"><div class="mini">HU Bloqueado</div><div class="display-6 fw-bold">{{cards.hu_blocked|default:0}}</div></div></div>
+      <div class="col-6 col-md">
+        <div class="card-kpi kpi-done">
+          <div class="mini">HU Completado</div>
+          <div class="display-6 fw-bold">{{cards.hu_done|default:0}}</div>
+          <div class="mini">SP done / planned: {{cards.sp_completed|default:0}} / {{cards.sp_planned|default:0}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+
+      <!-- Subtareas por estado -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Subtareas por estado</h5>
+            <canvas id="stChart" height="160"></canvas>
+            <div class="small text-muted mt-2">
+              Total: {{subtareas_stats.st_total|default:0}}
+              · Nuevo: {{subtareas_stats.st_nuevo|default:0}}
+              · En prog: {{subtareas_stats.st_prog|default:0}}
+              · Bloq: {{subtareas_stats.st_bloq|default:0}}
+              · Comp: {{subtareas_stats.st_comp|default:0}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Velocidad -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Velocidad (SP) – últimos 5 sprints</h5>
+            <canvas id="velChart" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- HU principal por estado -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">HU principal por estado</h5>
+            <div class="chart-equal">
+              <canvas id="huChart" height="260"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Burndown -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Burndown (SP restantes)</h5>
+            <canvas id="bdChart" height="260"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtareas por responsable -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Subtareas por responsable (por estado)</h5>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Responsable</th>
+                    <th class="text-center">Nuevo</th>
+                    <th class="text-center">En progreso</th>
+                    <th class="text-center">Bloqueado</th>
+                    <th class="text-center">Completado</th>
+                    <th class="text-center">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in subtareas_por_responsable %}
+                  <tr>
+                    <td>{{r.responsable__user__first_name}} {{r.responsable__user__last_name}}</td>
+                    <td class="text-center">{{r.nuevo}}</td>
+                    <td class="text-center">{{r.prog}}</td>
+                    <td class="text-center">{{r.bloq}}</td>
+                    <td class="text-center">{{r.comp}}</td>
+                    <td class="text-center fw-semibold">{{r.total}}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="6" class="text-center text-muted">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th>Total</th>
+                    <th class="text-center">{{st_res_tot.nuevo}}</th>
+                    <th class="text-center">{{st_res_tot.prog}}</th>
+                    <th class="text-center">{{st_res_tot.bloq}}</th>
+                    <th class="text-center">{{st_res_tot.comp}}</th>
+                    <th class="text-center">{{st_res_tot.total}}</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="footer-note mt-1">
+              * Para subtareas, “Completado” incluye ENTREGADA/COMPLETADO/CERRADA.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HU por responsable -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">HU principal por responsable</h5>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Responsable</th>
+                    <th class="text-center">Nuevo</th>
+                    <th class="text-center">En Progreso</th>
+                    <th class="text-center">Bloqueado</th>
+                    <th class="text-center">Completado</th>
+                    <th class="text-center">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in hu_por_resp %}
+                  <tr>
+                    <td>{{r.asignado_a__user__first_name}} {{r.asignado_a__user__last_name}}</td>
+                    <td class="text-center">{{r.new}}</td>
+                    <td class="text-center">{{r.inprog}}</td>
+                    <td class="text-center">{{r.blocked}}</td>
+                    <td class="text-center">{{r.done}}</td>
+                    <td class="text-center fw-semibold">{{r.total}}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="6" class="text-center text-muted">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-1">
+              Métricas de Daily por Integrante
+              <small class="text-muted">
+                {% if ini_rango and fin_rango %} ({{ini_rango}} → {{fin_rango}}, {{dias_habiles}} días hábiles){% endif %}
+              </small>
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Integrante</th>
+                    <th class="text-end">Cumplimiento en horario</th>
+                    <th class="text-end">Retrasos</th>
+                    <th class="text-end">No completado</th>
+                    <th class="text-end">Índice de efectividad</th>
+                    <th class="text-end">Participación en daily</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in tabla_daily %}
+                  <tr>
+                    <td>{{r.integrante}}</td>
+                    <td class="text-end">{{r.cumplimiento|floatformat:1}}%</td>
+                    <td class="text-end">{{r.retrasos|floatformat:1}}%</td>
+                    <td class="text-end">{{r.no_completado|floatformat:1}}%</td>
+                    <td class="text-end">{{r.efectividad|floatformat:1}}%</td>
+                    <td class="text-end">{{r.participacion|floatformat:1}}%</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="6" class="text-center text-muted">Sin registros de daily.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="footer-note">
+              • <strong>Cumplimiento:</strong> dailies en 5–9am / días hábiles. ·
+              • <strong>Participación:</strong> días con daily / días hábiles.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HU detalle -->
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Detalle de HU (últimas 25)</h5>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>HU</th>
+                    <th>Proyecto</th>
+                    <th>Sprint</th>
+                    <th>Estado</th>
+                    <th>SP</th>
+                    <th class="text-center">Subtareas</th>
+                    <th class="text-center">% Progreso</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for t in tareas %}
+                  <tr>
+                    <td>{{t.titulo}}</td>
+                    <td>{% if t.epica and t.epica.proyecto %}{{t.epica.proyecto.codigo}}{% endif %}</td>
+                    <td>{{t.sprint.nombre}}</td>
+                    <td>{{t.estado}}</td>
+                    <td>{{t.esfuerzo_display}}</td>
+                    <td class="text-center">{{t.cerradas_st}} / {{t.total_st}}</td>
+                    <td class="text-center">{{t.progreso|floatformat:0}}%</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="7" class="text-center text-muted">Sin HU</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- /row -->
+
+  </div> <!-- /container -->
+
+  <!-- Lógica de enlaces KPI (propaga filtros y user_id) -->
+  <script>
+(function(){
+  const getVal = (id)=>{ const el=document.getElementById(id); return el?(el.value||"").trim():""; };
+  const uid = getVal("kpiUserId") || getVal("user_id") || "";
+  const sid = getVal("kpiSprintId") || getVal("sprint_id") || "";
+  const pid = getVal("kpiProyectoId") || getVal("proyecto_id") || "";
+  const qp  = new URLSearchParams({user_id:uid, sprint_id:sid, proyecto_id:pid}).toString();
+  const add = (b)=> b + (qp?("?"+qp):"");
+  const b1=document.getElementById("btnKpiIndividual");
+  const b2=document.getElementById("btnKpiBurndown");
+  const b3=document.getElementById("btnKpiEsfuerzo");
+  if(b1) b1.href = add("/kpis/individual/page/");
+  if(b2) b2.href = add("/kpis/individual/burndown/page/");
+  if(b3) b3.href = add("/kpis/individual/distribucion-esfuerzo/page/");
+})();
+</script>
+
+  <!-- Gráficas -->
+  <script>
+    // Paleta centralizada
+    const C_PRIMARY = '#6C2BD9';
+    const C_DEEP = '#3B1D82';
+    const C_PINK = '#E14D8B';
+    const C_SKY = '#00A3FF';
+    const C_AMBER = '#FFC857';
+    const C_GREEN = '#22C55E';
+
+    // Subtareas (bar)
+    (function(){
+      const ctx = document.getElementById('stChart');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Nuevo','En progreso','Bloqueado','Completado'],
+          datasets: [{
+            label: 'Subtareas',
+            data: [
+              {{subtareas_stats.st_nuevo|default:0}},
+              {{subtareas_stats.st_prog|default:0}},
+              {{subtareas_stats.st_bloq|default:0}},
+              {{subtareas_stats.st_comp|default:0}}
+            ],
+            backgroundColor: [C_PRIMARY+'55', C_SKY, C_AMBER, C_GREEN],
+            borderColor: [C_PRIMARY, C_SKY, C_AMBER, C_GREEN],
+            borderWidth: 1.5
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    })();
+
+    // Velocidad (bar)
+    (function(){
+      const ctx = document.getElementById('velChart');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: {{vel_labels|safe}},
+          datasets: [
+            { label: 'Planned', data: {{vel_planned|safe}}, backgroundColor: '#cfd3ff' },
+            { label: 'Done', data: {{vel_done|safe}}, backgroundColor: C_PRIMARY }
+          ]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+    })();
+
+    // HU por estado (doughnut con valor y porcentaje)
+    (function(){
+      const ctx = document.getElementById('huChart');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: {{hu_labels|safe}},
+          datasets: [{
+            data: {{hu_data|safe}},
+            backgroundColor: [C_PRIMARY, C_PINK, C_AMBER, C_GREEN],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '65%',
+          plugins: {
+            legend: { position: 'top' },
+            datalabels: {
+              color: '#ffffff',
+              font: { weight: '700', size: 12 },
+              formatter: function(value, context){
+                const data = context.chart.data.datasets[0].data;
+                const total = data.reduce(function(a,b){return a+b;}, 0);
+                if (!total || value === 0) { return ''; }
+                const pct = Math.round((value / total) * 100);
+                return value + ' (' + pct + '%)';
+              }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    })();
+
+    // Burndown (line: SP restantes = planned - done)
+    (function(){
+      const ctx = document.getElementById('bdChart');
+      const planned = {{vel_planned|safe}};
+      const done = {{vel_done|safe}};
+      const remain = planned.map(function(p, i){
+        const d = done[i] || 0;
+        const v = (p || 0) - d;
+        return v > 0 ? v : 0;
+      });
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: {{vel_labels|safe}},
+          datasets: [{
+            label: 'SP restantes',
+            data: remain,
+            borderColor: C_PRIMARY,
+            backgroundColor: 'rgba(108,43,217,0.15)',
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: C_PRIMARY,
+            pointBorderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+    })();
+  </script>
+</body>
+</html>
