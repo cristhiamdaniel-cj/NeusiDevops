@@ -3,191 +3,245 @@
 {% block title %}Mi Disponibilidad (Semana){% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'disponibilidad/disponibilidad.css' %}?v=18">
+<link rel="stylesheet" href="{% static 'disponibilidad/disponibilidad.css' %}?v=21">
 {% endblock %}
 
-
 {% block content %}
-<div class="container py-4">
+<div class="dispon-page">
+  <div class="container py-4">
 
-  <!-- Barra con regresar y ver equipo -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <div class="d-flex gap-2">
-      <a class="btn btn-light border" href="{{ home_url }}">↩ Volver</a>
-      {% if puede_ver_equipo %}
-        <a class="btn btn-outline-primary" href="{{ equipo_url }}">👥 Ver equipo</a>
-      {% endif %}
-    </div>
-    <div class="btn-group">
-      <a class="btn btn-outline-secondary" href="?semana={{ prev_w|date:'Y-m-d' }}">← Semana anterior</a>
-      <span class="btn btn-light disabled">
-        {{ semana.semana_inicio|date:"d M" }} — {{ semana.semana_fin|date:"d M Y" }}
-      </span>
-      <a class="btn btn-outline-secondary" href="?semana={{ next_w|date:'Y-m-d' }}">Semana siguiente →</a>
-    </div>
-  </div>
-
-  {% if messages %}
-    {% for m in messages %}
-      <div class="alert alert-{{ m.tags }}">{{ m }}</div>
-    {% endfor %}
-  {% endif %}
-
-  <form method="post" class="card" id="form-semana">
-    {% csrf_token %}
-
- <style>
-      .week-grid { display:grid; grid-template-columns: repeat(7, minmax(140px,1fr)); gap:12px; }
-      @media (max-width: 1200px){ .week-grid{ grid-template-columns: repeat(3,1fr);} }
-      @media (max-width: 768px){ .week-grid{ grid-template-columns: repeat(2,1fr);} }
-      @media (max-width: 576px){ .week-grid{ grid-template-columns: 1fr;} }
-
-      .mini-week { display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; }
-      .mini-day { border:1px solid #0b50db; border-radius:10px; padding:8px; min-height:72px; display:flex; flex-direction:column; gap:6px;}
-      .mini-day h6{ font-size:12px; margin:0; color:#05295b; display:flex; justify-content:space-between; }
-      .pill { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700; }
-      .pill-green{ background:#dcfce7; color:#166534; }
-      .pill-gray{ background:#e5e7eb; color:#334155; }
-      .pill-blue{ background:#dbeafe; color:#1e3a8a; }
-
-      .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-      .chip { border:1px solid #d1dbd5; background:#f8fafc; padding:4px 8px; border-radius:999px; font-size:12px; cursor:pointer; }
-      .chip:hover { background:#eef2ffe7; border-color:#c7d2fe; }
-
-      .time-input { font-variant-numeric: tabular-nums; }
-      .is-invalid { border-color:#dc3545 !important; }
-      .invalid-hint { color:#dc3545; font-size:12px; display:none; }
-      .invalid-hint.show { display:block; }
-    </style>
-
-    <!-- datalist global para sugerencias -->
-    <datalist id="horas_sugeridas">
-      {% for h in "00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23"|cut:"," %}
-        <option value="{{ h }}:00"></option>
-        <option value="{{ h }}:15"></option>
-        <option value="{{ h }}:30"></option>
-        <option value="{{ h }}:45"></option>
-      {% endfor %}
-    </datalist>
-
-    <div class="card-body">
-      <!-- 7 columnas de edición -->
-      <div class="week-grid">
-        {% for d in semana.dias.all %}
-          <div class="border rounded p-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <strong>
-                {{ d.get_dia_semana_display }}
-                <small class="text-muted">({{ semana.semana_inicio|add_days:d.dia_semana|date:"Y-m-d" }})</small>
-              </strong>
-              <span class="badge {% if d.tipo == 'D' %}text-bg-success{% elif d.tipo == 'N' %}text-bg-secondary{% else %}text-bg-info{% endif %}" id="badge_{{ d.dia_semana }}">
-                <span id="badge_txt_{{ d.dia_semana }}">
-                  {% if d.tipo == "D" %}Disponible{% elif d.tipo == "N" %}No{% else %}
-                    {% if d.hora_inicio and d.hora_fin %}
-                      {{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}
-                    {% else %}Rango{% endif %}
-                  {% endif %}
-                </span>
-              </span>
+    <!-- Encabezado -->
+    <div class="dispon-header card border-0 shadow-sm-soft mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="dispon-icon-wrap">
+              <i class="bi bi-calendar-week"></i>
             </div>
-
-            <div class="mb-2">
-              <label class="form-label">Estado</label>
-              <select class="form-select estado-select" name="estado_{{ d.dia_semana }}" data-dia="{{ d.dia_semana }}">
-                <option value="D" {% if d.tipo == "D" %}selected{% endif %}>Disponible todo el día</option>
-                <option value="N" {% if d.tipo == "N" %}selected{% endif %}>No disponible</option>
-                <option value="R" {% if d.tipo == "R" %}selected{% endif %}>Rango (horas)</option>
-              </select>
-            </div>
-
-            <!-- Campos de tiempo TEXT con autocompletar -->
-            <div class="rango-wrap" id="rango_{{ d.dia_semana }}" {% if d.tipo != "R" %}style="display:none"{% endif %}>
-              <div class="row g-2">
-                <div class="col-6">
-                  <label class="form-label">Inicio</label>
-                  <input
-                    type="text"
-                    class="form-control time-input"
-                    name="ini_{{ d.dia_semana }}"
-                    id="ini_{{ d.dia_semana }}"
-                    value="{{ d.hora_inicio|time:'H:i'|default_if_none:'' }}"
-                    placeholder="hh:mm"
-                    list="horas_sugeridas"
-                    inputmode="numeric"
-                    autocomplete="off">
-                  <div class="invalid-hint" id="hint_ini_{{ d.dia_semana }}">Formato válido: 07:00</div>
-                </div>
-                <div class="col-6">
-                  <label class="form-label">Fin</label>
-                  <input
-                    type="text"
-                    class="form-control time-input"
-                    name="fin_{{ d.dia_semana }}"
-                    id="fin_{{ d.dia_semana }}"
-                    value="{{ d.hora_fin|time:'H:i'|default_if_none:'' }}"
-                    placeholder="hh:mm"
-                    list="horas_sugeridas"
-                    inputmode="numeric"
-                    autocomplete="off">
-                  <div class="invalid-hint" id="hint_fin_{{ d.dia_semana }}">Formato válido: 16:30</div>
-                </div>
-              </div>
-
-              <!-- Atajos rápidos -->
-              <div class="chips" data-dia="{{ d.dia_semana }}">
-                <span class="chip" data-range="07:00-16:00">07–16</span>
-                <span class="chip" data-range="08:00-17:00">08–17</span>
-                <span class="chip" data-range="09:00-18:00">09–18</span>
-                <span class="chip" data-range="19:00-22:00">19–22</span>
-                <span class="chip" data-clear="1">Limpiar</span>
-              </div>
+            <div>
+              <h1 class="h4 mb-1">Mi disponibilidad semanal</h1>
+              <p class="text-muted small mb-0">
+                Marca para cada día si estás disponible todo el día, no disponible o en un rango horario específico.
+              </p>
             </div>
           </div>
-        {% endfor %}
-      </div>
-    </div>
+          <div class="btn-group semana-nav">
+            <a class="btn btn-outline-secondary"
+               href="?semana={{ prev_w|date:'Y-m-d' }}">← Semana anterior</a>
+            <span class="btn btn-light disabled">
+              {{ semana.semana_inicio|date:"d M" }} — {{ semana.semana_fin|date:"d M Y" }}
+            </span>
+            <a class="btn btn-outline-secondary"
+               href="?semana={{ next_w|date:'Y-m-d' }}">Semana siguiente →</a>
+          </div>
+        </div>
 
-    <div class="card-footer d-flex justify-content-end gap-2">
-      <a class="btn btn-outline-secondary" href="?semana={{ semana.semana_inicio|date:'Y-m-d' }}">Deshacer</a>
-      <button class="btn btn-primary">💾 Guardar semana</button>
-    </div>
-  </form>
+        <!-- Leyenda & ayuda -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="neusi-chip">
+              <i class="bi bi-check-circle-fill chip-icon disp"></i>
+              Disponible todo el día
+            </span>
+            <span class="neusi-chip">
+              <i class="bi bi-slash-circle-fill chip-icon no"></i>
+              No disponible
+            </span>
+            <span class="neusi-chip">
+              <i class="bi bi-clock-fill chip-icon rango"></i>
+              Rango de horas
+            </span>
+          </div>
+          <div class="text-muted small fw-medium">
+            Consejo: usa los chips de horas rápidas (07–16, 08–17, etc.) para rellenar más rápido.
+          </div>
+        </div>
 
-  <!-- Mini-calendario semanal visual -->
-  <div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <span>📅 Resumen visual de la semana</span>
-      <div class="d-flex gap-2">
-        <span class="pill pill-green">Disponible</span>
-        <span class="pill pill-gray">No disponible</span>
-        <span class="pill pill-blue">Rango</span>
-      </div>
-    </div>
-    <div class="card-body">
-      <div class="mini-week">
-        {% for d in semana.dias.all %}
-          <div class="mini-day">
-            <h6>
-              <span>{{ d.get_dia_semana_display|slice:":3" }}</span>
-              <span>{{ semana.semana_inicio|add_days:d.dia_semana|date:"d/M" }}</span>
-            </h6>
-            {% if d.tipo == "D" %}
-              <span class="pill pill-green">Disponible</span>
-            {% elif d.tipo == "N" %}
-              <span class="pill pill-gray">No disponible</span>
-            {% else %}
-              {% if d.hora_inicio and d.hora_fin %}
-                <span class="pill pill-blue">{{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}</span>
-              {% else %}
-                <span class="pill pill-blue">Rango</span>
-              {% endif %}
+        <!-- Navegación secundaria -->
+        <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+          <div class="d-flex gap-2">
+            <a class="btn btn-light border" href="{{ home_url }}">
+              <i class="bi bi-arrow-left-short me-1"></i> Volver
+            </a>
+            {% if puede_ver_equipo %}
+              <a class="btn btn-outline-primary" href="{{ equipo_url }}">
+                <i class="bi bi-people-fill me-1"></i> Ver equipo
+              </a>
             {% endif %}
           </div>
-        {% endfor %}
+          <div class="text-muted small">
+            Hoy es <strong>{{ hoy|date:"l d M Y" }}</strong>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
+    {% if messages %}
+      {% for m in messages %}
+        <div class="alert alert-{{ m.tags }} shadow-sm-soft">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="card border-0 shadow-main mb-4" id="form-semana">
+      {% csrf_token %}
+
+      <!-- datalist global para sugerencias -->
+      <datalist id="horas_sugeridas">
+        {% for h in "00,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23"|cut:"," %}
+          <option value="{{ h }}:00"></option>
+          <option value="{{ h }}:15"></option>
+          <option value="{{ h }}:30"></option>
+          <option value="{{ h }}:45"></option>
+        {% endfor %}
+      </datalist>
+
+      <div class="card-body">
+        <!-- 7 columnas de edición -->
+        <div class="week-grid">
+          {% for d in semana.dias.all %}
+            <div class="day-card">
+              <div class="day-card-inner">
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <h6 class="mb-0">
+                      {{ d.get_dia_semana_display }}
+                    </h6>
+                    <small class="text-muted">
+                      {{ semana.semana_inicio|add_days:d.dia_semana|date:"Y-m-d" }}
+                    </small>
+                  </div>
+                  <span class="badge estado-badge
+                               {% if d.tipo == 'D' %}badge-disp
+                               {% elif d.tipo == 'N' %}badge-no
+                               {% else %}badge-rango{% endif %}"
+                        id="badge_{{ d.dia_semana }}">
+                    <span id="badge_txt_{{ d.dia_semana }}">
+                      {% if d.tipo == "D" %}Disponible{% elif d.tipo == "N" %}No{% else %}
+                        {% if d.hora_inicio and d.hora_fin %}
+                          {{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}
+                        {% else %}Rango{% endif %}
+                      {% endif %}
+                    </span>
+                  </span>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label mb-1">Estado del día</label>
+                  <select class="form-select estado-select"
+                          name="estado_{{ d.dia_semana }}"
+                          data-dia="{{ d.dia_semana }}">
+                    <option value="D" {% if d.tipo == "D" %}selected{% endif %}>Disponible todo el día</option>
+                    <option value="N" {% if d.tipo == "N" %}selected{% endif %}>No disponible</option>
+                    <option value="R" {% if d.tipo == "R" %}selected{% endif %}>Rango (horas)</option>
+                  </select>
+                </div>
+
+                <!-- Campos de tiempo TEXT con autocompletar -->
+                <div class="rango-wrap" id="rango_{{ d.dia_semana }}"
+                     {% if d.tipo != "R" %}style="display:none"{% endif %}>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="form-label">Inicio</label>
+                      <input
+                        type="text"
+                        class="form-control time-input"
+                        name="ini_{{ d.dia_semana }}"
+                        id="ini_{{ d.dia_semana }}"
+                        value="{{ d.hora_inicio|time:'H:i'|default_if_none:'' }}"
+                        placeholder="hh:mm"
+                        list="horas_sugeridas"
+                        inputmode="numeric"
+                        autocomplete="off">
+                      <div class="invalid-hint" id="hint_ini_{{ d.dia_semana }}">Formato válido: 07:00</div>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Fin</label>
+                      <input
+                        type="text"
+                        class="form-control time-input"
+                        name="fin_{{ d.dia_semana }}"
+                        id="fin_{{ d.dia_semana }}"
+                        value="{{ d.hora_fin|time:'H:i'|default_if_none:'' }}"
+                        placeholder="hh:mm"
+                        list="horas_sugeridas"
+                        inputmode="numeric"
+                        autocomplete="off">
+                      <div class="invalid-hint" id="hint_fin_{{ d.dia_semana }}">Formato válido: 16:30</div>
+                    </div>
+                  </div>
+
+                  <!-- Atajos rápidos -->
+                  <div class="chips mt-2" data-dia="{{ d.dia_semana }}">
+                    <span class="chip" data-range="07:00-16:00">07–16</span>
+                    <span class="chip" data-range="08:00-17:00">08–17</span>
+                    <span class="chip" data-range="09:00-18:00">09–18</span>
+                    <span class="chip" data-range="19:00-22:00">19–22</span>
+                    <span class="chip chip-clear" data-clear="1">
+                      <i class="bi bi-eraser-fill me-1"></i>Limpiar
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                onclick="window.location='?semana={{ semana.semana_inicio|date:'Y-m-d' }}'">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>
+          Deshacer cambios
+        </button>
+        <button class="btn btn-neusi-primary">
+          <i class="bi bi-save2 me-1"></i>
+          Guardar semana
+        </button>
+      </div>
+    </form>
+
+    <!-- Mini-calendario semanal visual -->
+    <div class="card border-0 shadow-sm-soft">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">
+          <i class="bi bi-eye me-1"></i>
+          Resumen visual de la semana
+        </span>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="pill pill-green">Disponible</span>
+          <span class="pill pill-gray">No disponible</span>
+          <span class="pill pill-blue">Rango</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="mini-week">
+          {% for d in semana.dias.all %}
+            <div class="mini-day">
+              <h6>
+                <span>{{ d.get_dia_semana_display|slice:":3" }}</span>
+                <span>{{ semana.semana_inicio|add_days:d.dia_semana|date:"d/M" }}</span>
+              </h6>
+              {% if d.tipo == "D" %}
+                <span class="pill pill-green">Disponible</span>
+              {% elif d.tipo == "N" %}
+                <span class="pill pill-gray">No disponible</span>
+              {% else %}
+                {% if d.hora_inicio and d.hora_fin %}
+                  <span class="pill pill-blue">{{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}</span>
+                {% else %}
+                  <span class="pill pill-blue">Rango</span>
+                {% endif %}
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <script>
@@ -195,11 +249,11 @@ function setBadge(dia, estado, iniVal, finVal) {
   const badge = document.getElementById('badge_' + dia);
   const txt = document.getElementById('badge_txt_' + dia);
   if (!badge || !txt) return;
-  badge.classList.remove('text-bg-success', 'text-bg-secondary', 'text-bg-info');
+  badge.classList.remove('badge-disp', 'badge-no', 'badge-rango');
 
-  if (estado === 'D') { badge.classList.add('text-bg-success'); txt.textContent = 'Disponible'; }
-  else if (estado === 'N') { badge.classList.add('text-bg-secondary'); txt.textContent = 'No'; }
-  else { badge.classList.add('text-bg-info'); txt.textContent = (iniVal && finVal) ? (iniVal + '–' + finVal) : 'Rango'; }
+  if (estado === 'D') { badge.classList.add('badge-disp'); txt.textContent = 'Disponible'; }
+  else if (estado === 'N') { badge.classList.add('badge-no'); txt.textContent = 'No'; }
+  else { badge.classList.add('badge-rango'); txt.textContent = (iniVal && finVal) ? (iniVal + '–' + finVal) : 'Rango'; }
 }
 
 // Normaliza entradas: "7", "730", "7:3", "07:3" -> "07:30" / "07:03"
@@ -261,7 +315,6 @@ document.querySelectorAll('.estado-select').forEach(sel => {
   [ini, fin].forEach(inp => {
     if (!inp) return;
     inp.addEventListener('input', () => {
-      // no forzamos formato mientras escribe; solo actualizamos badge
       updateBadge();
     });
     inp.addEventListener('blur', () => {
@@ -303,7 +356,7 @@ document.querySelectorAll('.estado-select').forEach(sel => {
   }
 });
 
-// Validación al enviar: si hay días en "Rango", exigir hh:mm válidos y ini < fin
+// Validación al enviar
 document.getElementById('form-semana').addEventListener('submit', function (e) {
   let firstError = null;
   document.querySelectorAll('.estado-select').forEach(sel => {
@@ -324,7 +377,6 @@ document.getElementById('form-semana').addEventListener('submit', function (e) {
     if (!okFin) { fin.classList.add('is-invalid'); if (hintFin) hintFin.classList.add('show'); firstError = firstError || fin; }
 
     if (okIni && okFin) {
-      // compara tiempos
       const [hi, mi] = ini.value.split(':').map(Number);
       const [hf, mf] = fin.value.split(':').map(Number);
       const si = hi*60 + mi, sf = hf*60 + mf;

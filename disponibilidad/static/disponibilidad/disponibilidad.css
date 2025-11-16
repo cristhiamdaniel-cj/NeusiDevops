@@ -1,113 +1,292 @@
-/* ================================
-   NEUSI Task Manager - Disponibilidad (v22)
-   Fondo lila + halo y efecto glass
-   Codificación: UTF-8
-   ================================ */
-
-/* Neutraliza fondos planos del layout/base/Bootstrap */
-html, body { background: transparent !important; height: 100%; }
-.bg-light, .bg-body, .bg-body-tertiary, .page, .content, .app-wrapper {
-  background: transparent !important;
+:root{
+  --neusi-purple:#6B4EFF;
+  --neusi-purple-soft:#c7d2ff;
+  --neusi-pink:#ff7a88;
+  --neusi-bg:#f4f3ff;
 }
 
-/* Stacking estable para colocar capas detrás del contenido */
-body { position: relative; }
-
-/* Fondo lila fijo detrás de todo */
-body::before{
-  content:"";
-  position: fixed;
-  inset: 0;
-  z-index: -1;               /* debajo de todo */
-  pointer-events: none;
+/* Fondo general del módulo */
+.dispon-page{
+  min-height:100vh;
+  padding-bottom:2rem;
   background:
-    radial-gradient(1200px 600px at -10% -10%, rgba(108,99,255,.12), transparent 60%),
-    radial-gradient(1200px 600px at 110% 110%, rgba(14,165,233,.14), transparent 60%),
-    linear-gradient(180deg, #ead6ff 10%, #f4f7ff 50%, #ffd4ab 100%);
-            /* más claro; usa #4419a0 si lo quieres más oscuro */
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+    radial-gradient(circle at top left,#f4efff 0,#ffffff 45%),
+    radial-gradient(circle at bottom right,#ffe9f0 0,#ffffff 55%);
 }
 
-/* Icono/halo (opcional) 
-body::after{
-  content:"";
-  position: fixed;
-  top: 50%;
-  right: 10vw;
-  transform: translateY(-50%);
-  width: 420px;
-  height: 420px;
-  z-index: -1;               /* debajo de todo 
-  pointer-events: none;
-  opacity: .9;
-  background:
-    radial-gradient(300px 300px at 75% 25%, rgba(124,58,237,.10), transparent 60%),
-    radial-gradient(230px 230px at 25% 75%, rgba(99,102,241,.10), transparent 60%),
-    url("/static/backlog/icons/Spring.png") no-repeat center / contain;
-  filter: drop-shadow(0 20px 40px rgba(32,44,80,.08));
-}*/
-
-/* Contenido por encima de las capas anteriores */
-body > * { position: relative; z-index: 1; }
-
-/* --------------------------------
-   Efecto glass en tarjetas y cabeceras
-   -------------------------------- */
-.card,
-.card-body,
-.card-header {
-  background: rgba(240, 224, 255, 0.84) !important;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+/* Sombras suaves reutilizables */
+.shadow-sm-soft{
+  box-shadow:0 6px 18px rgba(15,23,42,0.06);
+}
+.shadow-main{
+  box-shadow:0 16px 40px rgba(15,23,42,0.16);
 }
 
-/* Header translúcido (glass) */
-header {
-  background: rgba(255, 255, 255, 0.88) !important;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+/* Icono redondo principal */
+.dispon-page .dispon-icon-wrap{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,var(--neusi-purple),var(--neusi-pink));
+  color:#fff;
+  box-shadow:0 10px 26px rgba(91,55,255,0.35);
+  font-size:1.3rem;
 }
 
-/* Si aparece .bg-white en algún bloque, que no opaque del todo */
-.bg-white { background: rgba(255, 255, 255, 0.88) !important; }
-
-/* Cada “columna/día” (div .border.rounded.p-3) */
-.border.rounded.p-3 {
-  background: rgba(255, 255, 255, 0.78);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+/* Encabezado */
+.dispon-page .dispon-header{
+  border-radius:1.5rem;
+  background:#ffffffee;
+  backdrop-filter:blur(10px);
 }
 
-/* Contenedor principal sin fondo sólido */
-main.container { background: transparent !important; }
+/* Chips de leyenda con iconos */
+.dispon-page .neusi-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:12px;
+  background:#fff;
+  color:#4b5563;
+  border:1px solid #e5e7ff;
+  box-shadow:0 4px 10px rgba(15,23,42,0.04);
+}
 
-/* --------------------------------
-   Mini-pastillas/estados
-   -------------------------------- */
-.pill { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700; }
-.pill-green{ background:#dcfce7; color:#166534; }
-.pill-gray{ background:#e5e7eb; color:#334155; }
-.pill-blue{ background:#dbeafe; color:#1e3a8a; }
+.dispon-page .neusi-chip .chip-icon{
+  font-size:14px;
+}
 
-/* Chips de atajos de horario */
-.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-.chip { border:1px solid #d1d5db; background:#f8fafc; padding:4px 8px; border-radius:999px; font-size:12px; cursor:pointer; }
-.chip:hover { background:#eef2ff; border-color:#c7d2fe; }
+.dispon-page .neusi-chip .chip-icon.disp{ color:#16a34a; }
+.dispon-page .neusi-chip .chip-icon.no{ color:#9ca3af; }
+.dispon-page .neusi-chip .chip-icon.rango{ color:#2563eb; }
 
-/* Inputs de hora */
-.time-input { font-variant-numeric: tabular-nums; }
-.is-invalid { border-color:#dc3545 !important; }
-.invalid-hint { color:#dc3545; font-size:12px; display:none; }
-.invalid-hint.show { display:block; }
+/* Navegador de semana */
+.dispon-page .semana-nav .btn{
+  border-radius:999px;
+}
 
-/* Grid responsivo de la semana */
-.week-grid { display:grid; grid-template-columns: repeat(7, minmax(140px,1fr)); gap:12px; }
-@media (max-width: 1200px){ .week-grid{ grid-template-columns: repeat(3,1fr);} }
-@media (max-width: 768px){ .week-grid{ grid-template-columns: repeat(2,1fr);} }
-@media (max-width: 576px){ .week-grid{ grid-template-columns: 1fr;} }
+/* Grid de los 7 días */
+.dispon-page .week-grid{
+  display:grid;
+  grid-template-columns: repeat(7, minmax(140px,1fr));
+  gap:16px;
+}
 
-/* Mini calendario */
-.mini-week { display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; }
-.mini-day { border:1px solid #808898; border-radius:10px; padding:8px; min-height:72px; display:flex; flex-direction:column; gap:6px;}
-.mini-day h6{ font-size:12px; margin:0; color:#64748b; display:flex; justify-content:space-between; }
+@media (max-width: 1200px){
+  .dispon-page .week-grid{
+    grid-template-columns: repeat(3,1fr);
+  }
+}
+@media (max-width: 768px){
+  .dispon-page .week-grid{
+    grid-template-columns: repeat(2,1fr);
+  }
+}
+@media (max-width: 576px){
+  .dispon-page .week-grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card de cada día (capa externa con degradé) */
+.dispon-page .day-card{
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(107,78,255,0.15),rgba(255,122,136,0.10));
+  padding:1px;
+  position:relative;
+  box-shadow:0 12px 30px rgba(15,23,42,0.15);
+  transition:box-shadow .2s ease, transform .2s ease, filter .2s ease;
+}
+
+/* Contenido interno blanco */
+.dispon-page .day-card-inner{
+  border-radius:20px;
+  background:#ffffff;
+  padding:14px 14px 12px;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  position:relative;
+}
+
+/* Efecto hover */
+.dispon-page .day-card:hover{
+  transform:translateY(-5px) scale(1.015);
+  box-shadow:0 18px 40px rgba(15,23,42,0.25);
+  filter:saturate(1.05);
+}
+.dispon-page .day-card:hover .day-card-inner{
+  background:linear-gradient(180deg,#ffffff,#fbf7ff);
+}
+
+/* Tipografía de la card */
+.dispon-page .day-card h6{
+  font-size:14px;
+  margin:0;
+  font-weight:600;
+  color:#111827;
+}
+.dispon-page .day-card small{
+  font-size:11px;
+}
+
+/* Badge de estado en cada card */
+.dispon-page .estado-badge{
+  border-radius:999px;
+  font-size:11px;
+  padding:4px 10px;
+  border:1px solid transparent;
+}
+
+.dispon-page .badge-disp{
+  background:#dcfce7;
+  color:#166534;
+  border-color:#bbf7d0;
+}
+.dispon-page .badge-no{
+  background:#e5e7eb;
+  color:#4b5563;
+  border-color:#d4d4d8;
+}
+.dispon-page .badge-rango{
+  background:#dbeafe;
+  color:#1e3a8a;
+  border-color:#bfdbfe;
+}
+
+/* Inputs y ayudas */
+.dispon-page .time-input{
+  font-variant-numeric: tabular-nums;
+}
+.dispon-page .is-invalid{
+  border-color:#dc3545 !important;
+}
+.dispon-page .invalid-hint{
+  color:#dc3545;
+  font-size:12px;
+  display:none;
+}
+.dispon-page .invalid-hint.show{
+  display:block;
+}
+
+/* Select de estado con un poquito de color */
+.dispon-page .estado-select{
+  border-radius:999px;
+  font-size:13px;
+  border-color:#e5e7eb;
+}
+.dispon-page .estado-select:focus{
+  border-color:var(--neusi-purple-soft);
+  box-shadow:0 0 0 0.15rem rgba(107,78,255,0.22);
+}
+
+/* Chips de rangos rápidos */
+.dispon-page .chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.dispon-page .chip{
+  border:1px solid #d1dbd5;
+  background:#f8fafc;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.dispon-page .chip:hover{
+  background:#eef2ffe7;
+  border-color:#c7d2fe;
+  transform:translateY(-1px);
+  box-shadow:0 4px 10px rgba(148,163,184,0.4);
+}
+.dispon-page .chip.chip-clear{
+  background:#fff7ed;
+  border-color:#fed7aa;
+  color:#9a3412;
+}
+.dispon-page .chip.chip-clear:hover{
+  background:#fed7aa;
+}
+
+/* Botón principal Neusi */
+.dispon-page .btn-neusi-primary{
+  background:linear-gradient(135deg,var(--neusi-purple),var(--neusi-pink));
+  border:none;
+  color:#fff;
+  box-shadow:0 8px 22px rgba(107,78,255,0.45);
+  border-radius:999px;
+  padding-inline:1.5rem;
+}
+.dispon-page .btn-neusi-primary:hover{
+  filter:brightness(1.04);
+  transform:translateY(-1px);
+}
+.dispon-page .btn-neusi-primary:active{
+  transform:translateY(0);
+  box-shadow:0 4px 12px rgba(107,78,255,0.35);
+}
+
+/* Mini-resumen semanal */
+.dispon-page .mini-week{
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap:8px;
+}
+@media (max-width: 768px){
+  .dispon-page .mini-week{
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 576px){
+  .dispon-page .mini-week{
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dispon-page .mini-day{
+  border:1px solid #d0ddff;
+  border-radius:12px;
+  padding:8px;
+  min-height:72px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  background:linear-gradient(160deg,#f5f7ff,#ffffff);
+}
+.dispon-page .mini-day h6{
+  font-size:12px;
+  margin:0;
+  color:#05295b;
+  display:flex;
+  justify-content:space-between;
+}
+
+/* Pills del resumen */
+.dispon-page .pill{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+}
+.dispon-page .pill-green{
+  background:#dcfce7;
+  color:#166534;
+}
+.dispon-page .pill-gray{
+  background:#e5e7eb;
+  color:#334155;
+}
+.dispon-page .pill-blue{
+  background:#dbeafe;
+  color:#1e3a8a;
+}
